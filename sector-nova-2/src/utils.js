@@ -125,6 +125,15 @@ const COLORS = {
   COMM_BG: 'rgba(6, 14, 34, 0.85)', COMM_BORDER: '#5aa0d8', COMM_NAME: '#88ddff',
   WARNING_BAND: '#c81830', WARNING_STRIPE: '#ffcc22',
 
+  // --- Stage 2 (Phase 4-2) ---
+  SENTINEL_HARBOR: '#9aa8ba', SENTINEL_HARBOR_DARK: '#3a4452', SENTINEL_HARBOR_CORE: '#ffcc22',
+  DOCK_BODY: '#7d8898', DOCK_DARK: '#363e4a', DOCK_PLATE: '#a9b4c2', DOCK_STRIPE: '#ffcc22',
+  DOCK_CORE: '#ff7a3d', DOCK_CORE_HOT: '#ffe6b0', DOCK_MISSILE: '#d8dee8',
+  WALL_BODY: '#4a5462', WALL_DARK: '#262d37', WALL_EDGE: '#8c99aa', WALL_STRIPE: '#ffcc22',
+  WALL_PANEL_ODD: '#3fa89a', WALL_PANEL_ODD_LIGHT: '#a6f2e4',     // the NOVA CRYSTAL panel
+  CAUTION_BAND: '#2a2410', CAUTION_STRIPE: '#ffcc22',
+  FLOOR_LINE: '#222a35', FLOOR_RIVET: '#3a4554',
+
   // --- SECTOR NOVA 2: stage palettes ---
   // The journey runs cold blue -> gray -> purple -> red -> orange ->
   // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
@@ -393,6 +402,43 @@ const ICICLE_WARN_FRAMES = 40;             // shadow before it drops
 const ICICLE_SPEED = 4.5;
 const ICICLE_STAR_CHIP_CHANCE = 0.3;
 
+// DOCK TITAN: S2 boss (DESIGN.md 14). Core + two arm turrets.
+const DOCK_TITAN_HP = 200;                 // core (see README for the kill-time measurement)
+const DOCK_TITAN_ARM_HP = 60;
+const DOCK_TITAN_ARM_BONUS = 10000;        // part-break bonus per arm
+const DOCK_TITAN_DAMAGE_CAP = 8;           // decided (DESIGN.md 14)
+const DOCK_TITAN_SCORE = 15000;
+const DOCK_TITAN_RADIUS = 18;              // core hit radius
+const DOCK_TITAN_ARM_X = 48;               // arm offset from the core
+const DOCK_TITAN_ARM_RADIUS = 16;
+const DOCK_TITAN_TARGET_Y = 82;
+const DOCK_TITAN_ARMED_DAMAGE = 0.3;       // core damage while an arm is left
+const DOCK_TITAN_SWAY = 60;                // px of side-to-side movement
+const DOCK_TITAN_SWAY_SPEED = 0.006;       // radians per frame (arms phase)
+const DOCK_TITAN_SWAY_SPEED_CORE = 0.01;   // core phase
+const DOCK_TITAN_SWAY_SPEED_ENRAGED = 0.018;
+const DOCK_TITAN_CHARGE = 30;              // telegraph before every attack
+const DOCK_TITAN_ARM_REST = 40;            // after an arm volley
+const DOCK_TITAN_FAN_COUNT = 3;
+const DOCK_TITAN_FAN_STEP = 0.25;
+const DOCK_TITAN_FAN_SPEED = 2.4;
+const DOCK_TITAN_MISSILES = 4;
+const DOCK_TITAN_MISSILES_ENRAGED = 6;
+const DOCK_TITAN_MISSILE_REST = 70;
+const DOCK_TITAN_RING_COUNT = 12;
+const DOCK_TITAN_RING_SPEED = 1.9;
+const DOCK_TITAN_RING_REST = 80;
+const TITAN_MISSILE_HP = 1;
+const TITAN_MISSILE_SCORE = 50;
+const TITAN_MISSILE_RADIUS = 5;
+const TITAN_MISSILE_SPEED = 1.5;
+const TITAN_MISSILE_TURN = 0.03;           // radians per frame (slow homing)
+const TITAN_MISSILE_LIFE = 6 * 60;
+const TITAN_ARM_HP = 8;                    // the broken arm, falling
+const TITAN_ARM_SCORE = 1000;
+const TITAN_ARM_WARN_FRAMES = 40;          // shadow lane before it drops
+const TITAN_ARM_FALL_SPEED = 0.8;
+
 // --- Stage gimmicks (gimmicks.js) ---
 // S1 giant asteroid: shoot it, its fragments hit enemies only
 const ASTEROID_HP = 12;
@@ -403,6 +449,15 @@ const ASTEROID_FRAGMENTS = 5;
 const ASTEROID_FRAGMENT_DAMAGE = 3;
 const ASTEROID_FRAGMENT_SPEED = 3.2;
 const ASTEROID_FRAGMENT_LIFE = 70;
+
+// S2 narrow passage: walls scroll in with the floor
+const PASSAGE_MIN_GAP = 140;               // the passage is never narrower
+const PASSAGE_SCROLL = GUN_DECK_SCROLL;    // same speed as the floor and GUN DECKs
+const PASSAGE_CAUTION_FRAMES = 180;        // CAUTION before the walls reach the screen
+const PASSAGE_PUSHBACK = 10;               // px the ship is pushed back from a wall
+const WALL_PANEL_HP = 6;
+const WALL_PANEL_SCORE = 1000;
+const WALL_PANEL_RADIUS = 10;
 
 // --- NOVA CRYSTAL conditions ---
 const GOLD_SHARD_WINDOW = 5 * 60;          // S1: destroy within 5s of appearing

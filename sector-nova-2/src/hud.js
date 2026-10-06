@@ -40,6 +40,7 @@ class HUD {
 
     game.comm.draw(ctx, CANVAS_HEIGHT - 84, game.globalFrame);
     if (game.warningTimer > 0) this.drawWarning(ctx, game);
+    if (game.passage && game.passage.cautionActive) this.drawCaution(ctx, game.passage);
     if (game.boss && game.boss.banner) this.drawBanner(ctx, game.boss.banner, game.globalFrame);
   }
 
@@ -382,6 +383,42 @@ class HUD {
       ctx.fillStyle = COLORS.UI_WHITE;
       ctx.fillText(game.warningBossName, CANVAS_WIDTH / 2, cy + 16);
     }
+    ctx.restore();
+  }
+
+  /**
+   * S2 "CAUTION: NARROW PASSAGE" before the walls arrive: a yellow and
+   * black band across the upper screen, blinking text that never moves.
+   */
+  drawCaution(ctx, passage) {
+    const t = PASSAGE_CAUTION_FRAMES - passage.caution;
+    const y = 118;
+    ctx.save();
+    ctx.fillStyle = COLORS.CAUTION_BAND;
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(0, y, CANVAS_WIDTH, 34);
+    ctx.globalAlpha = 1;
+    // Hazard stripes along both edges of the band
+    ctx.fillStyle = COLORS.CAUTION_STRIPE;
+    for (const sy of [y, y + 30]) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, sy, CANVAS_WIDTH, 4);
+      ctx.clip();
+      for (let x = -8 + (t % 16); x < CANVAS_WIDTH + 8; x += 16) {
+        fillPolygon(ctx, [[x, sy + 4], [x + 6, sy], [x + 12, sy], [x + 6, sy + 4]]);
+      }
+      ctx.restore();
+    }
+    ctx.textAlign = 'center';
+    if (Math.floor(t / 12) % 2 === 0) {
+      ctx.font = 'bold 13px monospace';
+      ctx.fillStyle = COLORS.CAUTION_STRIPE;
+      ctx.fillText('CAUTION', CANVAS_WIDTH / 2, y + 16);
+    }
+    ctx.font = 'bold 8px monospace';
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.fillText('NARROW PASSAGE', CANVAS_WIDTH / 2, y + 26);
     ctx.restore();
   }
 

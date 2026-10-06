@@ -84,6 +84,7 @@ class Game {
     this.powerups = [];
     this.boss = null;
     this.timeline = null;
+    this.passage = null;      // S2 narrow passage (gimmicks.js)
     this.warningTimer = 0;
     this.warningBossName = '';
     this.spawnsLocked = false;
@@ -281,10 +282,15 @@ class Game {
 
     // --- Stage script ---
     this.timeline.update(ev => this.handleTimelineEvent(ev));
+    if (this.passage) {
+      this.passage.update(this);
+      if (!this.passage.alive) this.passage = null;
+    }
 
     // --- Player ---
     this.player.update(this.input);
     this.touch.applyDrag(this.player);
+    if (this.passage) this.passage.collidePlayer(this.player, () => this.hitPlayer());
     if (this.input.burst) this.useBurst();
     if (this.input.shoot) {
       const shots = this.player.shoot();
@@ -458,9 +464,13 @@ class Game {
         this.enemies.push(enemy);
         return;
       }
+      case 'wall':
+        // S2 narrow passage: CAUTION first, then the walls scroll in.
+        if (!this.spawnsLocked) this.passage = new NarrowPassage();
+        return;
       default:
-        // gimmickStart / gimmickEnd / hazard / wall arrive with the
-        // stages that use them (Phase 4-2 onward).
+        // gimmickStart / gimmickEnd / hazard arrive with the stages
+        // that use them (Phase 4-3 onward).
         if (DEBUG_MODE) console.warn('timeline: "' + ev.kind + '" is not implemented yet');
     }
   }
@@ -827,6 +837,7 @@ class Game {
       this.timeline.resume();
     }
     if (!this.timeline.skipTo('warning')) return;
+    this.passage = null;
     this.enemies = [];
     this.enemyBullets = [];
     this.hazards = [];
@@ -854,9 +865,11 @@ class Game {
     this.addEnemyBullets(enemy.deathBullets()); // FLARE SPIRIT
     if (enemy.deathPlayerShots) this.playerBullets.push(...enemy.deathPlayerShots()); // asteroid fragments
 
-    // NOVA CRYSTAL (S1): GOLD SHARD destroyed within its window.
-    if (enemy.crystalDeadline !== undefined && this.playTime <= enemy.crystalDeadline &&
-        !this.crystalStages.has(this.stage.stageNumber)) {
+    // NOVA CRYSTAL: GOLD SHARD destroyed within its window (S1), the
+    // odd wall panel (S2).
+    const crystalEarned = enemy.crystalDrop ||
+      (enemy.crystalDeadline !== undefined && this.playTime <= enemy.crystalDeadline);
+    if (crystalEarned && !this.crystalStages.has(this.stage.stageNumber)) {
       this.powerups.push(new Powerup(enemy.x, enemy.y, ITEM_NOVA_CRYSTAL));
     }
 
@@ -917,6 +930,7 @@ class Game {
   }
 
   drawGameplay(ctx) {
+    if (this.passage) this.passage.draw(ctx); // walls sit on the floor, under everything
     for (const p of this.powerups) p.draw(ctx);
     for (const e of this.enemies) if (e.drawLinks) e.drawLinks(ctx);
     for (const e of this.enemies) e.draw(ctx);

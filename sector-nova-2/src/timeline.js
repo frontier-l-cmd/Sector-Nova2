@@ -114,6 +114,66 @@ const STAGE_TIMELINES = {
     { t: 108.0, event: 'warning' },
     { t: 111.0, event: 'boss', type: 'glacierMaw' },
   ],
+
+  // ----------------------------------------------------------
+  // Stage 2 DEAD HARBOR (DESIGN.md 12): + GUN DECK / MINE LAYER /
+  // CARRIER. HARBOR SENTINEL at 50s, then the narrow passage (CAUTION
+  // at 54s, walls from 57s; GUN DECKs and the odd NOVA CRYSTAL panel
+  // are built into the walls), DOCK TITAN at 111s.
+  // ----------------------------------------------------------
+  2: [
+    // Opening: the harbor guns
+    { t: 2.0, spawn: 'SHARD', x: 'center', count: 3, interval: 20, pattern: 'line' },
+    { t: 4.5, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 38 },
+    { t: 7.0, spawn: 'GUN_DECK', x: 90 },
+    { t: 7.0, spawn: 'GUN_DECK', x: 230 },
+    { t: 10.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 11.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 14.0, spawn: 'MINE_LAYER', x: 'left', y: 120 },
+    { t: 17.0, spawn: 'SHARD', count: 6, interval: 20, pattern: 'sides' },
+    { t: 20.0, spawn: 'GUN_DECK', x: 160 },
+    { t: 22.0, spawn: 'CARRIER', x: 'center' },
+
+    // Middle
+    { t: 26.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
+    { t: 28.0, spawn: 'MINE_LAYER', x: 'right', y: 150 },
+    { t: 31.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 34.0, spawn: 'GUN_DECK', x: 70 },
+    { t: 34.0, spawn: 'GUN_DECK', x: 250 },
+    { t: 36.0, spawn: 'SNIPER', x: 160 },
+    { t: 39.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'v' },
+    { t: 42.0, spawn: 'CARRIER', x: 100 },
+    { t: 45.0, spawn: 'SHARD', x: 'player', count: 3, interval: 14, pattern: 'line' },
+
+    // Mid-boss (the timeline waits until it is beaten or flees)
+    { t: 50.0, event: 'midboss', type: 'sentinel' },
+    { t: 52.0, spawn: 'SHARD', x: 'center', count: 4, pattern: 'row', spacing: 34 },
+
+    // The narrow passage: light traffic inside, the wall guns do the work
+    { t: 54.0, event: 'wall', type: 'passage' },
+    { t: 60.0, spawn: 'SHARD', x: 'player', count: 3, interval: 16, pattern: 'line' },
+    { t: 64.0, spawn: 'WISP', x: 'player', count: 3, interval: 18, pattern: 'wave' },
+    { t: 68.0, spawn: 'SHARD', x: 'player', count: 3, interval: 16, pattern: 'line' },
+    { t: 72.0, spawn: 'WISP', x: 'player', count: 3, interval: 18, pattern: 'wave' },
+    { t: 76.0, spawn: 'SHARD', x: 'player', count: 3, interval: 16, pattern: 'line' },
+
+    // Late: everything together
+    { t: 82.0, spawn: 'CARRIER', x: 'center' },
+    { t: 84.0, spawn: 'SNIPER', x: 80 },
+    { t: 84.5, spawn: 'SNIPER', x: 240 },
+    { t: 88.0, spawn: 'MINE_LAYER', x: 'left', y: 140 },
+    { t: 90.0, spawn: 'GUN_DECK', x: 80 },
+    { t: 90.0, spawn: 'GUN_DECK', x: 240 },
+    { t: 93.0, spawn: 'SHARD', count: 8, interval: 15, pattern: 'sides' },
+    { t: 96.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 99.0, spawn: 'SNIPER', x: 'center' },
+    { t: 101.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 104.0, spawn: 'SHARD', x: 'player', count: 3, interval: 12, pattern: 'line' },
+
+    // Boss
+    { t: 108.0, event: 'warning' },
+    { t: 111.0, event: 'boss', type: 'dockTitan' },
+  ],
 };
 
 // ------------------------------------------------------------

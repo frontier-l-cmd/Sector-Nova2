@@ -4,8 +4,8 @@
 // Each stage describes its name, background theme, item drops and
 // boss. Enemy appearances come from STAGE_TIMELINES (timeline.js).
 //
-// Stage 1 is complete (Phase 4-1). Stages 2-6 are declared with
-// their final names and become playable in Phase 4-2 onward.
+// Stages 1-2 are complete (Phase 4-1 / 4-2). Stages 3-6 are declared
+// with their final names and become playable in Phase 4-3 onward.
 // ============================================================
 
 // Item weights (DESIGN.md 10). STAR CHIP drops often; NOVA CRYSTAL
@@ -43,7 +43,16 @@ const STAGES = {
     story: 'stage1',            // LYRA's message at the stage start
     implemented: true,
   },
-  2: { stageNumber: 2, stageName: 'DEAD HARBOR', bossType: 'dockTitan', implemented: false },
+  2: {
+    stageNumber: 2,
+    stageName: 'DEAD HARBOR',
+    itemDropRate: POWERUP_DROP_CHANCE,
+    powerupWeights: DEFAULT_POWERUP_WEIGHTS,
+    bossType: 'dockTitan',
+    bossExpectedTime: [45, 60],
+    story: 'stage2',
+    implemented: true,
+  },
   3: { stageNumber: 3, stageName: 'STORM VEIL', bossType: 'thunderRay', implemented: false },
   4: { stageNumber: 4, stageName: 'ECLIPSE HIVE', bossType: 'hiveMother', implemented: false },
   5: { stageNumber: 5, stageName: 'CORONA ZONE', bossType: 'coronaSerpent', implemented: false },

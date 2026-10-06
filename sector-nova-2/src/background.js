@@ -6,8 +6,9 @@
 // tints) and may stack extra layers on top.
 //
 // Stage-specific layers come through `layers`: S1 has a ringed
-// planet and drifting ice; panels, clouds, veins, flares and the
-// core arrive with their stages (Phase 4-2 onward). A layer is an object created by a
+// planet and drifting ice, S2 a metal floor with blinking warning
+// lights; clouds, veins, flares and the core arrive with their
+// stages (Phase 4-3 onward). A layer is an object created by a
 // factory with update(frame) and draw(ctx). Layers that need the
 // heat shimmer can render to an offscreen canvas and draw it in
 // horizontal strips; only the background ever shimmers. Layers with
@@ -201,8 +202,92 @@ class IceParticleLayer {
   }
 }
 
+// ------------------------------------------------------------
+// S2 DEAD HARBOR layers
+// ------------------------------------------------------------
+
+/**
+ * Metal floor panels scrolling at the GUN DECK speed (so ground units
+ * stay fixed on the floor), drawn behind the stars' near layer.
+ */
+class HarborFloorLayer {
+  constructor() {
+    this.offset = 0;
+    this.far = true;
+    this.size = 40;
+  }
+
+  update() {
+    this.offset = (this.offset + GUN_DECK_SCROLL) % this.size;
+  }
+
+  draw(ctx) {
+    const s = this.size;
+    ctx.save();
+    ctx.strokeStyle = COLORS.FLOOR_LINE;
+    ctx.lineWidth = 1;
+    for (let y = this.offset - s; y < CANVAS_HEIGHT; y += s) {
+      ctx.beginPath();
+      ctx.moveTo(0, Math.floor(y) + 0.5);
+      ctx.lineTo(CANVAS_WIDTH, Math.floor(y) + 0.5);
+      ctx.stroke();
+    }
+    for (let x = 0; x <= CANVAS_WIDTH; x += s) {
+      ctx.beginPath();
+      ctx.moveTo(x + 0.5, 0);
+      ctx.lineTo(x + 0.5, CANVAS_HEIGHT);
+      ctx.stroke();
+    }
+    // Rivets at the panel corners
+    ctx.fillStyle = COLORS.FLOOR_RIVET;
+    for (let y = this.offset - s; y < CANVAS_HEIGHT; y += s) {
+      for (let x = 0; x <= CANVAS_WIDTH; x += s) {
+        ctx.fillRect(x + 3, Math.floor(y) + 3, 2, 2);
+      }
+    }
+    ctx.restore();
+  }
+}
+
+/** Yellow warning lights down both sides, blinking in turn. */
+class WarningLightLayer {
+  constructor() {
+    this.offset = 0;
+    this.frame = 0;
+    this.gap = 120;
+  }
+
+  update() {
+    this.frame++;
+    this.offset = (this.offset + GUN_DECK_SCROLL) % this.gap;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    let i = 0;
+    for (let y = this.offset - this.gap; y < CANVAS_HEIGHT + this.gap; y += this.gap, i++) {
+      for (const x of [6, CANVAS_WIDTH - 6]) {
+        const on = Math.floor((this.frame + i * 20 + (x > 100 ? 30 : 0)) / 30) % 2 === 0;
+        ctx.fillStyle = COLORS.HARBOR_ACCENT;
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(x - 3, y - 5, 6, 10);
+        if (on) {
+          ctx.globalAlpha = 0.18;
+          ctx.fillStyle = COLORS.HARBOR_WARN;
+          ctx.beginPath();
+          ctx.arc(x, y, 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 0.9;
+          ctx.fillRect(x - 2, y - 3, 4, 6);
+        }
+      }
+    }
+    ctx.restore();
+  }
+}
+
 // Theme per screen / stage: gradient top->bottom, nebula tints, and
-// stage-specific layer factories (S1 done; S2+ arrive with their stages).
+// stage-specific layer factories (S1-S2 done; S3+ arrive with their stages).
 const BACKGROUND_THEMES = {
   title: {
     top: COLORS.BG_NEBULA,
@@ -220,7 +305,7 @@ const BACKGROUND_THEMES = {
     top: COLORS.HARBOR_BG_TOP,
     bottom: COLORS.HARBOR_BG_BOTTOM,
     nebulae: ['#1a2028', '#141a24', '#10141c'],
-    layers: [],
+    layers: [() => new HarborFloorLayer(), () => new WarningLightLayer()],
   },
   3: { // STORM VEIL - violet gray
     top: COLORS.STORM_BG_TOP,

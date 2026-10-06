@@ -112,6 +112,17 @@ turrets.
 | LYRA comm window | `COMM_BG`, `COMM_BORDER #5aa0d8`, `COMM_NAME #88ddff` | translucent dark-blue box along the bottom, name tag "LYRA", typed text, blinking ▼ |
 | WARNING | `WARNING_BAND #c81830`, `WARNING_STRIPE #ffcc22` | two red bands with scrolling yellow stripes; the word WARNING blinks but never moves |
 
+### Stage 2 objects and bosses (SECTOR NOVA 2, Phase 4-2)
+
+| Object | Tokens | Notes |
+|---|---|---|
+| S2 background | `HARBOR_BG_TOP/BOTTOM`, `FLOOR_LINE`, `FLOOR_RIVET`, `HARBOR_ACCENT`, `HARBOR_WARN` | dim metal floor grid scrolling at the GUN DECK speed; yellow lamps blinking down both sides |
+| Passage walls | `WALL_BODY #4a5462`, `WALL_DARK`, `WALL_EDGE`, `WALL_STRIPE #ffcc22` | solid steel with plate seams; a bright lip and a yellow dashed hazard line on the inner edge |
+| Odd wall panel | `WALL_PANEL_ODD #3fa89a`, `WALL_PANEL_ODD_LIGHT` | the one teal plate with a light streak (NOVA CRYSTAL); subtle on purpose |
+| CAUTION | `CAUTION_BAND`, `CAUTION_STRIPE #ffcc22` | dark band with yellow stripes on both edges; "CAUTION" blinks, "NARROW PASSAGE" stays; nothing moves |
+| HARBOR SENTINEL | `SENTINEL_HARBOR #9aa8ba`, `SENTINEL_HARBOR_DARK`, `SENTINEL_HARBOR_CORE #ffcc22` | the shared hexagon in steel gray with a yellow core |
+| DOCK TITAN | `DOCK_BODY / DARK / PLATE`, `DOCK_STRIPE`, `DOCK_CORE #ff7a3d`, `DOCK_CORE_HOT`, `DOCK_MISSILE` | wide hull, crane beam with hazard stripes, arm turrets with twin barrels; the core shows armor lines while an arm is left |
+
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
 | Kind | Tokens | Notes |
@@ -196,6 +207,9 @@ Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
   `ICICLE_SHADOW` lane (40 frames, harmless) instead.
 - **Boss shot telegraph:** before an aimed volley the core swells and a thin white ring closes
   in on it (30 frames). GLACIER MAW's jaw starts moving 20 frames before the mouth is open.
+- **Walls** (S2 passage) are drawn first in the playfield, under items, enemies and bullets;
+  they never block bullets. The broken DOCK TITAN arm telegraphs its fall with a blinking
+  `DOCK_STRIPE` shadow lane (40 frames).
 - **Gimmick objects** (the S1 giant asteroid, radius 28) are outside the small-enemy size band
   on purpose: they must read as terrain, not as an enemy.
 - **LYRA comm window** sits along the bottom of the play area (top edge at `H - 84`), under

@@ -2,6 +2,24 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 4-2] Stage 2 の完成 — 2026-10-06
+
+### 追加
+
+- S2「DEAD HARBOR」のタイムライン（GUN DECK / MINE LAYER / CARRIER が加わる、中ボス、狭い通路、WARNING、ボス）
+- S2 の背景レイヤー: 流れる金属パネルの床と、両脇で点滅する黄色い警告灯（`background.js`）
+- ギミック「狭い通路」（`gimmicks.js` の `NarrowPassage`）: CAUTION 表示3秒 → 床と一緒に流れる左右の壁（最小 140px）、触れると被弾＋押し戻し、壁の縁に GUN DECK
+- S2 の NOVA CRYSTAL: 壁に1枚だけある色の違うパネル（`WallPanel`）
+- 中ボス HARBOR SENTINEL（SENTINEL の S2 の色、HP 75）
+- ボス DOCK TITAN（`bosses/dockTitan.js`）: 腕2本の部位破壊（各 10000点）、外れて落ちる腕（影の予告つき）、追尾ミサイル、12方向リング、HP 50% 以下で強化。全攻撃に 30 フレームの予告
+- HUD の CAUTION 表示、S2 開始時の LYRA の通信（`story.js`）
+- DOCK TITAN と HARBOR SENTINEL の撃破時間を実戦で計測した表（README）
+
+### 変更
+
+- S1 クリア後は、リザルト → S2 のステージ紹介へ進む（S2 クリア後はタイトルへ）
+- デバッグキー 9 で WARNING 直前に飛ぶ時、通路も消す
+
 ## [Phase 4-1] Stage 1 の完成 — 2026-10-06
 
 ### 設計書

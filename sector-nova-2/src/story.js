@@ -6,7 +6,7 @@
 // character at a time, holds it, then shows the next queued message.
 // ENTER shows the whole message at once / skips to the next one.
 // Play never stops for a message.
-// Lines for S2-S6 are added with their stages (Phase 4-2 onward).
+// Lines for S3-S6 are added with their stages (Phase 4-3 onward).
 // ============================================================
 
 const STORY = {
@@ -15,6 +15,9 @@ const STORY = {
   ],
   stage1: [
     ['ENTERING FROST RING.', 'THE ICE HIDES THEIR SCOUTS.'],
+  ],
+  stage2: [
+    ['DEAD HARBOR AHEAD.', 'THEY TURNED OUR PORT INTO A FORTRESS.'],
   ],
   boss: [
     ['MASSIVE SIGNAL DETECTED!'],
