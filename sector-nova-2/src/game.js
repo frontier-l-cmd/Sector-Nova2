@@ -24,6 +24,7 @@ class Game {
     this.titleMenu = new TitleMenu();
     this.hud = new HUD();
     this.difficulty = loadDifficulty();
+    this.touch = new TouchControls(this, canvas);
 
     this.player = new Player();
     this.clearStageObjects();
@@ -229,6 +230,7 @@ class Game {
 
     // --- Player ---
     this.player.update(this.input);
+    this.touch.applyDrag(this.player);
     if (this.input.shoot) {
       const shots = this.player.shoot();
       if (shots.length) {

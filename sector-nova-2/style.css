@@ -27,12 +27,17 @@ html, body {
 }
 
 #gameCanvas {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   /* Pixel-perfect upscaling */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   /* Scale up to fit viewport while maintaining aspect ratio */
   width: auto;
   height: 90vh;
+  max-width: 98vw;
+  object-fit: contain;
   max-height: 960px;
   aspect-ratio: 320 / 480;
   /* Subtle border glow */

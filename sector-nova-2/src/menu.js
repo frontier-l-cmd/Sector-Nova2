@@ -7,6 +7,8 @@
 // ============================================================
 
 const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'bossRush', 'sound'];
+const TITLE_MENU_Y = 226;    // baseline of the first row
+const TITLE_MENU_ROW_H = 17;
 
 class TitleMenu {
   constructor() {
@@ -154,8 +156,8 @@ class TitleMenu {
 
     // Menu
     const rows = this.rows(game);
-    const menuY = 226;
-    const rowH = 17;
+    const menuY = TITLE_MENU_Y;
+    const rowH = TITLE_MENU_ROW_H;
     ctx.font = 'bold 10px monospace';
     rows.forEach((row, i) => {
       const y = menuY + i * rowH;
@@ -194,6 +196,10 @@ class TitleMenu {
     ctx.fillText('ENTER: OK   C: CONTINUE   1-6: STAGE', cx, 396);
     ctx.fillText('IN GAME  MOVE: ARROWS/WASD  SHOT: SPACE', cx, 408);
     ctx.fillText('P: PAUSE   M: SOUND ON/OFF', cx, 420);
+    if ('ontouchstart' in window) {
+      ctx.fillStyle = COLORS.UI_GREEN;
+      ctx.fillText('TOUCH: TAP ROW TWICE / DRAG TO MOVE / 2 FINGERS: PAUSE', cx, 452);
+    }
     if (DEBUG_MODE) {
       ctx.fillStyle = COLORS.UI_YELLOW;
       ctx.fillText('DEBUG: IN GAME 1-5 WEAPON  9 SKIP TO BOSS', cx, 438);

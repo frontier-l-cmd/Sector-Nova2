@@ -293,6 +293,9 @@ const ENEMY_TURRET_STOP_Y = 60;     // settles near top
 const ENEMY_TURRET_FIRE_INTERVAL = 90;
 const ENEMY_TURRET_BULLET_SPEED = 2.6;
 
+// --- Touch controls (touch.js, provisional) ---
+const TOUCH_DRAG_SCALE = 1.2; // ship moves this many px per px of finger drag
+
 // --- Audio (audio.js) ---
 const AUDIO_MASTER_VOLUME = 0.3;
 const AUDIO_SFX_VOLUME = 1.0;

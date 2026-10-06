@@ -30,6 +30,7 @@ class InputHandler {
     this.justPressed = {};
     this._previousKeys = {};
     this._tapped = {};            // pressed since the last update()
+    this._actionTapped = {};      // one-shot actions from touch controls
     this.virtual = {};            // action -> bool (future touch controls)
     this.actionDown = {};
     this.actionJustPressed = {};
@@ -69,10 +70,16 @@ class InputHandler {
     for (const action in INPUT_BINDINGS) {
       const codes = INPUT_BINDINGS[action];
       const down = !!this.virtual[action] || codes.some(code => this.keys[code]);
-      const tapped = codes.some(code => this.justPressed[code]);
+      const tapped = codes.some(code => this.justPressed[code]) || !!this._actionTapped[action];
       this.actionJustPressed[action] = tapped || (down && !this.actionDown[action]);
       this.actionDown[action] = down;
     }
+    this._actionTapped = {};
+  }
+
+  /** Hook for on-screen controls: a one-frame press of a logical action. */
+  tapAction(action) {
+    this._actionTapped[action] = true;
   }
 
   /** Hook for on-screen controls: press / release a logical action. */
