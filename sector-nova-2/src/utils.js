@@ -351,7 +351,7 @@ const BOSS_ESCAPE_SPEED = 2;               // mid-boss flying away
 // SENTINEL: mid-boss of S1-S5 (DESIGN.md 14), colored per stage
 const SENTINEL_HP_BASE = 60;               // S1; +15 per later stage
 const SENTINEL_HP_PER_STAGE = 15;
-const SENTINEL_DAMAGE_CAP = 8;             // proposal (README)
+const SENTINEL_DAMAGE_CAP = 8;             // decided (DESIGN.md 14)
 const SENTINEL_SCORE = 3000;
 const SENTINEL_RADIUS = 24;
 const SENTINEL_TARGET_Y = 90;
@@ -368,8 +368,8 @@ const SENTINEL_DEATH_FRAMES = 50;
 const SENTINEL_AFTERGLOW_FRAMES = 30;
 
 // GLACIER MAW: S1 boss (DESIGN.md 14)
-const GLACIER_MAW_HP = 196;                // NORMAL ~45s / max loadout ~15s (README)
-const GLACIER_MAW_DAMAGE_CAP = 8;          // proposal (README), just above NORMAL
+const GLACIER_MAW_HP = 200;                // NORMAL ~45s / max loadout >= 15s (README)
+const GLACIER_MAW_DAMAGE_CAP = 8;          // decided (DESIGN.md 14), just above NORMAL
 const GLACIER_MAW_SCORE = 10000;
 const GLACIER_MAW_RADIUS = 40;
 const GLACIER_MAW_TARGET_Y = 78;
