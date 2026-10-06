@@ -480,7 +480,7 @@ class Game {
 
   damageEnemy(enemy, amount, source) {
     enemy.applyDamage(amount, source);
-    if (enemy.hp <= 0) this.destroyEnemy(enemy);
+    if (enemy.hp <= 0) this.destroyEnemy(enemy, source === 'burst');
   }
 
   /**
@@ -675,14 +675,15 @@ class Game {
   /**
    * Handle an enemy that has been reduced to 0 HP: combo, score,
    * gauge, explosion, item drop, and any split offspring. Queued
-   * minions are flushed after the collision pass.
+   * minions are flushed after the collision pass. Kills made by
+   * NOVA BURST keep the combo but give no gauge (no BURST chains).
    */
-  destroyEnemy(enemy) {
+  destroyEnemy(enemy, byBurst) {
     if (!enemy.alive) return;
     enemy.alive = false;
     const mult = this.combo.addKill();
     this.score += enemy.score * mult;
-    this.player.addGauge(enemy.large ? GAUGE_KILL_LARGE : GAUGE_KILL);
+    if (!byBurst) this.player.addGauge(enemy.large ? GAUGE_KILL_LARGE : GAUGE_KILL);
     this.effects.explode(enemy.x, enemy.y);
     this.audio.play('explode');
 

@@ -379,6 +379,10 @@ const ENEMY_TURRET_BULLET_SPEED = 2.6;
 
 // --- Touch controls (touch.js, provisional) ---
 const TOUCH_DRAG_SCALE = 1.2; // ship moves this many px per px of finger drag
+const TOUCH_BURST_X = CANVAS_WIDTH - 34;   // BURST button center (bottom-right,
+const TOUCH_BURST_Y = CANVAS_HEIGHT - 66;  // just above the NOVA gauge)
+const TOUCH_BURST_RADIUS = 18;
+const TOUCH_BURST_HIT_MARGIN = 8;          // finger slack around the button
 
 // --- Audio (audio.js) ---
 const AUDIO_MASTER_VOLUME = 0.3;

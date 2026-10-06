@@ -9,7 +9,8 @@
 //                  with the remaining-time bar, "x4!" popup
 //   top (boss)   : boss name + HP bar (left of the combo column)
 //   bottom-left  : weapon name + Lv dots, options, REFLECT timer
-//   bottom-right : NOVA gauge, "BURST READY" blinking when full
+//   bottom-right : NOVA gauge, "BURST READY" blinking when full;
+//                  on touch devices the test BURST button sits above it
 // The LYRA comm window and the full WARNING arrive in Phase 4.
 // ============================================================
 
@@ -31,6 +32,7 @@ class HUD {
     this.drawCombo(ctx, game);
     this.drawWeaponPanel(ctx, game);
     this.drawGauge(ctx, game);
+    if (game.touch.available) this.drawBurstButton(ctx, game);
     if (DEBUG_MODE) this.drawDebugInfo(ctx, game);
     ctx.restore();
 
@@ -234,19 +236,77 @@ class HUD {
     }
   }
 
+  /**
+   * Touch BURST button (test touch controls). Gold and pulsing only
+   * when the gauge is full; otherwise a dim ring that fills with the
+   * gauge, so it reads as "not usable yet".
+   */
+  drawBurstButton(ctx, game) {
+    const player = game.player;
+    const x = TOUCH_BURST_X;
+    const y = TOUCH_BURST_Y;
+    const r = TOUCH_BURST_RADIUS;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 8px monospace';
+    if (player.burstReady) {
+      const pressed = game.touch.buttonFlash > 0;
+      const pulse = 1 + Math.sin(game.globalFrame * 0.2) * 0.08;
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = COLORS.BURST_GLOW;
+      ctx.beginPath();
+      ctx.arc(x, y, (r + 5) * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = pressed ? 1 : 0.85;
+      ctx.fillStyle = pressed ? COLORS.BURST_RING : COLORS.GAUGE_FILL;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = COLORS.UI_WHITE;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = COLORS.BG_DARK;
+      ctx.fillText('BURST', x, y + 1);
+    } else {
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = COLORS.GAUGE_BG;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = COLORS.UI_DIM;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Gauge progress around the rim
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = COLORS.GAUGE_FILL;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, r - 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (player.gauge / GAUGE_MAX));
+      ctx.stroke();
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = COLORS.UI_DIM;
+      ctx.fillText('BURST', x, y + 1);
+    }
+    ctx.restore();
+  }
+
   /** DEBUG_MODE: timeline clock, object counts, invincibility flag. */
   drawDebugInfo(ctx, game) {
     ctx.font = '7px monospace';
     ctx.textAlign = 'right';
     ctx.fillStyle = COLORS.UI_DIM;
+    // Sit above the touch BURST button when it is shown.
+    const base = game.touch.available ? TOUCH_BURST_Y - TOUCH_BURST_RADIUS - 8 : CANVAS_HEIGHT - 30;
     const t = game.timeline ? game.timeline.seconds.toFixed(1).padStart(5, '0') : '--';
     ctx.fillText('TL ' + t + 's' + (game.timeline && game.timeline.paused ? ' P' : ''),
-      HUD_RIGHT, CANVAS_HEIGHT - 38);
+      HUD_RIGHT, base - 8);
     ctx.fillText('E' + game.enemies.length + ' B' + game.enemyBullets.length,
-      HUD_RIGHT, CANVAS_HEIGHT - 30);
+      HUD_RIGHT, base);
     if (game.debugInvincible) {
       ctx.fillStyle = COLORS.UI_YELLOW;
-      ctx.fillText('INVINCIBLE', HUD_RIGHT, CANVAS_HEIGHT - 46);
+      ctx.fillText('INVINCIBLE', HUD_RIGHT, base - 16);
     }
   }
 
