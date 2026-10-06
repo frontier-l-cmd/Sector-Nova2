@@ -89,6 +89,17 @@ burning orange → white and gold**. Each stage has a token group in `COLORS`. `
 S5 and S6 become bright in Phase 5. **Enemy bullets and the player must never sink into
 a bright background** — check readability first and add a dark outline to bullets if needed.
 
+### Small enemy colors (SECTOR NOVA 2)
+
+Each enemy has a `*_BODY` / `*_DARK` / `*_CORE` token set in `COLORS` (body → dark inner →
+bright core): `SHARD_*` icy cyan, `WISP_*` pale blue, `SNIPER_*` steel with a red core,
+`MINE_LAYER_*` / `MINE_*` / `GUN_DECK_*` / `CARRIER_*` / `DRONE_*` harbor steel with yellow or
+cyan lights, `MIRROR_*` violet with a white `MIRROR_SHIELD` plate, `GHOST_*` translucent lilac,
+`SWARM_*` / `HATCHLING_*` hive crimson, `FLARE_*` orange flame, `LINK_GUARD_*` magenta with
+`LINK_BEAM` for its links and the shield ring on linked enemies. GOLD variants (GOLD SHARD /
+GOLD GHOST) swap to `GOLD_*`. Ground units (GUN DECK) are boxy and flat so they read as floor
+turrets.
+
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
 | Kind | Tokens | Notes |

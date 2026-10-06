@@ -26,6 +26,7 @@ class Game {
     this.hud = new HUD();
     this.combo = new ComboCounter();
     this.difficulty = loadDifficulty();
+    setPatternDifficulty(this.difficulty);
     this.touch = new TouchControls(this, canvas);
 
     this.player = new Player();
@@ -63,6 +64,7 @@ class Game {
   setDifficulty(level) {
     this.difficulty = level;
     saveDifficulty(level);
+    setPatternDifficulty(level);
   }
 
   /** Empty every per-stage list. */
@@ -78,6 +80,7 @@ class Game {
     this.warningTimer = 0;
     this.warningBossName = '';
     this.spawnsLocked = false;
+    this.testEndTimer = 0;
     this.effects.clear();
   }
 
@@ -94,6 +97,9 @@ class Game {
     this.score = 0;
     this.crystalStages = new Set();
     this.runFromNewGame = !!fromNewGame && stageNumber === 1;
+    // TEST RANGE (DEBUG only) starts invincible so every enemy can be
+    // watched; 0 toggles it as usual.
+    this.debugInvincible = !!this.stage.test;
     this.scoreSaved = false;
     this.newBestScore = false;
     this.newBestClearScore = false;
@@ -121,7 +127,7 @@ class Game {
   }
 
   recordGameOverScore() {
-    if (this.scoreSaved) return;
+    if (this.scoreSaved || this.stage.test) return;
     this.newBestScore = saveBestScore(this.score);
     this.newBestClearScore = false;
     this.scoreSaved = true;
@@ -256,13 +262,21 @@ class Game {
     this.playerBullets = this.playerBullets.filter(b => b.alive);
 
     // --- Enemies ---
+    const children = [];
     for (const e of this.enemies) {
       e.update(this.player);
       if (e.canFire && e.alive) {
         this.addEnemyBullets(e.tryFire(this.player.x, this.player.y));
       }
+      if (e.spawned.length) {
+        children.push(...e.spawned); // DRONEs, MINEs
+        e.spawned = [];
+      }
     }
     this.enemies = this.enemies.filter(e => e.alive);
+    this.enemies.push(...children);
+    this.updateLinks();
+    if (this.stage.test && this.updateTestRange()) return;
 
     // --- Boss ---
     if (this.boss) {
@@ -302,6 +316,37 @@ class Game {
       this.recordGameOverScore();
       this.state = STATE.GAME_OVER;
     }
+  }
+
+  /**
+   * LINK GUARD: each guard links its LINK_MAX_TARGETS nearest other
+   * enemies within LINK_RANGE (guards never link each other).
+   */
+  updateLinks() {
+    for (const e of this.enemies) e.linkedBy = null;
+    for (const guard of this.enemies) {
+      if (!(guard instanceof LinkGuard)) continue;
+      guard.links = this.enemies
+        .filter(e => e !== guard && e.alive && !(e instanceof LinkGuard) && !e.linkedBy &&
+          dist(guard.x, guard.y, e.x, e.y) <= LINK_RANGE)
+        .sort((a, b) => dist(guard.x, guard.y, a.x, a.y) - dist(guard.x, guard.y, b.x, b.y))
+        .slice(0, LINK_MAX_TARGETS);
+      for (const e of guard.links) e.linkedBy = guard;
+    }
+  }
+
+  /**
+   * TEST RANGE returns to the title 3 seconds after its last enemy is
+   * gone. Returns true when it has ended.
+   */
+  updateTestRange() {
+    if (!this.timeline.finished || this.enemies.length > 0) {
+      this.testEndTimer = 0;
+      return false;
+    }
+    if (++this.testEndTimer <= 180) return false;
+    this.returnToTitle();
+    return true;
   }
 
   /** Boss sequence finished: next stage, or campaign complete. */
@@ -406,7 +451,7 @@ class Game {
 
     // --- Enemies vs player ---
     for (const enemy of this.enemies) {
-      if (!enemy.alive || this.debugInvincible) continue;
+      if (!enemy.alive || this.debugInvincible || enemy.ground || !enemy.isHittable) continue;
       if (circleCollision(px, py, pr, enemy.x, enemy.y, enemy.radius)) {
         enemy.alive = false;
         this.effects.explode(enemy.x, enemy.y);
@@ -440,20 +485,29 @@ class Game {
       if (!bullet.alive) continue;
 
       for (const enemy of this.enemies) {
-        if (!enemy.alive) continue;
+        if (!enemy.alive || !enemy.isHittable) continue;
         if (!circleCollision(bullet.x, bullet.y, bullet.radius, enemy.x, enemy.y, enemy.radius)) continue;
+        const source = bullet.kind === 'rail' || bullet.kind === 'chain' ? bullet.kind : 'bullet';
 
         if (bullet.kind === 'rail') {
           // RAIL LANCER: damage each enemy once, keep travelling.
           if (bullet.hitSet.indexOf(enemy) !== -1) continue;
           bullet.hitSet.push(enemy);
-          this.damageEnemy(enemy, bullet.damage, 'rail');
+          this.damageEnemy(enemy, bullet.damage, source, bullet.vx, bullet.vy);
           this.effects.hitSpark(bullet.x, bullet.y);
           continue; // pierces
         }
         bullet.alive = false;
         this.effects.hitSpark(bullet.x, bullet.y);
-        this.damageEnemy(enemy, bullet.damage, bullet.kind === 'chain' ? 'chain' : 'bullet');
+        if (enemy.reflectsShot && enemy.reflectsShot(source, bullet.vx, bullet.vy)) {
+          // MIRROR: the shot comes back as a slow enemy bullet.
+          this.addEnemyBullets(Patterns.fan({
+            x: bullet.x, y: bullet.y, angle: Math.atan2(-bullet.vy, -bullet.vx),
+            count: 1, speed: MIRROR_REFLECT_SPEED, kind: 'reflect',
+          }));
+          break;
+        }
+        this.damageEnemy(enemy, bullet.damage, source, bullet.vx, bullet.vy);
         if (bullet.kind === 'chain') this.chainLightning(enemy, bullet);
         break; // other shots hit only one enemy
       }
@@ -478,8 +532,9 @@ class Game {
     }
   }
 
-  damageEnemy(enemy, amount, source) {
-    enemy.applyDamage(amount, source);
+  /** Damage through the enemy's own rules (LINK barrier, MIRROR, ...). */
+  damageEnemy(enemy, amount, source, dirX, dirY) {
+    enemy.takeHit(amount, source, dirX, dirY);
     if (enemy.hp <= 0) this.destroyEnemy(enemy, source === 'burst');
   }
 
@@ -494,7 +549,7 @@ class Game {
       let next = null;
       let best = CHAIN_RANGE;
       for (const e of this.enemies) {
-        if (!e.alive || hit.includes(e)) continue;
+        if (!e.alive || !e.isHittable || hit.includes(e)) continue;
         const d = dist(from.x, from.y, e.x, e.y);
         if (d <= best) {
           best = d;
@@ -504,7 +559,7 @@ class Game {
       if (!next) return;
       this.effects.lightning(from.x, from.y, next.x, next.y);
       hit.push(next);
-      this.damageEnemy(next, bolt.jumpDamage, 'chain');
+      this.damageEnemy(next, bolt.jumpDamage, 'chain', next.x - from.x, next.y - from.y);
       from = next;
     }
   }
@@ -588,7 +643,7 @@ class Game {
     this.clearHostiles();
 
     for (const e of this.enemies) {
-      if (e.alive && isOnScreen(e.x, e.y)) this.damageEnemy(e, BURST_ENEMY_DAMAGE, 'burst');
+      if (e.alive && e.isHittable && isOnScreen(e.x, e.y)) this.damageEnemy(e, BURST_ENEMY_DAMAGE, 'burst');
     }
     if (this.boss && this.boss.isTargetable && this.boss.isVulnerable()) {
       const dmg = Math.min(BURST_ENEMY_DAMAGE, this.boss.maxHp * BURST_BOSS_DAMAGE_RATIO);
@@ -691,10 +746,21 @@ class Game {
     if (spawned && spawned.length) {
       this.pendingEnemies.push(...spawned);
     }
+    this.addEnemyBullets(enemy.deathBullets()); // FLARE SPIRIT
+
+    // SWARM: every member of one formation destroyed -> bonus.
+    if (enemy.formation) {
+      enemy.formation.killed = (enemy.formation.killed || 0) + 1;
+      if (enemy.formation.killed === enemy.formation.count) {
+        this.score += SWARM_FORMATION_BONUS;
+        this.effects.powerupPickup(enemy.x, enemy.y);
+        this.audio.play('item');
+      }
+    }
 
     // Item drop, rate driven by the current stage.
     const dropRate = this.stage.itemDropRate || POWERUP_DROP_CHANCE;
-    if (Math.random() < dropRate) {
+    if (!enemy.noDrop && Math.random() < dropRate) {
       this.powerups.push(new Powerup(enemy.x, enemy.y, null, this.stage.powerupWeights));
     }
   }
@@ -732,6 +798,7 @@ class Game {
 
   drawGameplay(ctx) {
     for (const p of this.powerups) p.draw(ctx);
+    for (const e of this.enemies) if (e.drawLinks) e.drawLinks(ctx);
     for (const e of this.enemies) e.draw(ctx);
     if (this.boss) this.boss.draw(ctx);
 

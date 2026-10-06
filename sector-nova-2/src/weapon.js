@@ -133,6 +133,14 @@ class HomingNeedle {
     this.target = null;
   }
 
+  get vx() {
+    return Math.cos(this.angle) * HOMING_BULLET_SPEED;
+  }
+
+  get vy() {
+    return Math.sin(this.angle) * HOMING_BULLET_SPEED;
+  }
+
   update(world) {
     this.frame++;
     if (world) {
@@ -185,7 +193,7 @@ function isOnScreen(x, y) {
 
 function isHomingTargetValid(target, world) {
   if (target === world.boss) return !!world.boss && world.boss.isTargetable && world.boss.isVulnerable();
-  return target.alive && isOnScreen(target.x, target.y);
+  return target.alive && target.isHittable && isOnScreen(target.x, target.y);
 }
 
 /** Nearest on-screen enemy, or the boss core, to (x, y). */
@@ -193,7 +201,7 @@ function findHomingTarget(x, y, world) {
   let best = null;
   let bestD = Infinity;
   for (const e of world.enemies) {
-    if (!e.alive || !isOnScreen(e.x, e.y)) continue;
+    if (!e.alive || !e.isHittable || !isOnScreen(e.x, e.y)) continue;
     const d = dist(x, y, e.x, e.y);
     if (d < bestD) {
       bestD = d;

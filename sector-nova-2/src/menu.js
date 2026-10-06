@@ -6,7 +6,9 @@
 // campaign complete. Result / ending screens join in Phase 4/5.
 // ============================================================
 
-const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'bossRush', 'sound'];
+// TEST RANGE (Stage 0) is listed only in DEBUG_MODE.
+const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'bossRush', 'sound']
+  .concat(DEBUG_MODE ? ['testRange'] : []);
 const TITLE_MENU_Y = 226;    // baseline of the first row
 const TITLE_MENU_ROW_H = 17;
 
@@ -40,12 +42,13 @@ class TitleMenu {
     const input = game.input;
     this.stageCursor = clamp(this.stageCursor, 1, getUnlockedStage());
 
-    // Shortcuts kept from SECTOR NOVA 1: C = continue, 1-6 = stage.
+    // Shortcuts kept from SECTOR NOVA 1: C = continue, 1-6 = stage
+    // (0 = TEST RANGE in DEBUG_MODE).
     if (input.isJustPressed('KeyC')) {
       this.decide('continue', game);
       return;
     }
-    for (let n = 1; n <= MAX_STAGE; n++) {
+    for (let n = DEBUG_MODE ? 0 : 1; n <= MAX_STAGE; n++) {
       if (input.isJustPressed('Digit' + n) && isStagePlayable(n)) {
         game.audio.play('select');
         game.startFromStage(n);
@@ -107,6 +110,10 @@ class TitleMenu {
       case 'bossRush':
         // Locked until NORMAL END; the mode itself arrives in Phase 6.
         break;
+      case 'testRange':
+        game.audio.play('select');
+        game.startFromStage(0);
+        break;
     }
   }
 
@@ -122,7 +129,8 @@ class TitleMenu {
       { item: 'difficulty', label: 'DIFFICULTY', value: arrows('difficulty', game.difficulty), enabled: true },
       { item: 'bossRush', label: bossRush ? 'BOSS RUSH' : '???', value: '', enabled: bossRush },
       { item: 'sound', label: 'SOUND', value: arrows('sound', game.audio.muted ? 'OFF' : 'ON'), enabled: true },
-    ];
+      { item: 'testRange', label: 'TEST RANGE', value: 'DEBUG', enabled: true },
+    ].filter(row => TITLE_MENU_ITEMS.includes(row.item));
   }
 
   draw(ctx, game) {

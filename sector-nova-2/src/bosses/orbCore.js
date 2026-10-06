@@ -21,7 +21,7 @@ class OrbCore extends BossBase {
         attacks: [{
           run: 'fireSpread',
           duration: 1,
-          rest: (boss) => boss.isEnraged ? ORB_CORE_FIRE_INTERVAL_ENRAGED : ORB_CORE_FIRE_INTERVAL,
+          rest: (boss) => scaledFireInterval(boss.isEnraged ? ORB_CORE_FIRE_INTERVAL_ENRAGED : ORB_CORE_FIRE_INTERVAL),
         }],
       }],
     });

@@ -24,6 +24,16 @@ const DEFAULT_POWERUP_WEIGHTS = {
 };
 
 const STAGES = {
+  // Stage 0: TEST RANGE - every small enemy in turn (DEBUG_MODE only,
+  // picked from the title menu). No boss, no saves.
+  0: {
+    stageNumber: 0,
+    stageName: 'TEST RANGE',
+    itemDropRate: POWERUP_DROP_CHANCE,
+    powerupWeights: DEFAULT_POWERUP_WEIGHTS,
+    test: true,
+    implemented: DEBUG_MODE,
+  },
   1: {
     stageNumber: 1,
     stageName: 'FROST RING',
@@ -54,6 +64,7 @@ function highestImplementedStage() {
 
 function isStagePlayable(stageNumber) {
   const stage = STAGES[stageNumber];
+  if (stage && stage.test) return !!stage.implemented;
   return !!(stage && stage.implemented && stageNumber <= getUnlockedStage());
 }
 

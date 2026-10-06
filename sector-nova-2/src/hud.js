@@ -30,6 +30,7 @@ class HUD {
       this.drawStageLabel(ctx, game);
     }
     this.drawCombo(ctx, game);
+    if (game.stage.test) this.drawEnemyNames(ctx, game);
     this.drawWeaponPanel(ctx, game);
     this.drawGauge(ctx, game);
     if (game.touch.available) this.drawBurstButton(ctx, game);
@@ -119,6 +120,16 @@ class HUD {
       ctx.font = '7px monospace';
       ctx.fillStyle = COLORS.UI_YELLOW;
       ctx.fillText(boss.phaseName, barX, barY + barH + 9);
+    }
+  }
+
+  /** TEST RANGE: each enemy's type name under it. */
+  drawEnemyNames(ctx, game) {
+    ctx.font = '6px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    for (const e of game.enemies) {
+      if (e.y > -10) ctx.fillText(e.type.replace(/_/g, ' '), e.x, e.y + e.radius + 9);
     }
   }
 

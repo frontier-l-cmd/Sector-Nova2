@@ -2,6 +2,33 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 3] 雑魚敵 — 2026-10-06
+
+### Phase 3 前の対応
+
+- 大きな文字を揺らさないように: タイトルロゴの上下の揺れをやめ、タイトルと CAMPAIGN COMPLETE の影を「同じ大きさの文字を固定位置にずらす」形に変更（`drawShadowedText`）。
+  STYLE_GUIDE.md に「大きな文字は揺らさない」を追記
+- 武器ごと・Lv ごとの1秒あたりダメージを計測し、README に表で記録（遠距離・近距離、オプション2機あり/なし）
+- DESIGN.md（ルートと `sector-nova-2/` の両方）の「14. ボス・中ボス」の共通ルールと「17. バランスの原則」に
+  「最強装備（Lv3＋オプション2機）でも、想定撃破時間の下限の半分以上かかること」を追記
+- 計測の結果、武器は設計書の HP の目安に対して強すぎると判断。数値は変えず、README の「TODO / 要判断」に案を記載
+
+### 追加
+
+- 2作目の雑魚11種: SHARD / WISP / SNIPER / MINE LAYER / GUN DECK / CARRIER / MIRROR / PHASE GHOST / SWARM / FLARE SPIRIT / LINK GUARD
+- 派生: DRONE / MINE / HATCHLING（SWARM 型・WISP 型）/ GOLD SHARD / GOLD GHOST
+- 敵の共通の仕組み: LINK GUARD のバリア（`takeHit`）、すり抜け（`isHittable`）、地上物（`ground`）、子の出現（`spawned`）、
+  撃破時の弾（`deathBullets`）、編隊ボーナス（`formation`）
+- Stage 0「TEST RANGE」（DEBUG_MODE のみ。タイトルの行・0 キー・スマホのタップで開始。無敵で開始し、敵の名前を表示）
+- 敵ごとの色（`COLORS` の `SHARD_*` など）とパラメータ（`utils.js`）
+
+### 変更
+
+- 難易度の倍率（敵弾の速さ・発射頻度・撃ち返しの数）をタイトルで選んだ難易度で `patterns.js` から適用
+- ORB CORE の発射間隔にも難易度の発射頻度をかける
+- HOMING の目標・CHAIN の連鎖・BURST から、消えている PHASE GHOST を外す
+- 「大型の敵」を敵ごとの指定に（2作目では CARRIER）
+
 ## [Phase 2] 検収前の修正 — 2026-10-06
 
 - タッチ操作に **BURST ボタン** を追加（画面右下。ゲージ満タンの時だけ金色で押せる。満タン前は暗い丸で縁にゲージ量。タッチ端末でだけ表示）

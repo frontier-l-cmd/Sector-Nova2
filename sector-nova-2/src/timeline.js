@@ -29,6 +29,35 @@ const TIMELINE_EVENT_KINDS = [
 
 const STAGE_TIMELINES = {
   // ----------------------------------------------------------
+  // Stage 0 TEST RANGE (DEBUG_MODE): each SECTOR NOVA 2 enemy in turn,
+  // one block every ~8 seconds, names shown under the enemies.
+  // ----------------------------------------------------------
+  0: [
+    { t: 2.0, spawn: 'SHARD', x: 'center', count: 3, interval: 20, pattern: 'line' },
+    { t: 4.0, spawn: 'SHARD', x: 40 },                      // diagonal from the left
+    { t: 4.5, spawn: 'SHARD', x: 280 },                     // diagonal from the right
+    { t: 8.0, spawn: 'WISP', x: 'center', count: 4, interval: 18, pattern: 'wave' },
+    { t: 14.0, spawn: 'SNIPER', x: 'center' },
+    { t: 22.0, spawn: 'MINE_LAYER', x: 'left', y: 130 },     // lays MINEs
+    { t: 30.0, spawn: 'GUN_DECK', x: 80 },
+    { t: 30.0, spawn: 'GUN_DECK', x: 240 },
+    { t: 38.0, spawn: 'CARRIER', x: 'center' },             // releases DRONEs
+    { t: 48.0, spawn: 'MIRROR', x: 100 },
+    { t: 48.0, spawn: 'MIRROR', x: 220 },
+    { t: 56.0, spawn: 'PHASE_GHOST', x: 110 },
+    { t: 56.0, spawn: 'PHASE_GHOST', x: 210 },
+    { t: 64.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 70.0, spawn: 'FLARE_SPIRIT', x: 'center', count: 3, pattern: 'row', spacing: 70 },
+    { t: 78.0, spawn: 'LINK_GUARD', x: 'center' },
+    { t: 78.0, spawn: 'GUN_DECK', x: 120 },                 // shielded by the guard
+    { t: 78.0, spawn: 'GUN_DECK', x: 200 },
+    { t: 88.0, spawn: 'HATCHLING', x: 'center', count: 3, pattern: 'row', spacing: 30 },
+    { t: 90.0, spawn: 'HATCHLING_WISP', x: 'center' },
+    { t: 95.0, spawn: 'GOLD_SHARD', x: 'center' },
+    { t: 98.0, spawn: 'GOLD_GHOST', x: 'center' },
+  ],
+
+  // ----------------------------------------------------------
   // Stage 1 FROST RING - Phase 1 provisional content built from
   // SECTOR NOVA 1 enemies (A straight, B weave, C shooter, plus a
   // few FORM / SPLIT / RUSH / TURRET). Replaced in Phase 4.
@@ -152,6 +181,7 @@ function spawnTimelineEnemy(ev, player) {
   const enemy = factory(x, entry.y ?? pos.y);
   enemy.spawnX = x;
   if (pos.sameWave && enemy.waveOffset !== undefined) enemy.waveOffset = 0;
+  if (enemy.formationBonus) enemy.formation = ev.group; // SWARM bonus group
   return enemy;
 }
 
@@ -258,6 +288,6 @@ function validateTimelines() {
         if (!BOSS_REGISTRY[entry.type]) console.warn(where + ': unknown boss', entry.type);
       }
     });
-    if (!hasBoss) console.warn('timeline ' + stage + ': no boss event');
+    if (!hasBoss && !(STAGES[stage] && STAGES[stage].test)) console.warn('timeline ' + stage + ': no boss event');
   }
 }

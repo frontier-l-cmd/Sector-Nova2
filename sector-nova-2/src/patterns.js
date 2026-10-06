@@ -18,12 +18,17 @@
 //   -> 'active' (hurts) -> removed.
 // ============================================================
 
-/**
- * Difficulty multipliers used by the patterns.
- * Phase 3 switches this to the difficulty selected on the title screen.
- */
+// Difficulty the patterns scale for; the Game keeps it in sync with
+// the title-screen setting (setPatternDifficulty).
+let patternDifficultyLevel = DEFAULT_DIFFICULTY;
+
+function setPatternDifficulty(level) {
+  if (DIFFICULTY_SETTINGS[level]) patternDifficultyLevel = level;
+}
+
+/** Difficulty multipliers used by the patterns (DESIGN.md 13). */
 function patternDifficulty() {
-  return DIFFICULTY_SETTINGS[DEFAULT_DIFFICULTY];
+  return DIFFICULTY_SETTINGS[patternDifficultyLevel];
 }
 
 /** Base bullet speed -> speed for the current difficulty, capped. */

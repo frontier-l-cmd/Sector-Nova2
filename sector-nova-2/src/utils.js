@@ -98,6 +98,24 @@ const COLORS = {
   ENEMY_TURRET: '#aa88cc',
   ENEMY_TURRET_DARK: '#664488',
 
+  // --- SECTOR NOVA 2 small enemies: body / dark inner / bright core ---
+  SHARD_BODY: '#9fe6ff', SHARD_DARK: '#3a7fa8', SHARD_CORE: '#ffffff',
+  WISP_BODY: '#7fd8ff', WISP_DARK: '#2a6a9a', WISP_CORE: '#e8fbff',
+  SNIPER_BODY: '#b8c4d8', SNIPER_DARK: '#4a5670', SNIPER_CORE: '#ff5566',
+  MINE_LAYER_BODY: '#8fa0b4', MINE_LAYER_DARK: '#3c4656', MINE_LAYER_CORE: '#ffcc22',
+  MINE_BODY: '#55606e', MINE_LIGHT: '#ff4433',
+  GUN_DECK_BODY: '#7a8796', GUN_DECK_DARK: '#3a434e', GUN_DECK_CORE: '#ffcc22',
+  CARRIER_BODY: '#8c96a8', CARRIER_DARK: '#434a5a', CARRIER_CORE: '#66ddff',
+  DRONE_BODY: '#c8d2e0', DRONE_DARK: '#59657a', DRONE_CORE: '#ff7755',
+  MIRROR_BODY: '#a28cd6', MIRROR_DARK: '#4b3a7a', MIRROR_SHIELD: '#e6f6ff',
+  GHOST_BODY: '#c9b8ff', GHOST_DARK: '#5c4a99', GHOST_CORE: '#ffffff',
+  SWARM_BODY: '#c4466e', SWARM_DARK: '#651c3a', SWARM_CORE: '#ffd0dd',
+  FLARE_BODY: '#ff8833', FLARE_DARK: '#b83a10', FLARE_CORE: '#fff2b0',
+  LINK_GUARD_BODY: '#9a4a8a', LINK_GUARD_DARK: '#4a1e44', LINK_GUARD_CORE: '#ff99ee',
+  LINK_BEAM: '#ff99ee',
+  HATCHLING_BODY: '#b03a64', HATCHLING_DARK: '#5a1630', HATCHLING_CORE: '#ffc0d8',
+  GOLD_BODY: '#ffd34d', GOLD_DARK: '#a07818', GOLD_CORE: '#fffbe0',   // GOLD SHARD / GOLD GHOST
+
   // --- SECTOR NOVA 2: stage palettes ---
   // The journey runs cold blue -> gray -> purple -> red -> orange ->
   // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
@@ -174,6 +192,121 @@ const ENEMY_C_SPEED = 1;
 const ENEMY_C_RADIUS = 14;
 const ENEMY_C_FIRE_INTERVAL = 120; // frames
 const ENEMY_C_BULLET_SPEED = 2.5;
+
+// --- SECTOR NOVA 2 small enemies (DESIGN.md 11) ---
+// Common
+const ENEMY_SPAWN_LEAVE_MARGIN = 30;      // removed this far outside the screen
+const LINK_RANGE = 90;                    // LINK GUARD reaches enemies within this
+const LINK_MAX_TARGETS = 2;
+const SWARM_FORMATION_BONUS = 2000;       // whole SWARM formation destroyed
+const MIRROR_FRONT_RAIL_CHAIN_SCALE = 0.25;
+const MIRROR_REFLECT_SPEED = 1.8;         // NORMAL / SPREAD shots bounced back
+
+// SHARD: straight (or diagonal) diver
+const SHARD_HP = 1;
+const SHARD_SCORE = 100;
+const SHARD_SPEED = 2.2;
+const SHARD_RADIUS = 8;
+
+// WISP: sine-wave drifter, groups share one wave
+const WISP_HP = 2;
+const WISP_SCORE = 150;
+const WISP_SPEED = 1.4;
+const WISP_RADIUS = 9;
+const WISP_WAVE_AMP = 44;
+const WISP_WAVE_FREQ = 0.035;
+
+// SNIPER: parks near the top, single aimed shots with a charge glow
+const SNIPER_HP = 3;
+const SNIPER_SCORE = 300;
+const SNIPER_RADIUS = 10;
+const SNIPER_ENTRY_SPEED = 1.5;
+const SNIPER_STOP_Y = 70;
+const SNIPER_FIRE_INTERVAL = 100;
+const SNIPER_CHARGE_FRAMES = 45;          // core glows this long before a shot
+const SNIPER_BULLET_SPEED = 3.0;
+const SNIPER_STAY_FRAMES = 6 * 60;        // then it leaves upward
+const SNIPER_LEAVE_SPEED = 1.2;
+
+// MINE LAYER: crosses sideways laying mines
+const MINE_LAYER_HP = 4;
+const MINE_LAYER_SCORE = 300;
+const MINE_LAYER_RADIUS = 12;
+const MINE_LAYER_SPEED = 1.1;
+const MINE_LAYER_Y = 110;                 // default lane when the timeline gives none
+const MINE_LAYER_DROP_INTERVAL = 70;
+const MINE_HP = 1;
+const MINE_SCORE = 30;
+const MINE_RADIUS = 7;
+const MINE_FUSE = 120;                    // frames until it bursts
+const MINE_RING_COUNT = 8;
+const MINE_RING_SPEED = 1.8;
+const MINE_DRIFT = 0.3;
+
+// GUN DECK: ground turret scrolling with the floor, aimed 3-way
+const GUN_DECK_HP = 4;
+const GUN_DECK_SCORE = 250;
+const GUN_DECK_RADIUS = 11;
+const GUN_DECK_SCROLL = 0.8;              // moves with the background
+const GUN_DECK_FIRE_INTERVAL = 110;
+const GUN_DECK_BULLET_SPEED = 2.2;
+const GUN_DECK_SPREAD = 0.25;
+
+// CARRIER: slow mothership that releases DRONEs
+const CARRIER_HP = 10;
+const CARRIER_SCORE = 800;
+const CARRIER_RADIUS = 14;
+const CARRIER_SPEED = 0.45;
+const CARRIER_SPAWN_INTERVAL = 90;
+const CARRIER_SPAWN_COUNT = 2;
+const DRONE_HP = 1;
+const DRONE_SCORE = 50;
+const DRONE_RADIUS = 7;
+const DRONE_SPEED = 1.1;
+const DRONE_TURN = 0.04;                  // radians per frame toward the ship
+const DRONE_HOMING_FRAMES = 5 * 60;       // then it flies straight on
+
+// MIRROR: reflects frontal NORMAL / SPREAD shots
+const MIRROR_HP = 4;
+const MIRROR_SCORE = 400;
+const MIRROR_RADIUS = 12;
+const MIRROR_SPEED = 0.9;
+
+// PHASE GHOST: visible 90f / gone 60f, ripples before it appears
+const PHASE_GHOST_HP = 3;
+const PHASE_GHOST_SCORE = 400;
+const PHASE_GHOST_RADIUS = 11;
+const PHASE_GHOST_SPEED = 0.7;
+const PHASE_GHOST_VISIBLE = 90;
+const PHASE_GHOST_HIDDEN = 60;
+const PHASE_GHOST_RIPPLE = 40;            // warning shimmer before (re)appearing
+
+// SWARM: fast V formation
+const SWARM_HP = 1;
+const SWARM_SCORE = 80;
+const SWARM_RADIUS = 7;
+const SWARM_SPEED = 3.4;
+
+// FLARE SPIRIT: wandering flame, slow 6-way burst when destroyed
+const FLARE_SPIRIT_HP = 3;
+const FLARE_SPIRIT_SCORE = 350;
+const FLARE_SPIRIT_RADIUS = 10;
+const FLARE_SPIRIT_SPEED = 0.8;
+const FLARE_SPIRIT_BURST = 6;
+
+// LINK GUARD: links up to 2 nearby enemies; linked enemies take no damage
+const LINK_GUARD_HP = 5;
+const LINK_GUARD_SCORE = 500;
+const LINK_GUARD_RADIUS = 12;
+const LINK_GUARD_SPEED = 0.6;
+
+// HATCHLING (HIVE MOTHER eggs): SWARM type x3 or a strong WISP x1
+const HATCHLING_HP = 1;
+const HATCHLING_SCORE = 60;
+const HATCHLING_RADIUS = 7;
+const HATCHLING_SPEED = 2.6;
+const HATCHLING_WISP_HP = 3;
+const HATCHLING_WISP_SCORE = 200;
 
 // --- Boss framework (boss.js) ---
 const BOSS_SPEED = 1;
