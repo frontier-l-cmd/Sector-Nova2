@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sector-nova-2",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8754"],
+      "port": 8754
+    }
+  ]
+}

@@ -1,0 +1,401 @@
+// ============================================================
+// SECTOR NOVA 2 - Utils & Constants
+// ------------------------------------------------------------
+// Every tunable number lives here so balance can be adjusted
+// without touching game logic (DESIGN.md section 0).
+// ============================================================
+
+// --- Debug ---
+// Master switch for development-only helpers (debug hotkeys, the
+// timeline clock in the HUD, the window.game handle). Set to false
+// before shipping a release build.
+const DEBUG_MODE = true;
+
+// --- Canvas ---
+const CANVAS_WIDTH = 320;
+const CANVAS_HEIGHT = 480;
+const FPS = 60; // the game is frame-based and assumes 60 fps
+
+// --- Colors ---
+const COLORS = {
+  BG_DARK: '#0a0a1a',
+  BG_NEBULA: '#0d0d2b',
+  STAR_DIM: '#555577',
+  STAR_BRIGHT: '#aaaadd',
+  STAR_WHITE: '#ffffff',
+  PLAYER_BODY: '#3399ff',
+  PLAYER_WING: '#2266cc',
+  PLAYER_ENGINE: '#ff6633',
+  PLAYER_COCKPIT: '#66ccff',
+  PLAYER_BULLET: '#66eeff',
+  PLAYER_BULLET_GLOW: '#33aacc',
+  ENEMY_A: '#cc3333',
+  ENEMY_A_DARK: '#881111',
+  ENEMY_B: '#33cc66',
+  ENEMY_B_DARK: '#118833',
+  ENEMY_C: '#cc66ff',
+  ENEMY_C_DARK: '#8833aa',
+  ENEMY_BULLET: '#ff4466',
+  ENEMY_BULLET_GLOW: '#cc2244',
+  BOSS_CORE: '#ff3366',
+  BOSS_ARMOR: '#6644aa',
+  BOSS_ARMOR_DARK: '#442277',
+  BOSS_GLOW: '#ff66aa',
+  BOSS_BULLET: '#ffaa33',
+  BOSS_BULLET_GLOW: '#cc7711',
+  EXPLOSION_INNER: '#ffffff',
+  EXPLOSION_MID: '#ffaa33',
+  EXPLOSION_OUTER: '#ff4411',
+  HIT_FLASH: '#ffffff',
+  UI_WHITE: '#ffffff',
+  UI_BLUE: '#88bbff',
+  UI_YELLOW: '#ffdd44',
+  UI_RED: '#ff4444',
+  UI_GREEN: '#44ff88',
+  UI_DIM: '#667788',
+  POWERUP_GLOW: '#ffff44',
+  POWERUP_BODY: '#44ddff',
+  // Weapon / special item colors (SECTOR NOVA 1 set, replaced in Phase 2)
+  ITEM_TRIPLE: '#cc66ff',     // purple - TRIPLE BEAM
+  ITEM_PIERCE: '#44aaff',     // blue - PIERCE LASER
+  ITEM_FLAME: '#ff5544',      // red - FLAME VORTEX
+  ITEM_SHIELD: '#44ff88',     // green - SHIELD BARRIER
+  ITEM_LIFE: '#ffdd44',       // yellow - LIFE RECOVER
+  ITEM_MAX_LIFE: '#ff66cc',   // pink - MAX LIFE UP
+  LASER_BODY: '#66ddff',
+  LASER_GLOW: '#2299ff',
+  FLAME_BODY: '#ff7744',
+  FLAME_GLOW: '#ffbb55',
+  SHIELD_BODY: '#66ffaa',
+  SHIELD_GLOW: '#33cc77',
+  // SECTOR NOVA 1 enemy colors (provisional Stage 1 enemies)
+  ENEMY_SHIELD: '#dddd55',
+  ENEMY_SHIELD_DARK: '#888822',
+  ENEMY_SHIELD_PLATE: '#bbbbcc',
+  ENEMY_SPLIT: '#ff8844',
+  ENEMY_SPLIT_DARK: '#aa5522',
+  ENEMY_FORM: '#55ddcc',
+  ENEMY_FORM_DARK: '#229988',
+  ENEMY_RUSH: '#ff5599',
+  ENEMY_RUSH_DARK: '#aa2266',
+  ENEMY_TURRET: '#aa88cc',
+  ENEMY_TURRET_DARK: '#664488',
+
+  // --- SECTOR NOVA 2: stage palettes ---
+  // The journey runs cold blue -> gray -> purple -> red -> orange ->
+  // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
+  // backdrop; the other entries are accents only.
+  FROST_BG_TOP: '#0c1c36',      // S1 FROST RING
+  FROST_BG_BOTTOM: '#050a18',
+  FROST_ACCENT: '#88ddff',
+  FROST_LIGHT: '#e8f8ff',
+  HARBOR_BG_TOP: '#151b24',     // S2 DEAD HARBOR
+  HARBOR_BG_BOTTOM: '#08090e',
+  HARBOR_ACCENT: '#7a8ca3',
+  HARBOR_WARN: '#ffcc22',
+  STORM_BG_TOP: '#1d1829',      // S3 STORM VEIL
+  STORM_BG_BOTTOM: '#0a0912',
+  STORM_ACCENT: '#9a88bb',
+  STORM_BOLT: '#f4f0ff',
+  HIVE_BG_TOP: '#2a0a1e',       // S4 ECLIPSE HIVE
+  HIVE_BG_BOTTOM: '#10040c',
+  HIVE_ACCENT: '#aa3366',
+  HIVE_VEIN: '#661a3d',
+  CORONA_BG_TOP: '#3b0f08',     // S5 CORONA ZONE
+  CORONA_BG_BOTTOM: '#160503',
+  CORONA_ACCENT: '#ff6622',
+  CORONA_FLARE: '#ffaa33',
+  HELIOS_BG_TOP: '#3d3315',     // S6 HELIOS CORE
+  HELIOS_BG_BOTTOM: '#14100a',
+  HELIOS_ACCENT: '#ffe688',
+  HELIOS_CORE: '#fffbe6',
+
+  // --- SECTOR NOVA 2: hostile bullet variants (patterns.js) ---
+  // Normal enemy bullets stay red and boss bullets orange (as in 1).
+  REVENGE_BULLET: '#ff77cc',       // pink, slow death-burst bullets
+  REVENGE_BULLET_GLOW: '#cc3399',
+  REFLECT_BULLET: '#aaf4ff',       // cyan-white, REFLECT SHIELD / MIRROR
+  REFLECT_BULLET_GLOW: '#55ccee',
+
+  // --- SECTOR NOVA 2: telegraphed hazards (patterns.js Hazard) ---
+  HAZARD_WARN: '#ff4444',
+  HAZARD_GLOW: '#ffaa55',
+  HAZARD_CORE: '#ffffff',
+
+  // --- SECTOR NOVA 2: title / menu ---
+  TITLE_SUBTITLE: '#ffcc66',       // "ECLIPSE" gold
+  MENU_DISABLED: '#3a4450',
+};
+
+// --- Player ---
+const PLAYER_SPEED = 4;
+const PLAYER_MAX_LIVES = 3;
+const PLAYER_STAGE_MAX_LIVES = 5;
+const PLAYER_FIRE_INTERVAL = 8; // frames between shots
+const PLAYER_BULLET_SPEED = 8;
+const PLAYER_HIT_RADIUS = 6; // smaller than visual
+const PLAYER_INVINCIBLE_FRAMES = 90; // 1.5 seconds at 60fps
+const PLAYER_BLINK_INTERVAL = 4;
+
+// --- Enemies (SECTOR NOVA 1 set, used by the provisional Stage 1) ---
+const ENEMY_A_HP = 1;
+const ENEMY_A_SCORE = 100;
+const ENEMY_A_SPEED = 2;
+const ENEMY_A_RADIUS = 10;
+
+const ENEMY_B_HP = 2;
+const ENEMY_B_SCORE = 200;
+const ENEMY_B_SPEED = 1.5;
+const ENEMY_B_RADIUS = 12;
+const ENEMY_B_WAVE_AMP = 40;
+const ENEMY_B_WAVE_FREQ = 0.03;
+
+const ENEMY_C_HP = 3;
+const ENEMY_C_SCORE = 300;
+const ENEMY_C_SPEED = 1;
+const ENEMY_C_RADIUS = 14;
+const ENEMY_C_FIRE_INTERVAL = 120; // frames
+const ENEMY_C_BULLET_SPEED = 2.5;
+
+// --- Boss framework (boss.js) ---
+const BOSS_SPEED = 1;
+const BOSS_RADIUS = 40;
+const BOSS_ENRAGE_HP_THRESHOLD = 0.5;      // HP ratio at which a boss enrages
+const BOSS_BULLET_SPEED = 3;
+const BOSS_ENTRY_LERP = 0.03;              // entry glide factor per frame
+const BOSS_DEATH_FRAMES = 90;              // shaking + small explosions
+const BOSS_DEATH_EXPLODE_INTERVAL = 8;
+const BOSS_AFTERGLOW_FRAMES = 120;         // 2s calm after the big explosion
+const BOSS_PHASE_TRANSITION_FRAMES = 120;  // 2s form-change presentation
+const BOSS_DEFEAT_SCORE = 5000;
+const BOSS_HIT_SCORE = 10;                 // per player hit on a boss
+
+// ORB CORE: SECTOR NOVA 1's Stage 1 boss rebuilt on BossBase (Phase 1).
+const ORB_CORE_HP = 80;
+const ORB_CORE_FIRE_INTERVAL = 85;
+const ORB_CORE_FIRE_INTERVAL_ENRAGED = 60;
+const ORB_CORE_BULLET_SPEED_SCALE = 0.85;
+const ORB_CORE_ENRAGED_SPEED_BONUS = 0.5;  // added to BOSS_BULLET_SPEED
+const ORB_CORE_SPREAD = 0.3;               // radians between 3-way shots
+const ORB_CORE_SPREAD_ENRAGED = 0.4;
+const ORB_CORE_ENRAGED_MOVE_SCALE = 1.5;
+const ORB_CORE_ARMOR_SPIN = 0.02;          // radians per frame
+
+// --- Bullet patterns & hazards (patterns.js) ---
+const ENEMY_BULLET_MAX_SPEED = 4.0;        // cap at NORMAL difficulty
+const REVENGE_BULLET_SPEED = 1.6;
+const HAZARD_MIN_WARN_FRAMES = 40;         // every danger is telegraphed >= 40f
+const HAZARD_DEFAULT_WARN_FRAMES = 60;
+const HAZARD_DEFAULT_ACTIVE_FRAMES = 20;
+const HAZARD_DEFAULT_WIDTH = 12;
+
+// --- Timeline (timeline.js) ---
+const TIMELINE_SPAWN_Y = -20;
+const TIMELINE_X_POSITIONS = { left: 60, center: 160, right: 260 };
+const TIMELINE_EDGE_MARGIN = 16;           // spawns are clamped inside this
+const TIMELINE_RANDOM_X_MARGIN = 30;
+const TIMELINE_SIDES_MARGIN = 30;          // 'sides' pattern x inset
+const TIMELINE_DEFAULT_SPACING = 30;       // px between row / v / column members
+const TIMELINE_V_DEPTH = 18;               // px each V rank trails the leader
+const WARNING_FRAMES = 180;                // 3s WARNING before the boss
+
+// --- Game States ---
+const STATE = {
+  TITLE: 'title',
+  PLAYING: 'playing',
+  PAUSED: 'paused',
+  GAME_OVER: 'gameover',
+  STAGE_CLEAR: 'stageclear',
+  CAMPAIGN_COMPLETE: 'campaigncomplete',
+};
+
+// --- Difficulty (DESIGN.md 13) ---
+// Selected on the title screen and saved. Applied in later phases:
+// bullet speed / fire rate in patterns.js (Phase 3), the rest in Phase 6.
+const DIFFICULTY_LEVELS = ['EASY', 'NORMAL', 'HARD'];
+const DEFAULT_DIFFICULTY = 'NORMAL';
+const DIFFICULTY_SETTINGS = {
+  EASY:   { lives: 4, bulletSpeed: 0.8,  fireRate: 0.75, revenge: 0,   gaugeRate: 1.5, scoreRate: 0.5 },
+  NORMAL: { lives: 3, bulletSpeed: 1.0,  fireRate: 1.0,  revenge: 1,   gaugeRate: 1.0, scoreRate: 1.0 },
+  HARD:   { lives: 3, bulletSpeed: 1.15, fireRate: 1.3,  revenge: 1.5, gaugeRate: 1.0, scoreRate: 1.5 },
+};
+
+// --- Powerup ---
+const POWERUP_DROP_CHANCE = 0.08; // 8% chance on enemy kill (stages can override)
+const POWERUP_SPEED = 1.5;
+const POWERUP_RADIUS = 8;
+
+// --- Weapons (SECTOR NOVA 1 set, replaced by the level system in Phase 2) ---
+const WEAPON_NORMAL = 'normal';
+const WEAPON_TRIPLE = 'tripleBeam';
+const WEAPON_PIERCE = 'pierceLaser';
+const WEAPON_FLAME = 'flameVortex';
+const ITEM_SHIELD = 'shieldBarrier';
+const ITEM_LIFE = 'lifeRecover';
+const ITEM_MAX_LIFE = 'maxLifeUp';
+const WEAPON_DURATION = 20 * 60; // 20 seconds at 60fps
+const SHIELD_DURATION = 20 * 60; // 20 seconds at 60fps
+
+// TRIPLE BEAM
+const TRIPLE_FIRE_INTERVAL = 10;
+const TRIPLE_SIDE_SPEED = 2;
+
+// PIERCE LASER
+const LASER_FIRE_INTERVAL = 14;
+const LASER_BULLET_SPEED = 11;
+const LASER_DAMAGE = 2;
+const LASER_BOSS_DAMAGE = 2;
+const LASER_MOVE_PENALTY = 0.65; // player moves slower while equipped
+
+// FLAME VORTEX
+const FLAME_FIRE_INTERVAL = 12;
+const FLAME_BULLET_SPEED = 5.6;
+const FLAME_BULLET_RADIUS = 4;
+const FLAME_DAMAGE = 1;
+const FLAME_LIFE = 58;
+
+// SHIELD BARRIER
+const SHIELD_RADIUS = 34;
+
+// --- SECTOR NOVA 1 enemies (continued) ---
+const ENEMY_SHIELD_HP = 4;
+const ENEMY_SHIELD_SCORE = 250;
+const ENEMY_SHIELD_SPEED = 1.2;
+const ENEMY_SHIELD_RADIUS = 13;
+const ENEMY_SHIELD_FRONT_REDUCTION = 0.25; // frontal hits do 25% damage
+
+const ENEMY_SPLIT_HP = 3;
+const ENEMY_SPLIT_SCORE = 200;
+const ENEMY_SPLIT_SPEED = 1.3;
+const ENEMY_SPLIT_RADIUS = 13;
+const ENEMY_SPLITLING_HP = 1;
+const ENEMY_SPLITLING_SCORE = 50;
+const ENEMY_SPLITLING_SPEED = 2.2;
+const ENEMY_SPLITLING_RADIUS = 7;
+
+const ENEMY_FORM_HP = 2;
+const ENEMY_FORM_SCORE = 150;
+const ENEMY_FORM_SPEED = 1.6;
+const ENEMY_FORM_RADIUS = 10;
+
+const ENEMY_RUSH_HP = 2;
+const ENEMY_RUSH_SCORE = 250;
+const ENEMY_RUSH_SPEED = 0.8;
+const ENEMY_RUSH_RADIUS = 11;
+const ENEMY_RUSH_CHARGE_TIME = 70;  // frames before dashing
+const ENEMY_RUSH_DASH_SPEED = 6;
+
+const ENEMY_TURRET_HP = 5;
+const ENEMY_TURRET_SCORE = 300;
+const ENEMY_TURRET_SPEED = 1;
+const ENEMY_TURRET_RADIUS = 13;
+const ENEMY_TURRET_STOP_Y = 60;     // settles near top
+const ENEMY_TURRET_FIRE_INTERVAL = 90;
+const ENEMY_TURRET_BULLET_SPEED = 2.6;
+
+// --- Audio (audio.js) ---
+const AUDIO_MASTER_VOLUME = 0.3;
+const AUDIO_SFX_VOLUME = 1.0;
+const AUDIO_BGM_VOLUME = 0.5;          // BGM sits under the effects
+const AUDIO_SHOT_MIN_INTERVAL = 0.07;  // seconds; thins rapid-fire shot sounds
+
+// --- Save keys (localStorage) ---
+// Fully separate from SECTOR NOVA 1's sectorNova_* keys (DESIGN.md 15-10).
+const SAVE_KEYS = {
+  UNLOCKED_STAGE: 'sectorNova2_unlockedStage',
+  BEST_SCORE: 'sectorNova2_bestScore',
+  BEST_CLEAR_SCORE: 'sectorNova2_bestClearScore',
+  BEST_RANKS: 'sectorNova2_bestRanks',
+  DIFFICULTY: 'sectorNova2_difficulty',
+  MUTED: 'sectorNova2_muted',
+  NORMAL_END_CLEARED: 'sectorNova2_normalEndCleared',
+  TRUE_END_CLEARED: 'sectorNova2_trueEndCleared',
+  BOSS_RUSH_BEST_TIME: 'sectorNova2_bossRushBestTime',
+};
+
+// --- Utility Functions ---
+
+/**
+ * Calculate distance between two points
+ */
+function dist(x1, y1, x2, y2) {
+  const dx = x1 - x2;
+  const dy = y1 - y2;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+/**
+ * Check circle-circle collision
+ */
+function circleCollision(x1, y1, r1, x2, y2, r2) {
+  return dist(x1, y1, x2, y2) < r1 + r2;
+}
+
+/**
+ * Clamp a value between min and max
+ */
+function clamp(val, min, max) {
+  return Math.max(min, Math.min(max, val));
+}
+
+/**
+ * Random integer between min (inclusive) and max (inclusive)
+ */
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Random float between min and max
+ */
+function randFloat(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+/**
+ * Calculate angle from (x1,y1) to (x2,y2)
+ */
+function angleTo(x1, y1, x2, y2) {
+  return Math.atan2(y2 - y1, x2 - x1);
+}
+
+/**
+ * Linear interpolation
+ */
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+// --- Storage helpers ---
+// localStorage can be unavailable in private or restricted contexts,
+// so every access is wrapped and falls back quietly.
+
+function storageGet(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+}
+
+function storageSet(key, value) {
+  try {
+    window.localStorage.setItem(key, String(value));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function loadSavedInt(key, fallback) {
+  const parsed = parseInt(storageGet(key), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function loadSavedBool(key) {
+  return storageGet(key) === '1';
+}
+
+function saveBool(key, value) {
+  return storageSet(key, value ? '1' : '0');
+}
