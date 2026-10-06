@@ -4,9 +4,14 @@
 // Owns the state machine, stage flow, collisions and the entity
 // lists. Stage content comes from timeline.js, bosses from boss.js
 // and src/bosses/, the HUD from hud.js, menus and full-screen
-// overlays from menu.js, the backdrop from background.js and sound
-// from audio.js. Combo lives in scoring.js; graze, NOVA BURST and
-// item effects are resolved here.
+// overlays from menu.js, the backdrop from background.js, sound
+// from audio.js and LYRA's comm window from story.js. Combo and rank
+// live in scoring.js; graze, NOVA BURST and item effects are
+// resolved here.
+//
+// Flow: TITLE -> OPENING (NEW GAME only) -> STAGE_INTRO -> PLAYING
+//       (mid-boss, WARNING, boss) -> STAGE_RESULT -> next STAGE_INTRO
+//       or, after the last implemented stage, back to the TITLE.
 //
 // The Game is also the "world" bosses act on: addEnemyBullets(),
 // addHazard(), clearHostiles(), onBossDefeated(),
@@ -25,6 +30,7 @@ class Game {
     this.titleMenu = new TitleMenu();
     this.hud = new HUD();
     this.combo = new ComboCounter();
+    this.comm = new CommWindow();
     this.difficulty = loadDifficulty();
     setPatternDifficulty(this.difficulty);
     this.touch = new TouchControls(this, canvas);
@@ -36,10 +42,11 @@ class Game {
     this.state = STATE.TITLE;
     this.score = 0;
     this.playTime = 0; // frames since the current stage started
-    this.stageClearTimer = 0;
+    this.stateTimer = 0; // frames spent in the current non-play screen
     this.scoreSaved = false;
     this.newBestScore = false;
-    this.newBestClearScore = false;
+    this.result = null;  // last stage result (STAGE_RESULT screen)
+    this.stats = null;   // per-stage numbers for the rank
     this.globalFrame = 0; // drives blinking UI in every state
     this.crystalStages = new Set(); // stages whose NOVA CRYSTAL was taken
     this.runFromNewGame = false;    // TRUE END counts only NEW GAME runs
@@ -102,10 +109,24 @@ class Game {
     this.debugInvincible = !!this.stage.test;
     this.scoreSaved = false;
     this.newBestScore = false;
-    this.newBestClearScore = false;
     this.beginStage();
-    this.state = STATE.PLAYING;
+    if (this.stage.test) {
+      this.state = STATE.PLAYING;
+    } else if (this.runFromNewGame) {
+      this.state = STATE.OPENING; // LYRA's prologue first
+      this.stateTimer = 0;
+      this.comm.show('opening');
+    } else {
+      this.beginIntro();
+    }
     return true;
+  }
+
+  /** Stage name banner + the stage's LYRA message, then play. */
+  beginIntro() {
+    this.state = STATE.STAGE_INTRO;
+    this.stateTimer = 0;
+    if (this.stage.story) this.comm.show(this.stage.story);
   }
 
   /**
@@ -116,27 +137,20 @@ class Game {
     this.clearStageObjects();
     this.score = 0;
     this.playTime = 0;
-    this.stageClearTimer = 0;
+    this.stateTimer = 0;
     this.scoreSaved = false;
     this.newBestScore = false;
-    this.newBestClearScore = false;
     this.combo.reset();
+    this.comm.clear();
     this.background.setTheme('title');
     this.titleMenu.reset();
     this.state = STATE.TITLE;
   }
 
+  /** Save BEST SCORE at the end of a run (game over or last stage). */
   recordGameOverScore() {
     if (this.scoreSaved || this.stage.test) return;
     this.newBestScore = saveBestScore(this.score);
-    this.newBestClearScore = false;
-    this.scoreSaved = true;
-  }
-
-  recordCampaignCompleteScore() {
-    if (this.scoreSaved) return;
-    this.newBestScore = saveBestScore(this.score);
-    this.newBestClearScore = saveBestClearScore(this.score);
     this.scoreSaved = true;
   }
 
@@ -150,8 +164,11 @@ class Game {
     this.timeline = new TimelineRunner(STAGE_TIMELINES[this.stage.stageNumber]);
     this.background.setTheme(this.stage.stageNumber);
     this.playTime = 0;
-    this.stageClearTimer = 0;
+    this.stateTimer = 0;
     this.combo.reset();
+    this.combo.best = 0;
+    this.comm.clear();
+    this.stats = { hits: 0, partBonus: 0, bossSeconds: null };
 
     const p = this.player;
     p.x = CANVAS_WIDTH / 2;
@@ -183,6 +200,15 @@ class Game {
         this.background.update();
         this.titleMenu.update(this);
         break;
+      case STATE.OPENING:
+        this.updateOpening();
+        break;
+      case STATE.STAGE_INTRO:
+        this.updateStageIntro();
+        break;
+      case STATE.STAGE_RESULT:
+        this.updateStageResult();
+        break;
       case STATE.PLAYING:
         this.updatePlaying();
         break;
@@ -192,12 +218,43 @@ class Game {
       case STATE.GAME_OVER:
         this.updateGameOver();
         break;
-      case STATE.STAGE_CLEAR:
-        this.updateStageClear();
-        break;
-      case STATE.CAMPAIGN_COMPLETE:
-        this.updateCampaignComplete();
-        break;
+    }
+  }
+
+  /** OPENING: ENTER advances LYRA's lines; then the stage intro. */
+  updateOpening() {
+    this.background.update();
+    this.stateTimer++;
+    if (this.input.enter) this.comm.skip();
+    this.comm.update();
+    if (!this.comm.active) this.beginIntro();
+  }
+
+  /** STAGE_INTRO: the ship can move; ENTER skips the banner. */
+  updateStageIntro() {
+    this.background.update();
+    this.player.update(this.input);
+    this.touch.applyDrag(this.player);
+    this.comm.update();
+    this.effects.update();
+    if (++this.stateTimer >= STAGE_INTRO_FRAMES || this.input.enter) {
+      this.state = STATE.PLAYING;
+    }
+  }
+
+  /** STAGE_RESULT: ENTER goes to the next stage, or back to the title. */
+  updateStageResult() {
+    this.background.update();
+    this.effects.update();
+    this.stateTimer++;
+    if (!this.input.enter || this.stateTimer <= RESULT_INPUT_DELAY) return;
+    if (this.stageManager.advance()) {
+      this.beginStage();
+      this.beginIntro();
+    } else {
+      // Last implemented stage (S1 in Phase 4-1): keep the score, go home.
+      this.recordGameOverScore();
+      this.returnToTitle();
     }
   }
 
@@ -205,30 +262,6 @@ class Game {
     this.background.update();
     this.effects.update();
     if (this.input.enter) {
-      this.returnToTitle();
-    }
-  }
-
-  updateStageClear() {
-    this.background.update();
-    this.effects.update();
-    this.stageClearTimer++;
-    if (this.input.enter && this.stageClearTimer > 120) {
-      // STAGE_CLEAR is only reached when a next stage exists.
-      if (this.stageManager.advance()) {
-        this.beginStage();
-        this.state = STATE.PLAYING;
-      } else {
-        this.state = STATE.CAMPAIGN_COMPLETE;
-      }
-    }
-  }
-
-  updateCampaignComplete() {
-    this.background.update();
-    this.effects.update();
-    this.stageClearTimer++;
-    if (this.input.enter && this.stageClearTimer > 90) {
       this.returnToTitle();
     }
   }
@@ -243,6 +276,8 @@ class Game {
     this.background.update();
     this.handleDebugKeys();
     this.combo.update();
+    if (this.input.enter) this.comm.skip();
+    this.comm.update();
 
     // --- Stage script ---
     this.timeline.update(ev => this.handleTimelineEvent(ev));
@@ -278,13 +313,18 @@ class Game {
     this.updateLinks();
     if (this.stage.test && this.updateTestRange()) return;
 
-    // --- Boss ---
+    // --- Boss / mid-boss ---
     if (this.boss) {
       this.boss.update(this);
       if (this.boss.isFinished) {
+        const finished = this.boss;
         this.boss = null;
-        this.onStageCleared();
-        return;
+        if (finished.midboss) {
+          this.timeline.resume(); // beaten or fled: the stage goes on
+        } else {
+          this.onStageCleared();
+          return;
+        }
       }
     }
 
@@ -349,16 +389,33 @@ class Game {
     return true;
   }
 
-  /** Boss sequence finished: next stage, or campaign complete. */
+  /**
+   * Boss sequence finished: rank the stage (DESIGN.md 15-6), add the
+   * bonus, unlock the next stage and show the result screen.
+   */
   onStageCleared() {
-    this.stageClearTimer = 0;
-    if (this.stageManager.hasNextImplemented()) {
-      saveUnlockedStage(this.stageManager.current + 1);
-      this.state = STATE.STAGE_CLEAR;
-    } else {
-      this.recordCampaignCompleteScore();
-      this.state = STATE.CAMPAIGN_COMPLETE;
-    }
+    const stage = this.stage;
+    const rank = calcStageRank(
+      { hits: this.stats.hits, bossSeconds: this.stats.bossSeconds, maxCombo: this.combo.best },
+      stage.bossExpectedTime,
+      DIFFICULTY_SETTINGS[this.difficulty].scoreRate
+    );
+    this.score += rank.bonus;
+    this.result = {
+      stageNumber: stage.stageNumber,
+      stageName: stage.stageName,
+      clearSeconds: this.playTime / 60,
+      hits: this.stats.hits,
+      maxCombo: this.combo.best,
+      partBonus: this.stats.partBonus,
+      bossSeconds: this.stats.bossSeconds,
+      newBestRank: saveBestRank(stage.stageNumber, rank.rank),
+      ...rank,
+      total: this.score,
+    };
+    if (this.stageManager.hasNextImplemented()) saveUnlockedStage(this.stageManager.current + 1);
+    this.state = STATE.STAGE_RESULT;
+    this.stateTimer = 0;
   }
 
   // ============================================================
@@ -378,16 +435,40 @@ class Game {
       case 'boss':
         this.spawnBoss(ev.entry.type);
         return;
+      case 'midboss': {
+        // The timeline waits until the mid-boss is beaten or flees.
+        const midboss = createBoss(ev.entry.type, { stage: this.stage.stageNumber });
+        if (!midboss) return;
+        this.boss = midboss;
+        this.timeline.pause();
+        return;
+      }
+      case 'comm':
+        this.comm.show(ev.entry.id);
+        return;
+      case 'asteroid':
+        if (!this.spawnsLocked) this.enemies.push(new Asteroid(resolveTimelineX(ev.entry.x, this.player), ev.entry.y));
+        return;
+      case 'goldEnemy': {
+        // NOVA CRYSTAL condition: destroy it within its time window.
+        const gold = ENEMY_FACTORIES['GOLD_' + ev.entry.type];
+        if (!gold || this.spawnsLocked) return;
+        const enemy = gold(resolveTimelineX(ev.entry.x, this.player), TIMELINE_SPAWN_Y);
+        enemy.crystalDeadline = this.playTime + (ev.entry.window ? ev.entry.window * FPS : GOLD_SHARD_WINDOW);
+        this.enemies.push(enemy);
+        return;
+      }
       default:
-        // midboss / comm / gimmicks / hazard / asteroid / goldEnemy /
-        // wall arrive with the stages that use them (Phase 3-5).
+        // gimmickStart / gimmickEnd / hazard / wall arrive with the
+        // stages that use them (Phase 4-2 onward).
         if (DEBUG_MODE) console.warn('timeline: "' + ev.kind + '" is not implemented yet');
     }
   }
 
   /**
-   * Pre-boss WARNING: stops small-fry spawns and clears hostile fire.
-   * (Phase 4 adds the red bands, alarm and boss BGM.)
+   * Pre-boss WARNING (DESIGN.md 14): 3 seconds of red bands and the
+   * alarm, LYRA's warning, no more small-fry spawns, hostile fire
+   * cleared. (The switch to boss BGM comes with the BGM in Phase 6.)
    */
   startWarning() {
     const bossEvent = this.timeline.findNext('boss');
@@ -396,6 +477,8 @@ class Game {
     this.spawnsLocked = true;
     this.enemyBullets = [];
     this.hazards = [];
+    this.audio.play('alarm');
+    this.comm.show('boss');
   }
 
   spawnBoss(type) {
@@ -419,6 +502,11 @@ class Game {
     this.hazards.push(hazard);
   }
 
+  /** Enemies created by bosses (icicles, eggs, ...). */
+  addEnemy(enemy) {
+    this.enemies.push(enemy);
+  }
+
   /** Remove every hostile bullet and hazard (form change, boss defeat). */
   clearHostiles() {
     this.enemyBullets = [];
@@ -427,10 +515,20 @@ class Game {
 
   onBossDefeated(boss) {
     this.score += boss.score;
+    if (!boss.midboss) this.stats.bossSeconds = boss.activeFrames / FPS;
+    // Things the boss dropped (icicles, ...) go with it.
+    for (const e of this.enemies) {
+      if (e.fromBoss) {
+        e.alive = false;
+        this.effects.explode(e.x, e.y, 6);
+      }
+    }
   }
 
   onBossPartDestroyed(boss, part) {
-    this.score += part.score * this.combo.multiplier;
+    const bonus = part.score * this.combo.multiplier;
+    this.score += bonus;
+    this.stats.partBonus += bonus;
     this.player.addGauge(GAUGE_PART_BREAK);
     this.effects.explode(part.x(boss), part.y(boss), 14);
     this.audio.play('explode');
@@ -453,8 +551,10 @@ class Game {
     for (const enemy of this.enemies) {
       if (!enemy.alive || this.debugInvincible || enemy.ground || !enemy.isHittable) continue;
       if (circleCollision(px, py, pr, enemy.x, enemy.y, enemy.radius)) {
-        enemy.alive = false;
-        this.effects.explode(enemy.x, enemy.y);
+        if (!enemy.survivesRam) { // the giant asteroid stays
+          enemy.alive = false;
+          this.effects.explode(enemy.x, enemy.y);
+        }
         this.hitPlayer();
       }
     }
@@ -487,7 +587,7 @@ class Game {
       for (const enemy of this.enemies) {
         if (!enemy.alive || !enemy.isHittable) continue;
         if (!circleCollision(bullet.x, bullet.y, bullet.radius, enemy.x, enemy.y, enemy.radius)) continue;
-        const source = bullet.kind === 'rail' || bullet.kind === 'chain' ? bullet.kind : 'bullet';
+        const source = ['rail', 'chain', 'fragment'].includes(bullet.kind) ? bullet.kind : 'bullet';
 
         if (bullet.kind === 'rail') {
           // RAIL LANCER: damage each enemy once, keep travelling.
@@ -676,6 +776,7 @@ class Game {
     }
 
     this.combo.break();
+    if (this.stats) this.stats.hits++;
     this.audio.play('hit');
     if (player.takeDamage()) {
       this.effects.explode(x, y, 20, 5);
@@ -721,6 +822,10 @@ class Game {
   }
 
   debugSkipToWarning() {
+    if (this.boss && this.boss.midboss) { // skip the mid-boss too
+      this.boss = null;
+      this.timeline.resume();
+    }
     if (!this.timeline.skipTo('warning')) return;
     this.enemies = [];
     this.enemyBullets = [];
@@ -747,6 +852,13 @@ class Game {
       this.pendingEnemies.push(...spawned);
     }
     this.addEnemyBullets(enemy.deathBullets()); // FLARE SPIRIT
+    if (enemy.deathPlayerShots) this.playerBullets.push(...enemy.deathPlayerShots()); // asteroid fragments
+
+    // NOVA CRYSTAL (S1): GOLD SHARD destroyed within its window.
+    if (enemy.crystalDeadline !== undefined && this.playTime <= enemy.crystalDeadline &&
+        !this.crystalStages.has(this.stage.stageNumber)) {
+      this.powerups.push(new Powerup(enemy.x, enemy.y, ITEM_NOVA_CRYSTAL));
+    }
 
     // SWARM: every member of one formation destroyed -> bonus.
     if (enemy.formation) {
@@ -758,9 +870,13 @@ class Game {
       }
     }
 
-    // Item drop, rate driven by the current stage.
-    const dropRate = this.stage.itemDropRate || POWERUP_DROP_CHANCE;
-    if (!enemy.noDrop && Math.random() < dropRate) {
+    // Item drop: some enemies have their own (icicles -> STAR CHIP),
+    // otherwise the stage's rate and weights.
+    if (enemy.dropOverride) {
+      if (Math.random() < enemy.dropOverride.chance) {
+        this.powerups.push(new Powerup(enemy.x, enemy.y, enemy.dropOverride.type));
+      }
+    } else if (!enemy.noDrop && Math.random() < (this.stage.itemDropRate || POWERUP_DROP_CHANCE)) {
       this.powerups.push(new Powerup(enemy.x, enemy.y, null, this.stage.powerupWeights));
     }
   }
@@ -786,12 +902,16 @@ class Game {
         this.drawGameplay(ctx);
         drawGameOverScreen(ctx, this);
         break;
-      case STATE.STAGE_CLEAR:
-        this.drawGameplay(ctx);
-        drawStageClearScreen(ctx, this);
+      case STATE.OPENING:
+        drawOpeningScreen(ctx, this);
         break;
-      case STATE.CAMPAIGN_COMPLETE:
-        drawCampaignCompleteScreen(ctx, this);
+      case STATE.STAGE_INTRO:
+        this.drawGameplay(ctx);
+        drawStageIntro(ctx, this);
+        break;
+      case STATE.STAGE_RESULT:
+        this.drawGameplay(ctx);
+        drawResultScreen(ctx, this);
         break;
     }
   }

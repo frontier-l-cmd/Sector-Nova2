@@ -2,8 +2,8 @@
 // SECTOR NOVA 2 - Menus & Screens
 // ------------------------------------------------------------
 // Title menu (UP/DOWN select, LEFT/RIGHT change, ENTER decide) and
-// the full-screen overlays: pause, game over, stage clear and
-// campaign complete. Result / ending screens join in Phase 4/5.
+// the full-screen screens: opening, stage intro, pause, game over and
+// the stage result with its rank. Endings join in Phase 5.
 // ============================================================
 
 // TEST RANGE (Stage 0) is listed only in DEBUG_MODE.
@@ -284,109 +284,117 @@ function drawGameOverScreen(ctx, game) {
 }
 
 // ============================================================
-// STAGE CLEAR (replaced by the result / rank screen in Phase 4)
+// OPENING (NEW GAME): LYRA's prologue over the star field
 // ============================================================
-function drawStageClearScreen(ctx, game) {
+function drawOpeningScreen(ctx, game) {
   ctx.save();
-
-  const alpha = Math.min(game.stageClearTimer / 60, 1);
-  ctx.fillStyle = `rgba(0, 0, 20, ${alpha * 0.6})`;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
   ctx.textAlign = 'center';
-  if (game.stageClearTimer > 30) {
-    ctx.fillStyle = COLORS.UI_GREEN;
-    ctx.font = 'bold 24px monospace';
-    ctx.fillText('STAGE CLEAR!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
-
-    ctx.fillStyle = COLORS.UI_YELLOW;
-    ctx.font = '14px monospace';
-    ctx.fillText('SCORE', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
-    ctx.font = 'bold 18px monospace';
-    ctx.fillText(String(game.score).padStart(8, '0'), CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 25);
+  ctx.font = 'bold 12px monospace';
+  ctx.fillStyle = COLORS.TITLE_SUBTITLE;
+  ctx.fillText('INCOMING TRANSMISSION', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
+  ctx.restore();
+  game.comm.draw(ctx, CANVAS_HEIGHT / 2 - 20, game.globalFrame);
+  if (Math.floor(game.globalFrame / 30) % 2 === 0) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = '8px monospace';
+    ctx.fillStyle = COLORS.UI_DIM;
+    ctx.fillText('ENTER / TAP: NEXT', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 40);
+    ctx.restore();
   }
+}
 
-  // Next-stage banner
-  if (game.stageClearTimer > 60) {
-    const next = STAGES[game.stageManager.current + 1];
-    if (next && next.implemented) {
-      ctx.fillStyle = COLORS.UI_BLUE;
-      ctx.font = '10px monospace';
-      ctx.fillText('NEXT: STAGE ' + next.stageNumber, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 48);
-      ctx.fillStyle = COLORS.UI_WHITE;
-      ctx.font = 'bold 12px monospace';
-      ctx.fillText(next.stageName, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
-    }
-  }
-
-  if (game.stageClearTimer > 120 && Math.floor(game.globalFrame / 30) % 2 === 0) {
-    ctx.fillStyle = COLORS.UI_WHITE;
-    ctx.font = '10px monospace';
-    ctx.fillText('PRESS ENTER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 84);
-  }
-
+// ============================================================
+// STAGE INTRO: stage number + name (fixed position, no motion)
+// ============================================================
+function drawStageIntro(ctx, game) {
+  const t = game.stateTimer;
+  const alpha = Math.min(1, t / 20, (STAGE_INTRO_FRAMES - t) / 20);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, alpha);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  ctx.fillRect(0, CANVAS_HEIGHT / 2 - 50, CANVAS_WIDTH, 64);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 12px monospace';
+  drawShadowedText(ctx, 'STAGE ' + game.stage.stageNumber, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 26,
+    COLORS.UI_BLUE, COLORS.BG_DARK);
+  ctx.font = 'bold 22px monospace';
+  drawShadowedText(ctx, game.stage.stageName, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 2,
+    COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
   ctx.restore();
 }
 
 // ============================================================
-// CAMPAIGN COMPLETE (last implemented stage cleared; replaced by
-// the NORMAL / TRUE / BAD endings in Phase 5/6)
+// STAGE RESULT (DESIGN.md 15-6): time, hits, max combo, part-break
+// bonus, rank and total. Rows appear one after another.
 // ============================================================
-function drawCampaignCompleteScreen(ctx, game) {
+function drawResultScreen(ctx, game) {
+  const r = game.result;
+  if (!r) return;
+  const t = game.stateTimer;
+  const cx = CANVAS_WIDTH / 2;
   ctx.save();
-
-  const alpha = Math.min(game.stageClearTimer / 60, 1);
-  ctx.fillStyle = `rgba(4, 2, 24, ${alpha * 0.8})`;
+  ctx.fillStyle = 'rgba(0, 0, 20, ' + Math.min(t / 30, 1) * 0.75 + ')';
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   ctx.textAlign = 'center';
-  const cx = CANVAS_WIDTH / 2;
-  const topY = 120;
-
-  ctx.font = 'bold 24px monospace';
-  drawShadowedText(ctx, 'CAMPAIGN', cx, topY, COLORS.UI_WHITE, COLORS.TEXT_SHADOW_GOLD);
-  drawShadowedText(ctx, 'COMPLETE', cx, topY + 30, COLORS.UI_WHITE, COLORS.TEXT_SHADOW_GOLD);
-
-  ctx.strokeStyle = COLORS.UI_YELLOW;
-  ctx.lineWidth = 1;
-  ctx.globalAlpha = 0.6;
-  ctx.beginPath();
-  ctx.moveTo(50, topY + 48);
-  ctx.lineTo(CANVAS_WIDTH - 50, topY + 48);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = COLORS.UI_BLUE;
+  ctx.font = 'bold 20px monospace';
+  drawShadowedText(ctx, 'STAGE ' + r.stageNumber + ' CLEAR', cx, 96, COLORS.UI_GREEN, COLORS.BG_DARK);
   ctx.font = '10px monospace';
-  ctx.fillText('THANK YOU FOR PLAYING', cx, topY + 70);
-  ctx.fillStyle = COLORS.UI_DIM;
-  ctx.font = '8px monospace';
-  ctx.fillText('SECTOR NOVA 2: ECLIPSE', cx, topY + 86);
-
-  ctx.fillStyle = COLORS.UI_YELLOW;
-  ctx.font = '14px monospace';
-  ctx.fillText('TOTAL SCORE', cx, topY + 132);
-  ctx.fillStyle = COLORS.UI_WHITE;
-  ctx.font = 'bold 22px monospace';
-  ctx.fillText(String(game.score).padStart(8, '0'), cx, topY + 158);
-
   ctx.fillStyle = COLORS.UI_BLUE;
-  ctx.font = '12px monospace';
-  ctx.fillText('BEST CLEAR', cx, topY + 188);
-  ctx.fillStyle = COLORS.UI_WHITE;
-  ctx.font = 'bold 18px monospace';
-  ctx.fillText(String(game.bestClearScore).padStart(8, '0'), cx, topY + 212);
-  if (game.newBestClearScore) {
-    ctx.fillStyle = COLORS.UI_YELLOW;
-    ctx.font = 'bold 10px monospace';
-    ctx.fillText('NEW CLEAR BEST!', cx, topY + 232);
-  }
+  ctx.fillText(r.stageName, cx, 114);
 
-  if (game.stageClearTimer > 90 && Math.floor(game.globalFrame / 30) % 2 === 0) {
+  const fmt = (sec) => sec === null ? '--' : sec.toFixed(1) + 's';
+  const rows = [
+    ['CLEAR TIME', fmt(r.clearSeconds), ''],
+    ['BOSS TIME', fmt(r.bossSeconds), '+' + r.timePoints],
+    ['DAMAGE TAKEN', String(r.hits), '+' + r.hitPoints],
+    ['MAX COMBO', String(r.maxCombo), '+' + r.comboPoints],
+    ['PART BONUS', String(r.partBonus), ''],
+  ];
+  ctx.font = '9px monospace';
+  rows.forEach(([label, value, pts], i) => {
+    if (t < 20 + i * 10) return;
+    const y = 150 + i * 18;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = COLORS.UI_DIM;
+    ctx.fillText(label, 48, y);
+    ctx.textAlign = 'right';
     ctx.fillStyle = COLORS.UI_WHITE;
-    ctx.font = '10px monospace';
-    ctx.fillText('PRESS ENTER TO TITLE', cx, topY + 258);
+    ctx.fillText(value, 230, y);
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    ctx.fillText(pts, 274, y);
+  });
+
+  if (t >= RESULT_RANK_FRAME) {
+    ctx.textAlign = 'center';
+    ctx.font = '9px monospace';
+    ctx.fillStyle = COLORS.UI_DIM;
+    ctx.fillText('RANK  (' + r.points + ' / 100)', cx, 256);
+    ctx.font = 'bold 36px monospace';
+    const rankColor = { S: COLORS.UI_YELLOW, A: COLORS.UI_GREEN, B: COLORS.UI_BLUE, C: COLORS.UI_WHITE }[r.rank];
+    drawShadowedText(ctx, r.rank, cx, 296, rankColor, COLORS.BG_DARK);
+    if (r.newBestRank) {
+      ctx.font = 'bold 8px monospace';
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      ctx.fillText('NEW BEST RANK', cx, 310);
+    }
+    ctx.font = '9px monospace';
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.fillText('RANK BONUS  +' + r.bonus, cx, 330);
+    ctx.font = 'bold 12px monospace';
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    ctx.fillText('TOTAL  ' + String(Math.floor(r.total)).padStart(8, '0'), cx, 352);
   }
 
+  if (t > RESULT_INPUT_DELAY && Math.floor(game.globalFrame / 30) % 2 === 0) {
+    ctx.textAlign = 'center';
+    ctx.font = '10px monospace';
+    ctx.fillStyle = COLORS.UI_WHITE;
+    const next = game.stageManager.hasNextImplemented() ? 'PRESS ENTER - NEXT STAGE' : 'PRESS ENTER TO TITLE';
+    ctx.fillText(next, cx, 390);
+  }
   ctx.restore();
 }

@@ -100,6 +100,18 @@ cyan lights, `MIRROR_*` violet with a white `MIRROR_SHIELD` plate, `GHOST_*` tra
 GOLD GHOST) swap to `GOLD_*`. Ground units (GUN DECK) are boxy and flat so they read as floor
 turrets.
 
+### Stage 1 objects and bosses (SECTOR NOVA 2, Phase 4-1)
+
+| Object | Tokens | Notes |
+|---|---|---|
+| S1 background | `FROST_BG_TOP/BOTTOM`, `FROST_ACCENT`, `FROST_LIGHT` | ringed planet (behind the stars, low alpha) + drifting ice grains |
+| Giant asteroid | `ASTEROID_BODY #8a96a8`, `ASTEROID_DARK`, `ASTEROID_LIGHT` | gray rock with craters; fragments use the same colors |
+| FROST SENTINEL | `SENTINEL_FROST #7fd0ff`, `SENTINEL_FROST_DARK`, `SENTINEL_FROST_CORE` | one hexagon shape for every stage; later stages add their own color set |
+| GLACIER MAW | `GLACIER_ICE / MID / DARK / DEEP`, `GLACIER_CORE #8ff0ff`, `GLACIER_EYE` | jagged ice crown, upper + lower jaw with fangs, core deep in the mouth; eyes turn `UI_RED` when enraged |
+| Icicle | `ICICLE_BODY #d8f4ff`, `ICICLE_SHADOW #0a2a4a` | blinking shadow lane for 40 frames, then the falling icicle |
+| LYRA comm window | `COMM_BG`, `COMM_BORDER #5aa0d8`, `COMM_NAME #88ddff` | translucent dark-blue box along the bottom, name tag "LYRA", typed text, blinking ▼ |
+| WARNING | `WARNING_BAND #c81830`, `WARNING_STRIPE #ffcc22` | two red bands with scrolling yellow stripes; the word WARNING blinks but never moves |
+
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
 | Kind | Tokens | Notes |
@@ -178,8 +190,18 @@ Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
 - **Draw order** (`Game.drawGameplay`): background → items → enemies → boss → hazards →
   options → REFLECT SHIELD → player → player bullets → **hostile bullets** → effects → HUD. Hostile bullets are
   always drawn above clouds, darkness, and bright backdrops — never hide them.
-- **Telegraphs:** lasers, lightning, flares, falling ice, etc. use `Hazard`: a thin blinking
+- **Telegraphs:** lasers, lightning, flares, etc. use `Hazard`: a thin blinking
   `HAZARD_WARN` guide first (harmless), then a `HAZARD_GLOW` band with a white core.
+  GLACIER MAW's icicles are shootable enemies, so they telegraph with their own blinking
+  `ICICLE_SHADOW` lane (40 frames, harmless) instead.
+- **Boss shot telegraph:** before an aimed volley the core swells and a thin white ring closes
+  in on it (30 frames). GLACIER MAW's jaw starts moving 20 frames before the mouth is open.
+- **Gimmick objects** (the S1 giant asteroid, radius 28) are outside the small-enemy size band
+  on purpose: they must read as terrain, not as an enemy.
+- **LYRA comm window** sits along the bottom of the play area (top edge at `H - 84`), under
+  the HUD text. Play never stops for it.
+- **Stage intro / result:** the stage banner and the result heading stay in place and only fade;
+  result rows appear one by one, then the rank letter.
 - **Background shimmer** (S5) moves only the background, never the player, enemies, or bullets.
 - **Bosses** extend `BossBase` (`src/boss.js`), one file each in `src/bosses/`. Form changes
   clear hostile bullets and show the form name; defeat = shaking explosions → big explosion

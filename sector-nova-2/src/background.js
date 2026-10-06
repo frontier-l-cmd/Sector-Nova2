@@ -5,12 +5,13 @@
 // stage picks a theme from BACKGROUND_THEMES (gradient + nebula
 // tints) and may stack extra layers on top.
 //
-// Phase 1 skeleton: themes are wired per stage; the stage-specific
-// layers (ice, panels, clouds, veins, flares, core) arrive in
-// Phase 4/5 through `layers`. A layer is an object created by a
+// Stage-specific layers come through `layers`: S1 has a ringed
+// planet and drifting ice; panels, clouds, veins, flares and the
+// core arrive with their stages (Phase 4-2 onward). A layer is an object created by a
 // factory with update(frame) and draw(ctx). Layers that need the
 // heat shimmer can render to an offscreen canvas and draw it in
-// horizontal strips; only the background ever shimmers.
+// horizontal strips; only the background ever shimmers. Layers with
+// `far = true` are drawn behind the star field.
 // ============================================================
 
 /**
@@ -106,8 +107,102 @@ class StarField {
   }
 }
 
+// ------------------------------------------------------------
+// S1 FROST RING layers
+// ------------------------------------------------------------
+
+/** A distant ringed planet sliding down very slowly (far layer). */
+class RingedPlanetLayer {
+  constructor() {
+    this.x = CANVAS_WIDTH * 0.72;
+    this.y = 120;
+    this.r = 34;
+    this.far = true; // drawn behind the stars
+  }
+
+  update() {
+    this.y += 0.04;
+    if (this.y > CANVAS_HEIGHT + this.r * 3) this.y = -this.r * 3;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    // Back half of the ring
+    ctx.strokeStyle = COLORS.FROST_ACCENT;
+    ctx.globalAlpha = 0.18;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.r * 1.9, this.r * 0.45, -0.3, Math.PI, Math.PI * 2);
+    ctx.stroke();
+    // Planet body (lit from the upper left)
+    const g = ctx.createRadialGradient(-this.r * 0.4, -this.r * 0.4, 2, 0, 0, this.r);
+    g.addColorStop(0, '#3c6e96');
+    g.addColorStop(1, '#0e2440');
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.r, 0, Math.PI * 2);
+    ctx.fill();
+    // Front half of the ring
+    ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = COLORS.FROST_LIGHT;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.r * 1.9, this.r * 0.45, -0.3, 0, Math.PI);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/** Ice grains drifting down and sideways (near layer). */
+class IceParticleLayer {
+  constructor() {
+    this.grains = [];
+    for (let i = 0; i < 26; i++) {
+      this.grains.push({
+        x: Math.random() * CANVAS_WIDTH,
+        y: Math.random() * CANVAS_HEIGHT,
+        vy: randFloat(0.5, 1.4),
+        vx: randFloat(-0.25, 0.1),
+        size: randFloat(1, 2.5),
+        spin: Math.random() * Math.PI,
+      });
+    }
+  }
+
+  update() {
+    for (const g of this.grains) {
+      g.x += g.vx;
+      g.y += g.vy;
+      g.spin += 0.05;
+      if (g.y > CANVAS_HEIGHT + 4) {
+        g.y = -4;
+        g.x = Math.random() * CANVAS_WIDTH;
+      }
+      if (g.x < -4) g.x = CANVAS_WIDTH + 4;
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.fillStyle = COLORS.FROST_LIGHT;
+    for (const g of this.grains) {
+      ctx.globalAlpha = 0.25 + Math.abs(Math.sin(g.spin)) * 0.35;
+      const s = g.size;
+      ctx.beginPath();
+      ctx.moveTo(g.x, g.y - s);
+      ctx.lineTo(g.x + s * 0.6, g.y);
+      ctx.lineTo(g.x, g.y + s);
+      ctx.lineTo(g.x - s * 0.6, g.y);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
 // Theme per screen / stage: gradient top->bottom, nebula tints, and
-// stage-specific layer factories (empty until Phase 4/5).
+// stage-specific layer factories (S1 done; S2+ arrive with their stages).
 const BACKGROUND_THEMES = {
   title: {
     top: COLORS.BG_NEBULA,
@@ -119,7 +214,7 @@ const BACKGROUND_THEMES = {
     top: COLORS.FROST_BG_TOP,
     bottom: COLORS.FROST_BG_BOTTOM,
     nebulae: ['#0a2240', '#102a44', '#0a1428'],
-    layers: [],
+    layers: [() => new RingedPlanetLayer(), () => new IceParticleLayer()],
   },
   2: { // DEAD HARBOR - iron gray / blue
     top: COLORS.HARBOR_BG_TOP,
@@ -187,7 +282,9 @@ class Background {
     ctx.fillStyle = this.gradient;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+    // Far layers (planets) sit behind the stars, the rest in front.
+    for (const layer of this.layers) if (layer.far) layer.draw(ctx);
     this.starField.draw(ctx);
-    for (const layer of this.layers) layer.draw(ctx);
+    for (const layer of this.layers) if (!layer.far) layer.draw(ctx);
   }
 }

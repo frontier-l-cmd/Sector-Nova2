@@ -116,6 +116,15 @@ const COLORS = {
   HATCHLING_BODY: '#b03a64', HATCHLING_DARK: '#5a1630', HATCHLING_CORE: '#ffc0d8',
   GOLD_BODY: '#ffd34d', GOLD_DARK: '#a07818', GOLD_CORE: '#fffbe0',   // GOLD SHARD / GOLD GHOST
 
+  // --- Bosses (Phase 4-1) ---
+  SENTINEL_FROST: '#7fd0ff', SENTINEL_FROST_DARK: '#24597e', SENTINEL_FROST_CORE: '#e8fbff',
+  GLACIER_ICE: '#bfe9ff', GLACIER_MID: '#7cc4ea', GLACIER_DARK: '#2f6f9e', GLACIER_DEEP: '#123352',
+  GLACIER_CORE: '#8ff0ff', GLACIER_EYE: '#e8ffff',
+  ICICLE_BODY: '#d8f4ff', ICICLE_SHADOW: '#0a2a4a',
+  ASTEROID_BODY: '#8a96a8', ASTEROID_DARK: '#4a5262', ASTEROID_LIGHT: '#c8d2e0',
+  COMM_BG: 'rgba(6, 14, 34, 0.85)', COMM_BORDER: '#5aa0d8', COMM_NAME: '#88ddff',
+  WARNING_BAND: '#c81830', WARNING_STRIPE: '#ffcc22',
+
   // --- SECTOR NOVA 2: stage palettes ---
   // The journey runs cold blue -> gray -> purple -> red -> orange ->
   // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
@@ -332,6 +341,85 @@ const ORB_CORE_SPREAD_ENRAGED = 0.4;
 const ORB_CORE_ENRAGED_MOVE_SCALE = 1.5;
 const ORB_CORE_ARMOR_SPIN = 0.02;          // radians per frame
 
+// --- Boss damage soft cap (DESIGN.md 14) ---
+// Damage a boss takes beyond its per-second cap counts only half.
+// Each boss sets its own cap (damageCap in its definition).
+const BOSS_DAMAGE_CAP_WINDOW = 60;         // frames (1 second)
+const BOSS_DAMAGE_OVER_CAP_RATE = 0.5;
+const BOSS_ESCAPE_SPEED = 2;               // mid-boss flying away
+
+// SENTINEL: mid-boss of S1-S5 (DESIGN.md 14), colored per stage
+const SENTINEL_HP_BASE = 60;               // S1; +15 per later stage
+const SENTINEL_HP_PER_STAGE = 15;
+const SENTINEL_DAMAGE_CAP = 8;             // proposal (README)
+const SENTINEL_SCORE = 3000;
+const SENTINEL_RADIUS = 24;
+const SENTINEL_TARGET_Y = 90;
+const SENTINEL_ESCAPE_FRAMES = 25 * 60;    // flees if not beaten in 25s
+const SENTINEL_CHARGE_FRAMES = 30;         // core swells before every shot (telegraph)
+const SENTINEL_FIRE_INTERVAL = 80;          // shot to shot, charge included
+const SENTINEL_FIRE_INTERVAL_ENRAGED = 58;
+const SENTINEL_FAN_COUNT = 5;
+const SENTINEL_FAN_STEP = 0.22;
+const SENTINEL_FAN_SPEED = 2.4;
+const SENTINEL_RING_COUNT = 12;
+const SENTINEL_RING_SPEED = 1.8;
+const SENTINEL_DEATH_FRAMES = 50;
+const SENTINEL_AFTERGLOW_FRAMES = 30;
+
+// GLACIER MAW: S1 boss (DESIGN.md 14)
+const GLACIER_MAW_HP = 196;                // NORMAL ~45s / max loadout ~15s (README)
+const GLACIER_MAW_DAMAGE_CAP = 8;          // proposal (README), just above NORMAL
+const GLACIER_MAW_SCORE = 10000;
+const GLACIER_MAW_RADIUS = 40;
+const GLACIER_MAW_TARGET_Y = 78;
+const GLACIER_MAW_CYCLE = 6 * 60;          // jaw cycle
+const GLACIER_MAW_OPEN = 3 * 60;           // open part of the cycle
+const GLACIER_MAW_OPEN_ENRAGED = 4 * 60;
+const GLACIER_MAW_JAW_MOVE = 20;           // frames to open / close (visible warning)
+const GLACIER_MAW_CLOSED_DAMAGE = 0.2;     // hitting the jaws
+const GLACIER_MAW_FAN_COUNT = 5;
+const GLACIER_MAW_FAN_STEP = 0.24;
+const GLACIER_MAW_FAN_SPEED = 2.3;
+const GLACIER_MAW_FAN_REPEAT = 18;         // enraged: second volley this much later
+const GLACIER_MAW_FAN_WARN = 30;           // core flashes before the mid-open fan
+const GLACIER_MAW_SWAY = 40;               // px of slow side-to-side drift
+const GLACIER_MAW_ICICLE_INTERVAL = 150;
+const GLACIER_MAW_ICICLE_INTERVAL_ENRAGED = 95;
+const ICICLE_HP = 2;
+const ICICLE_SCORE = 100;
+const ICICLE_RADIUS = 7;
+const ICICLE_WARN_FRAMES = 40;             // shadow before it drops
+const ICICLE_SPEED = 4.5;
+const ICICLE_STAR_CHIP_CHANCE = 0.3;
+
+// --- Stage gimmicks (gimmicks.js) ---
+// S1 giant asteroid: shoot it, its fragments hit enemies only
+const ASTEROID_HP = 12;
+const ASTEROID_SCORE = 500;
+const ASTEROID_RADIUS = 28;
+const ASTEROID_SPEED = 0.7;
+const ASTEROID_FRAGMENTS = 5;
+const ASTEROID_FRAGMENT_DAMAGE = 3;
+const ASTEROID_FRAGMENT_SPEED = 3.2;
+const ASTEROID_FRAGMENT_LIFE = 70;
+
+// --- NOVA CRYSTAL conditions ---
+const GOLD_SHARD_WINDOW = 5 * 60;          // S1: destroy within 5s of appearing
+
+// --- LYRA comm window (story.js) ---
+const COMM_CHARS_PER_FRAME = 0.5;          // typing speed
+const COMM_HOLD_FRAMES = 150;              // stays after the text is complete
+const STAGE_INTRO_FRAMES = 150;
+
+// --- Stage result / rank (DESIGN.md 15-6) ---
+const RANK_HIT_POINTS = [40, 25, 10];       // 0 / 1 / 2 hits, 3+ = 0
+const RANK_TIME_POINTS = [30, 15];          // within lower / upper expected time
+const RANK_COMBO_POINTS = [[50, 30], [25, 20], [10, 10]];
+const RANKS = [['S', 90, 50000], ['A', 70, 30000], ['B', 45, 10000], ['C', 0, 0]];
+const RESULT_RANK_FRAME = 70;               // the rank appears after the rows
+const RESULT_INPUT_DELAY = 90;              // frames before ENTER is accepted (rank shown first)
+
 // --- Bullet patterns & hazards (patterns.js) ---
 const ENEMY_BULLET_MAX_SPEED = 4.0;        // cap at NORMAL difficulty
 const REVENGE_BULLET_SPEED = 1.6;
@@ -358,11 +446,12 @@ const TEXT_SHADOW_OFFSET = 2;
 // --- Game States ---
 const STATE = {
   TITLE: 'title',
+  OPENING: 'opening',         // LYRA's prologue before a NEW GAME
+  STAGE_INTRO: 'stageintro',  // stage name + first comm, ~2.5s
+  STAGE_RESULT: 'stageresult',
   PLAYING: 'playing',
   PAUSED: 'paused',
   GAME_OVER: 'gameover',
-  STAGE_CLEAR: 'stageclear',
-  CAMPAIGN_COMPLETE: 'campaigncomplete',
 };
 
 // --- Difficulty (DESIGN.md 13) ---

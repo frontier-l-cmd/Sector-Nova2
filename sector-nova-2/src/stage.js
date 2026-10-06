@@ -4,9 +4,8 @@
 // Each stage describes its name, background theme, item drops and
 // boss. Enemy appearances come from STAGE_TIMELINES (timeline.js).
 //
-// Phase 1: only Stage 1 is implemented (provisional timeline with
-// SECTOR NOVA 1 enemies). Stages 2-6 are declared with their final
-// names and become playable in Phase 4/5.
+// Stage 1 is complete (Phase 4-1). Stages 2-6 are declared with
+// their final names and become playable in Phase 4-2 onward.
 // ============================================================
 
 // Item weights (DESIGN.md 10). STAR CHIP drops often; NOVA CRYSTAL
@@ -39,7 +38,9 @@ const STAGES = {
     stageName: 'FROST RING',
     itemDropRate: POWERUP_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
-    bossType: 'orbCore', // provisional; GLACIER MAW in Phase 4
+    bossType: 'glacierMaw',
+    bossExpectedTime: [30, 45], // seconds (DESIGN.md 14), used by the rank
+    story: 'stage1',            // LYRA's message at the stage start
     implemented: true,
   },
   2: { stageNumber: 2, stageName: 'DEAD HARBOR', bossType: 'dockTitan', implemented: false },
@@ -108,6 +109,26 @@ function loadBestClearScore() {
 
 function saveBestClearScore(score) {
   return saveScoreIfHigher(SAVE_KEYS.BEST_CLEAR_SCORE, score);
+}
+
+/** Best rank per stage, e.g. { "1": "A" } (sectorNova2_bestRanks). */
+function loadBestRanks() {
+  try {
+    return JSON.parse(storageGet(SAVE_KEYS.BEST_RANKS)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+/** Save a stage rank if it beats the stored one. Returns true if saved. */
+function saveBestRank(stageNumber, rank) {
+  const order = RANKS.map(r => r[0]); // S, A, B, C
+  const ranks = loadBestRanks();
+  const old = ranks[stageNumber];
+  if (old && order.indexOf(old) <= order.indexOf(rank)) return false;
+  ranks[stageNumber] = rank;
+  storageSet(SAVE_KEYS.BEST_RANKS, JSON.stringify(ranks));
+  return true;
 }
 
 function loadDifficulty() {

@@ -5,8 +5,8 @@
 // the combo going. Running out of time or getting hit resets it.
 // The multiplier (x1 / x2 / x4 / x8 by COMBO_TIERS) applies to kill
 // points, graze points and boss-part break points.
-// Graze detection lives in Game.checkGraze(); stage ranks join
-// this file in Phase 4.
+// Graze detection lives in Game.graze().
+// Stage rank (DESIGN.md 15-6) is calculated by calcStageRank().
 // ============================================================
 
 function comboMultiplierFor(count) {
@@ -61,4 +61,31 @@ class ComboCounter {
     if (this.popupTimer > 0) this.popupTimer--;
     if (this.timer > 0 && --this.timer <= 0) this.count = 0;
   }
+}
+
+/**
+ * Stage rank out of 100 points (DESIGN.md 15-6):
+ *   hits taken  0 = 40 / 1 = 25 / 2 = 10 / 3+ = 0
+ *   boss time   within the expected lower bound = 30 / upper = 15
+ *   max combo   50+ = 30 / 25+ = 20 / 10+ = 10
+ * Returns { hitPoints, timePoints, comboPoints, points, rank, bonus }
+ * with the bonus already scaled by the difficulty's score rate.
+ */
+function calcStageRank(stats, expectedTime, scoreRate) {
+  const hitPoints = RANK_HIT_POINTS[stats.hits] ?? 0;
+  let timePoints = 0;
+  if (stats.bossSeconds !== null && expectedTime) {
+    if (stats.bossSeconds <= expectedTime[0]) timePoints = RANK_TIME_POINTS[0];
+    else if (stats.bossSeconds <= expectedTime[1]) timePoints = RANK_TIME_POINTS[1];
+  }
+  let comboPoints = 0;
+  for (const [min, pts] of RANK_COMBO_POINTS) {
+    if (stats.maxCombo >= min) {
+      comboPoints = pts;
+      break;
+    }
+  }
+  const points = hitPoints + timePoints + comboPoints;
+  const [rank, , bonus] = RANKS.find(([, min]) => points >= min);
+  return { hitPoints, timePoints, comboPoints, points, rank, bonus: Math.round(bonus * scoreRate) };
 }

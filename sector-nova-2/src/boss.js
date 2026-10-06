@@ -7,6 +7,10 @@
 //
 // Definition passed to super(def):
 //   name, maxHp, radius, targetY, score
+//   damageCap        : per-second soft cap; damage beyond it counts half
+//   midboss          : true for mid-bosses (no result screen after)
+//   escapeAfter      : frames of fighting before a mid-boss flees
+//   deathFrames / afterglowFrames : length of the defeat sequence
 //   phases: [{
 //     name,                // shown in the HUD / transition banner
 //     hp,                  // optional: fresh HP pool for this form
@@ -25,7 +29,7 @@
 // the shot. isVulnerable() / damageMultiplier() model weak points.
 //
 // States: entering -> active <-> transition -> dying -> afterglow
-//         -> finished
+//         -> finished   (mid-boss: active -> escaping -> finished)
 //   transition: hostile bullets cleared, form name shown, invulnerable
 //   dying:      shaking + small explosions, bullets cleared
 //   afterglow:  big explosion done, 2s of calm before the result
@@ -42,10 +46,10 @@ function registerBoss(key, cls, name) {
   BOSS_REGISTRY[key] = { cls, name };
 }
 
-function createBoss(key) {
+function createBoss(key, options) {
   const entry = BOSS_REGISTRY[key];
   if (!entry) return null;
-  const boss = new entry.cls();
+  const boss = new entry.cls(options || {});
   boss.typeKey = key;
   return boss;
 }
@@ -101,6 +105,14 @@ class BossBase {
     this.phases = def.phases;
     this.phaseIndex = 0;
     this.parts = [];
+    this.damageCap = def.damageCap ?? Infinity;
+    this.damageLog = [];          // [frame, raw damage] within the cap window
+    this.midboss = !!def.midboss;
+    this.escapeAfter = def.escapeAfter ?? 0;
+    this.escaped = false;
+    this.deathFrames = def.deathFrames ?? BOSS_DEATH_FRAMES;
+    this.afterglowFrames = def.afterglowFrames ?? BOSS_AFTERGLOW_FRAMES;
+    this.activeFrames = 0;        // frames spent fighting (kill time for the rank)
 
     this.state = 'entering';
     this.stateTimer = 0;
@@ -194,9 +206,21 @@ class BossBase {
         // Damage lands in the game's collision pass, so react to it
         // before moving or attacking again.
         if (this.checkPhaseEnd(world)) break;
+        this.activeFrames++;
+        if (this.escapeAfter && this.activeFrames >= this.escapeAfter) {
+          this.state = 'escaping'; // mid-boss gives up and flies away
+          break;
+        }
         this.updateParts();
         this.updateMovement(world);
         this.updateAttacks(world);
+        break;
+      case 'escaping':
+        this.y -= BOSS_ESCAPE_SPEED;
+        if (this.y < -this.radius * 2) {
+          this.escaped = true;
+          this.state = 'finished';
+        }
         break;
       case 'transition':
         this.updateParts();
@@ -214,7 +238,7 @@ class BossBase {
           world.audio.play('explode');
           world.clearHostiles();
           this.state = 'afterglow';
-          this.stateTimer = BOSS_AFTERGLOW_FRAMES;
+          this.stateTimer = this.afterglowFrames;
         }
         break;
       case 'afterglow':
@@ -302,7 +326,7 @@ class BossBase {
   beginDefeat(world) {
     this.hp = 0;
     this.state = 'dying';
-    this.stateTimer = BOSS_DEATH_FRAMES;
+    this.stateTimer = this.deathFrames;
     world.clearHostiles();
     world.onBossDefeated(this);
   }
@@ -333,13 +357,13 @@ class BossBase {
   applyHit(target, amount, source, world) {
     if (!this.isTargetable) return 0;
     if (target === this) {
-      const dealt = amount * this.damageMultiplier(source);
+      const dealt = this.capDamage(amount * this.damageMultiplier(source), source);
       this.hp = Math.max(0, this.hp - dealt);
       return dealt;
     }
     const part = target;
     if (!part.alive) return 0;
-    part.hp -= amount;
+    part.hp -= this.capDamage(amount, source);
     if (part.hp <= 0) {
       part.hp = 0;
       part.alive = false;
@@ -348,6 +372,25 @@ class BossBase {
       if (part.onDestroy) part.onDestroy(this, part, world);
     }
     return amount;
+  }
+
+  /**
+   * Soft damage cap (DESIGN.md 14): of the damage arriving within one
+   * second, the part above damageCap counts only half. NOVA BURST has
+   * its own cap and is not counted.
+   */
+  capDamage(amount, source) {
+    if (source === 'burst' || this.damageCap === Infinity) return amount;
+    const since = this.frame - BOSS_DAMAGE_CAP_WINDOW;
+    while (this.damageLog.length && this.damageLog[0][0] <= since) this.damageLog.shift();
+    const recent = this.damageLog.reduce((sum, d) => sum + d[1], 0);
+    this.damageLog.push([this.frame, amount]);
+    const full = clamp(this.damageCap - recent, 0, amount);
+    return full + (amount - full) * BOSS_DAMAGE_OVER_CAP_RATE;
+  }
+
+  get isEscaping() {
+    return this.state === 'escaping';
   }
 
   // --- Draw --------------------------------------------------------
@@ -359,7 +402,7 @@ class BossBase {
     ctx.translate(this.x, this.y);
     if (this.state === 'dying') {
       // Shake harder as the explosion nears, and flicker.
-      const shake = (BOSS_DEATH_FRAMES - this.stateTimer) * 0.3;
+      const shake = (this.deathFrames - this.stateTimer) * 0.3;
       ctx.translate(randFloat(-shake, shake), randFloat(-shake, shake));
       if (Math.random() < 0.3) {
         ctx.restore();

@@ -11,7 +11,8 @@
 //   bottom-left  : weapon name + Lv dots, options, REFLECT timer
 //   bottom-right : NOVA gauge, "BURST READY" blinking when full;
 //                  on touch devices the test BURST button sits above it
-// The LYRA comm window and the full WARNING arrive in Phase 4.
+//   bottom       : LYRA's comm window while a message is shown
+// Plus the WARNING presentation and boss form-change banners.
 // ============================================================
 
 const HUD_BAR_HEIGHT = 16;
@@ -37,6 +38,7 @@ class HUD {
     if (DEBUG_MODE) this.drawDebugInfo(ctx, game);
     ctx.restore();
 
+    game.comm.draw(ctx, CANVAS_HEIGHT - 84, game.globalFrame);
     if (game.warningTimer > 0) this.drawWarning(ctx, game);
     if (game.boss && game.boss.banner) this.drawBanner(ctx, game.boss.banner, game.globalFrame);
   }
@@ -114,6 +116,15 @@ class HUD {
     ctx.strokeStyle = COLORS.UI_WHITE;
     ctx.lineWidth = 1;
     ctx.strokeRect(barX, barY, barW, barH);
+
+    // Mid-bosses flee when time runs out: show the seconds left.
+    if (boss.midboss && boss.state === 'active') {
+      ctx.textAlign = 'right';
+      ctx.font = '7px monospace';
+      ctx.fillStyle = boss.escapeSecondsLeft <= 5 ? COLORS.UI_RED : COLORS.UI_DIM;
+      ctx.fillText('ESCAPE ' + boss.escapeSecondsLeft, barX + barW, 27);
+      ctx.textAlign = 'left';
+    }
 
     // Multi-form bosses show the current form under the bar.
     if (boss.phases.length > 1) {
@@ -321,20 +332,56 @@ class HUD {
     }
   }
 
-  /** Pre-boss WARNING (Phase 1 version; full presentation in Phase 4). */
+  /**
+   * Pre-boss WARNING (DESIGN.md 14): red hazard bands with scrolling
+   * stripes above and below a blinking "WARNING", then the boss name.
+   * Text never moves; only the stripes inside the bands scroll.
+   */
   drawWarning(ctx, game) {
+    const t = WARNING_FRAMES - game.warningTimer;
+    const cy = CANVAS_HEIGHT / 2;
     ctx.save();
-    const flash = Math.floor(game.warningTimer / 10) % 2 === 0;
-    if (flash) {
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.08)';
+    // Faint red tint pulse
+    if (Math.floor(t / 15) % 2 === 0) {
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.07)';
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
+    const band = (y, dir) => {
+      ctx.fillStyle = COLORS.WARNING_BAND;
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(0, y, CANVAS_WIDTH, 16);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, y + 3, CANVAS_WIDTH, 10);
+      ctx.clip();
+      ctx.fillStyle = COLORS.WARNING_STRIPE;
+      ctx.globalAlpha = 0.9;
+      const shift = (t * 1.5 * dir) % 24;
+      for (let x = -24; x < CANVAS_WIDTH + 24; x += 24) {
+        ctx.beginPath();
+        ctx.moveTo(x + shift, y + 13);
+        ctx.lineTo(x + shift + 8, y + 3);
+        ctx.lineTo(x + shift + 16, y + 3);
+        ctx.lineTo(x + shift + 8, y + 13);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    };
+    band(cy - 62, 1);
+    band(cy + 34, -1);
+
     ctx.textAlign = 'center';
-    ctx.fillStyle = flash ? COLORS.UI_RED : COLORS.UI_YELLOW;
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText('WARNING', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 20);
-    ctx.font = '10px monospace';
-    ctx.fillText(game.warningBossName + ' APPROACHING', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 5);
+    ctx.font = 'bold 26px monospace';
+    const on = Math.floor(t / 10) % 2 === 0;
+    drawShadowedText(ctx, 'WARNING', CANVAS_WIDTH / 2, cy - 8,
+      on ? COLORS.UI_RED : COLORS.UI_YELLOW, COLORS.BG_DARK);
+    if (t >= 60) {
+      ctx.font = 'bold 11px monospace';
+      ctx.fillStyle = COLORS.UI_WHITE;
+      ctx.fillText(game.warningBossName, CANVAS_WIDTH / 2, cy + 16);
+    }
     ctx.restore();
   }
 

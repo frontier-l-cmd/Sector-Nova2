@@ -9,7 +9,7 @@
 //  - M toggles mute; the setting is saved.
 //
 // Effects so far: shot / explode / select (Phase 1), hit / item /
-// graze / burst (Phase 2).
+// graze / burst (Phase 2), alarm (Phase 4-1).
 // The full effect list and the BGM step sequencer come later.
 // ============================================================
 
@@ -62,6 +62,12 @@ const SFX_DEFS = {
       { wave: 'triangle', freq: 110, freqEnd: 880, duration: 0.5, volume: 0.3 },
       { wave: 'square', freq: 220, freqEnd: 1760, duration: 0.4, volume: 0.06 },
     ],
+  },
+  // WARNING alarm: three falling square sirens (Phase 4-1).
+  alarm: {
+    layers: [0, 0.55, 1.1].map(delay => (
+      { wave: 'square', freq: 880, freqEnd: 440, duration: 0.45, volume: 0.12, delay }
+    )),
   },
   // Two-step chime for menu cursor moves and decisions.
   select: {

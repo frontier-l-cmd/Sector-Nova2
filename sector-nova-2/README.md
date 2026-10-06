@@ -10,10 +10,25 @@ HTML5 Canvas と JavaScript だけで作られており、画像・音声ファ�
 - 変更履歴: [CHANGELOG.md](CHANGELOG.md)
 - 1作目（`../sector-nova/`）は一切変更していません。
 
-## 現在のバージョン: Phase 3（雑魚敵）
+## 現在のバージョン: Phase 4-1（Stage 1 の完成）
 
-Phase 3 で2作目の雑魚11種と派生（DRONE / MINE / HATCHLING / GOLD 個体）が入り、難易度の倍率（弾速・発射頻度・撃ち返し）が効くようになりました。
-全種は Stage 0「TEST RANGE」（DEBUG_MODE のみ）で順番に確認できます。Stage 1 の仮タイムラインとボスはまだ1作目の敵・ORB CORE のままです（Phase 4 で作り直し）。
+Stage 1「FROST RING」が本番の内容になりました。NEW GAME → LYRA のオープニング → S1 → 中ボス FROST SENTINEL → WARNING → ボス GLACIER MAW → リザルト（ランク）→ タイトル、の順で通して遊べます。
+Stage 2 以降はまだ無いので、S1 クリア後はリザルトの後タイトルに戻ります。
+
+### Phase 4-1 で作ったもの
+
+- S1 の背景（遠くの輪のある惑星・漂う氷の粒）、ギミック「巨大隕石」、本番のタイムライン（2作目の雑魚だけ）
+- 中ボス **FROST SENTINEL**（25秒で逃げる）、ボス **GLACIER MAW**（顎が開いた時だけ弱点が出る）
+- **WARNING 演出**（赤い帯・警報音・ボス名）、LYRA の**通信ウィンドウ**と `story.js`（オープニングと S1 分）
+- **リザルト画面とランク**（S / A / B / C とボーナス。ステージごとの最高ランクを保存）
+- S1 の **NOVA CRYSTAL**: GOLD SHARD を出現から5秒以内に倒すと出る
+- ボスの1秒あたりダメージの**ゆるい上限**（超えた分は半分だけ効く）
+- 1作目の敵と ORB CORE は Stage 1 から外しました（コードは Phase 1〜3 の自動テスト用に残しています）
+
+### Phase 3 で作ったもの
+
+- 2作目の雑魚11種と派生（DRONE / MINE / HATCHLING / GOLD 個体）、難易度の倍率（弾速・発射頻度・撃ち返し）
+- Stage 0「TEST RANGE」（DEBUG_MODE のみ）で全種を順番に確認できる
 
 ### Phase 2 で作ったもの
 
@@ -78,7 +93,7 @@ Phase 3 で2作目の雑魚11種と派生（DRONE / MINE / HATCHLING / GOLD 個�
 | 6 | オプション機 +1（最大2） |
 | 7 | REFLECT SHIELD 付与 |
 | 8 | NOVA ゲージを満タン |
-| 9 | WARNING の直前までスキップ（ボス戦の確認用） |
+| 9 | WARNING の直前までスキップ（中ボスが出ていれば消す。ボス戦の確認用） |
 | 0 | 無敵の ON / OFF（右下に INVINCIBLE と表示。かすりは発生する） |
 
 `DEBUG_MODE` の時は、画面右下（NOVA ゲージの上）にタイムラインの経過秒と敵・敵弾の数が出ます。
@@ -112,7 +127,7 @@ Phase 3 で2作目の雑魚11種と派生（DRONE / MINE / HATCHLING / GOLD 個�
 | 黄色の十字 | REPAIR | ライフ +1（満タン時は1000点） |
 | ピンクのハート | HULL UP | このステージ中だけ最大ライフ +1（上限5）して全回復（上限かつ満タン時は1500点） |
 | 金の小さな星 | STAR CHIP | 500点 + ゲージ 10%（よく落ちる） |
-| 虹色の大きな菱形 | NOVA CRYSTAL | 獲得数を右上に表示（出現条件は Phase 4/5） |
+| 虹色の大きな菱形 | NOVA CRYSTAL | 獲得数を右上に表示（S1 の出現条件は Phase 4-1 で実装。残りは Phase 4-2〜5） |
 
 ### オプション機・NOVA BURST・かすり・コンボ
 
@@ -183,12 +198,70 @@ DESIGN.md「14. ボス・中ボス」「17. バランスの原則」の「最強
 **判断: 今の武器は、設計書の HP の目安に対して強すぎます**（最強装備が許される上限の約 3〜5 倍）。
 数値は変えていません。対応案は「TODO / 要判断」の「Phase 3 前の計測で分かったこと」にあります。
 
+## ボスの撃破時間（Phase 4-1、自動テストで実戦計測）
+
+ボスと実際に戦わせて、出現してから倒すまでの秒数を測りました（各3回の平均）。
+自機は無敵、ボスの真下を追いかけ続けて撃ちっぱなし。「遠」は画面下（y=400）、「近」はボスの 110px 下。
+つららや雑魚が弾を吸うのも実戦どおりです。アイテムは取らせていません。
+
+**無理なく持てる装備** は S1 では「武器 Lv2・オプションなし」としました（S1 の途中で拾える範囲）。
+**最強装備** は Lv3 ＋ オプション2機です。
+
+| 装備 | GLACIER MAW 遠 | GLACIER MAW 近 | FROST SENTINEL 遠 | FROST SENTINEL 近 |
+|---|---|---|---|---|
+| NORMAL | 44.7 | 44.8 | 11.2 | 7.8 |
+| SPREAD Lv2 | 43.1 | 22.6 | 9.3 | 5.8 |
+| RAIL Lv2 | 46.3 | 47.0 | 11.0 | 10.9 |
+| CHAIN Lv2 | 57.3 | 55.1 | 9.8 | 9.9 |
+| HOMING Lv2 | 51.7 | 51.3 | 13.0 | 12.9 |
+| SPREAD Lv3＋OPT2 | 28.0 | **15.1** | 8.2 | **3.4** |
+| RAIL Lv3＋OPT2 | 19.5 | 19.4 | 4.2 | 4.0 |
+| CHAIN Lv3＋OPT2 | 43.0 | 42.2 | 11.3 | 10.9 |
+| HOMING Lv3＋OPT2 | 32.8 | 31.7 | 6.3 | 6.3 |
+
+- GLACIER MAW の想定撃破時間は 30〜45秒、最強装備でも 15秒以上（DESIGN.md 14 / 17）
+- 上限なしだと（HP 196 のまま）SPREAD 最強・近で 8.4秒、RAIL 最強で 10.7秒でした。上限で約2倍に伸びています
+- NORMAL は顎の開閉にほぼ縛られるので、上限（8）の影響をほとんど受けません
+
+### ダメージ上限の値の提案
+
+「上限を超えた分は半分だけ効く」なので、強い装備ほど「素の1秒あたりダメージの半分＋上限の半分」に近づきます。
+上限を NORMAL の1秒あたりダメージ（約 7.5）より下げると NORMAL まで遅くなるため、**NORMAL より少し上**が目安です。
+
+| ボス | 提案（今の値） | 理由 |
+|---|---|---|
+| GLACIER MAW | **上限 8 / HP 196** | 計測した組み合わせの中で、NORMAL 45秒以内と最強装備 15秒以上の両方を満たしたのはこの値だけ。上限 6 や 5 だと NORMAL が 59〜69秒に伸び、上限 9〜10 だと最強が 13秒台になる |
+| FROST SENTINEL | **上限 8 / HP 60（設計書どおり）** | NORMAL を遅くしない値。ただし最強装備では上限をいくつにしても 3〜4秒で溶ける（上限 4 でも 3.5秒）。HP 60 が小さいため |
+
+調べた組み合わせ（GLACIER MAW。NORMAL 遠 / SPREAD Lv2 近 / SPREAD 最強 近 / RAIL 最強 遠、秒）:
+
+| HP | 上限 | NORMAL | SPREAD Lv2 | SPREAD 最強 | RAIL 最強 |
+|---|---|---|---|---|---|
+| 190 | 5 | 66.0 | 23.0 | 14.9 | 21.1 |
+| 190 | 6 | 59.2 | 22.8 | 14.9 | 19.3 |
+| 190 | 8 | 43.6 | 22.2 | 14.6 | 18.3 |
+| 196 | 8 | 44.8 | 22.7 | 15.1 | 19.5 |
+| 200 | 8 | 45.4 | 23.0 | 15.3 | 20.1 |
+| 200 | 9 | 46.0 | 22.9 | 13.5 | 19.9 |
+| 205 | 10 | 47.2 | 23.0 | 13.1 | 20.1 |
+
+**要判断（数値は上の値で仮決め。指示に合わせて変更します）**
+
+1. GLACIER MAW: 上の値（上限 8 / HP 196）でよいか。
+   最強装備の 15.1 秒は 15 秒ぎりぎりです。余裕を持たせるなら HP 200（最強 15.3 秒、NORMAL 45.4 秒）。
+2. 「無理なく持てる装備」で CHAIN Lv2（55〜57秒）と HOMING Lv2（51〜52秒）は 45 秒を超えます。
+   CHAIN は1体相手だと連鎖しない、HOMING は1発が軽い武器なので、ボス相手に弱いのは武器の性格どおりと考えて、そのままにしています。
+   全武器を45秒以内にするなら HP を下げることになり、最強 15 秒以上と両立しません。
+3. FROST SENTINEL: 設計書に想定撃破時間がありません。最強装備で 3〜4 秒です。案:
+   - (a) このまま（中ボスはすぐ倒せてよい。逃げる 25 秒までに NORMAL でも倒せる）
+   - (b) 想定撃破時間を「10〜20秒」と決め、HP を約 130 に上げる（NORMAL は 25 秒の逃走時間を超えそうなので、逃走時間も見直しが必要）
+
 ## タイトルメニュー
 
 | 項目 | 内容 |
 |---|---|
-| NEW GAME | Stage 1 からスコア 0 で開始 |
-| CONTINUE | 最新の解放ステージから開始 |
+| NEW GAME | LYRA のオープニング → Stage 1 からスコア 0 で開始 |
+| CONTINUE | 最新の解放ステージから開始（オープニングなし） |
 | STAGE SELECT | ←→ で解放済みステージを選び、Enter で開始 |
 | DIFFICULTY | EASY / NORMAL / HARD（←→で変更・セーブ。敵弾の速さ・発射頻度・撃ち返しは Phase 3 から適用。ライフ・ゲージ・スコア倍率は Phase 6） |
 | BOSS RUSH | NORMAL END 到達で解放。未解放時は「???」でグレー表示 |
@@ -219,23 +292,48 @@ DESIGN.md「14. ボス・中ボス」「17. バランスの原則」の「最強
 | MINE | 1 | 30 | MINE LAYER が置く。120フレームで8方向に破裂。最後の40フレームは赤い輪が縮む。破裂前に撃てば壊せる |
 | HATCHLING | 1 | 60 | HIVE MOTHER の卵から（Phase 5）。SWARM 型 |
 | HATCHLING WISP | 3 | 200 | 同じく強化 WISP 型 |
-| GOLD SHARD / GOLD GHOST | 通常と同じ | 通常と同じ | 金色の特別個体。NOVA CRYSTAL の出現条件は Phase 4 |
+| GOLD SHARD / GOLD GHOST | 通常と同じ | 通常と同じ | 金色の特別個体。S1 は GOLD SHARD を出現から5秒以内に倒すと NOVA CRYSTAL（GOLD GHOST は S3 で使用予定） |
 
 ## ステージ
 
 | # | 名前 | 状態 |
 |---|---|---|
 | 0 | TEST RANGE | `DEBUG_MODE` のみ。雑魚全種を順番に出す確認用（ボスなし・セーブなし・無敵で開始） |
-| 1 | FROST RING | 実装済み（Phase 1 の仮内容: 1作目の敵 + ORB CORE） |
-| 2 | DEAD HARBOR | 未実装（Phase 4） |
-| 3 | STORM VEIL | 未実装（Phase 4） |
+| 1 | FROST RING | 実装済み（Phase 4-1） |
+| 2 | DEAD HARBOR | 未実装（Phase 4-2） |
+| 3 | STORM VEIL | 未実装（Phase 4-3） |
 | 4 | ECLIPSE HIVE | 未実装（Phase 5） |
 | 5 | CORONA ZONE | 未実装（Phase 5） |
 | 6 | HELIOS CORE | 未実装（Phase 5） |
 
-Stage 1 の流れ（仮）: 序盤（0〜30秒）→ 中盤（32〜75秒、50〜54秒は中ボス用の空き枠）→
-後半（76〜103秒）→ 108秒 WARNING → 111秒 ORB CORE。
-ORB CORE を倒すと、現時点では最後の実装ステージなので CAMPAIGN COMPLETE 画面になります。
+### Stage 1「FROST RING」の流れ
+
+| 時間 | 内容 |
+|---|---|
+| 0秒〜 | ステージ名と LYRA の通信（「ENTERING FROST RING.」）。自機は動かせる |
+| 2〜20秒 | 序盤: SHARD の列、WISP の波を1種類ずつ |
+| 23・28・36秒 | 巨大隕石。間に SHARD / WISP |
+| 42秒 | GOLD SHARD（右寄り）。5秒以内に倒すと NOVA CRYSTAL |
+| 50秒 | 中ボス FROST SENTINEL。倒すか逃げるまでタイムラインが止まる |
+| 52秒〜 | 後半: SNIPER が加わる。64・81秒に巨大隕石 |
+| 108秒 | WARNING（3秒）。雑魚が出なくなり敵弾が消える |
+| 111秒 | ボス GLACIER MAW |
+| 撃破後 | リザルト → タイトル（S2 は Phase 4-2） |
+
+### 巨大隕石（S1 のギミック）
+
+| HP | 点 | 半径 | 内容 |
+|---|---|---|---|
+| 12 | 500 | 28 | ゆっくり降りてくる。触れると被弾（隕石は壊れない）。壊すと5つの破片が飛び散り、**敵だけ**に3ダメージ（自機には当たらない）。大型扱い（ゲージ +4%） |
+
+### 中ボス・ボス（Phase 4-1）
+
+| 名前 | HP | ダメージ上限（1秒） | 点 | 内容 |
+|---|---|---|---|---|
+| FROST SENTINEL（中ボス） | 60 | 8 | 3000 | 六角形の中ボス。自機狙いの5方向弾と12方向リングを交互に撃つ。HP 50% 以下で撃つ間隔が短くなる。**25秒で上へ逃げる**（得点なし）。HP バーに残り秒数（ESCAPE n） |
+| GLACIER MAW（S1 ボス） | 196 | 8 | 10000 | 上下の顎を持つ氷の頭。6秒周期で顎が3秒閉じて3秒開く。**閉じている間はダメージ 20%**、開くと奥の核に 100%。顎は開く 20 フレーム前から動き始める（予告）。開いた瞬間と開いている途中に自機狙い5方向弾。つららが落ちる（落ちる前に 40 フレーム影の帯が出る。撃って壊せて、30% で STAR CHIP）。HP 50% 以下で開く時間が4秒に伸び、5方向弾が2連射になり、つららが増える |
+
+ボスを倒すと、そのボスが出したつららは消えます。
 
 ## 仕組み（開発者向け）
 
@@ -267,6 +365,8 @@ ORB CORE を倒すと、現時点では最後の実装ステージなので CAMP
 - 形態移行: 敵弾と危険物を全消去し、形態名を2秒表示
 - 撃破: 揺れながら小爆発（90f）→ 大爆発・弾消去 → 2秒の余韻 → ステージ終了
 - 50% 以下で `isEnraged`
+- `damageCap`: 1秒あたりダメージのゆるい上限。直近 60 フレームに受けた量が上限を超えた分は半分だけ効く（NOVA BURST は対象外。部位にも適用）
+- `midboss` / `escapeAfter`: 中ボス。時間切れで上へ逃げ、得点なしで終わる
 
 ### 弾パターン（`src/patterns.js`）
 
@@ -296,21 +396,25 @@ sector-nova-2/
    |- patterns.js      # 弾パターン・Hazard
    |- weapon.js        # 武器5種と弾（RAIL / CHAIN / HOMING / 反射弾）、REFLECT SHIELD の描画
    |- player.js        # NOVA-II とオプション機、Lv ルール、NOVA ゲージ
-   |- enemy.js         # 2作目の雑魚11種＋派生、1作目の敵（Stage 1 の仮タイムライン用。Phase 4 で削除）
+   |- enemy.js         # 2作目の雑魚11種＋派生、1作目の敵（自動テスト用に残す。Stage 1 では使わない）
+   |- gimmicks.js      # ステージギミック（S1: 巨大隕石と破片）
    |- powerup.js       # アイテム10種（色と形）
-   |- scoring.js       # コンボ（ランクは Phase 4）
+   |- scoring.js       # コンボ・ステージランク
+   |- story.js         # LYRA の台詞と通信ウィンドウ
    |- timeline.js      # タイムラインのデータと実行
    |- stage.js         # ステージ定義・ステージ解放/スコアのセーブ
    |- boss.js          # BossBase / BossPart / ボス登録
    |- bosses/
-   |  `- orbCore.js    # BossBase 版 ORB CORE（Phase 1 の動作確認用）
+   |  |- orbCore.js    # BossBase 版 ORB CORE（自動テスト用に残す。Stage 1 では使わない）
+   |  |- sentinel.js   # 中ボス SENTINEL（ステージごとの色）
+   |  `- glacierMaw.js # S1 ボス GLACIER MAW とつらら
    |- hud.js           # HUD
    |- menu.js          # タイトルメニュー・ポーズ・ゲームオーバー等の画面
    |- game.js          # 状態管理・当たり判定・進行
    `- main.js
 ```
 
-`story.js` / `gimmicks.js` と残りのボスファイルは、使う Phase で追加します。
+残りのボスファイルは、使う Phase で追加します。
 
 ## セーブデータ（localStorage）
 
@@ -320,10 +424,10 @@ sector-nova-2/
 |---|---|---|
 | `sectorNova2_unlockedStage` | 解放済みの最大ステージ | Phase 1 |
 | `sectorNova2_bestScore` | 最高スコア | Phase 1 |
-| `sectorNova2_bestClearScore` | クリア時の最高スコア | Phase 1 |
+| `sectorNova2_bestClearScore` | クリア時の最高スコア（Phase 4-1 から、エンディング到達時だけ保存。Phase 5 で使用） | Phase 1 |
 | `sectorNova2_difficulty` | 選んだ難易度 | Phase 1 |
 | `sectorNova2_muted` | ミュート設定 | Phase 1 |
-| `sectorNova2_bestRanks` | ステージごとの最高ランク | Phase 4 |
+| `sectorNova2_bestRanks` | ステージごとの最高ランク（例 `{"1":"A"}`） | Phase 4-1 |
 | `sectorNova2_normalEndCleared` | NORMAL END 到達（BOSS RUSH 解放） | Phase 5/6 |
 | `sectorNova2_trueEndCleared` | TRUE END 到達 | Phase 6 |
 | `sectorNova2_bossRushBestTime` | BOSS RUSH の最速タイム | Phase 6 |
@@ -378,13 +482,31 @@ sector-nova-2/
 - [x] MIRROR の正面反射・側面ダメージ、LINK GUARD のバリア、PHASE GHOST の無敵時間が正しい
 - [x] Phase 1・Phase 2・テスト用の仮タッチ操作の完了条件が壊れていない
 
-### Phase 4: Stage 1〜3
+### Phase 4-1: Stage 1 — 完了（検収待ち）
 
-- [ ] S1〜S3 の背景・ギミック・タイムライン
-- [ ] 中ボス SENTINEL、ボス3体（GLACIER MAW / DOCK TITAN / THUNDER RAY）
-- [ ] WARNING 演出、LYRA の通信ウィンドウと `story.js`
-- [ ] リザルト画面とランク
-- [ ] S1〜S3 の NOVA CRYSTAL 条件
+- [x] S1「FROST RING」の背景・巨大隕石のギミック・タイムライン
+- [x] 中ボス SENTINEL（S1 の色）、ボス GLACIER MAW
+- [x] WARNING 演出、LYRA の通信ウィンドウと `story.js`（オープニングと S1 分）
+- [x] リザルト画面とランク（S1 クリア後はリザルトを出してタイトルへ）
+- [x] S1 の NOVA CRYSTAL 条件（GOLD SHARD）
+- [x] 1作目の敵と ORB CORE を Stage 1 から外す
+
+完了条件:
+
+- [x] S1 を通しで遊べる
+- [x] S1 は NORMAL だけでクリア可能
+- [x] ギミックとボスの攻撃に必ず予告がある（隕石は画面上から見えて降りる / 顎は20フレーム前から動く / つららは40フレームの影 / SENTINEL の弾は撃つ前に芯が光る）
+- [x] ランクが表示される
+- [x] 最強装備でも GLACIER MAW の撃破に15秒以上かかる（自動テストで最短 15.1 秒）
+- [x] Phase 1〜3・テスト用の仮タッチ操作の完了条件が壊れていない
+
+### Phase 4-2: Stage 2
+
+- [ ] S2 の背景・狭い通路のギミック・タイムライン、中ボス SENTINEL（S2 の色）、ボス DOCK TITAN、`story.js` の S2 分、S2 の NOVA CRYSTAL
+
+### Phase 4-3: Stage 3
+
+- [ ] S3 の背景・落雷と雲のギミック・タイムライン、ボス THUNDER RAY、`story.js` の S3 分、S3 の NOVA CRYSTAL
 
 ### Phase 5: Stage 4〜6
 
@@ -411,7 +533,7 @@ sector-nova-2/
 
 1. **Stage 1 以外は未実装扱い。** 1作目の Stage 2〜5 とランダム湧き（`EnemySpawner`）は削除しました。
    Stage 2〜6 は名前とボス名だけ定義（`implemented: false`）し、Phase 4/5 でタイムラインごと作ります。
-2. **Stage 1 クリア後は1作目の CAMPAIGN COMPLETE 画面（仮）。** このとき `sectorNova2_bestClearScore` も記録されます。
+2. **Stage 1 クリア後は1作目の CAMPAIGN COMPLETE 画面（仮）。** このとき `sectorNova2_bestClearScore` も記録されます。（Phase 4-1 でリザルト画面に置き換え）
    Phase 4 でリザルト画面、Phase 5 でエンディングに置き換え、BEST CLEAR の記録も NORMAL END 到達時に変えます。
 3. **DIFFICULTY は選択とセーブのみ。** 弾速・発射頻度の倍率は Phase 3 で `patterns.js` の `patternDifficulty()` に、
    初期ライフ・ゲージ・スコア倍率は Phase 6 で適用します（倍率表は `DIFFICULTY_SETTINGS` に定義済み）。
@@ -489,9 +611,25 @@ sector-nova-2/
 11. **難易度の発射頻度は SNIPER / GUN DECK / 1作目の C・TURRET / ORB CORE にかかります**（最初の1発までの待ち時間はそのまま）。
 12. **1作目の敵は Stage 1 の仮タイムライン用に残しています**（指示どおり。Phase 4 で Stage 1 を作り直す時に削除）。
 
+### Phase 4-1 で判断したこと
+
+1. **ステージ開始の「ステージ名＋LYRA」を STAGE_INTRO という状態にしました**（2.5秒。自機は動かせ、ENTER / タップで飛ばせる）。NEW GAME の時だけ、その前にオープニング（OPENING）が入ります。
+2. **FROST SENTINEL の点は 3000、GLACIER MAW は 10000**（設計書に記載なし。ORB CORE の 5000 と雑魚の点から決めた）。SENTINEL は逃げると 0 点。
+3. **巨大隕石は HP 12 / 500点 / 大型扱い**。破片は敵だけに当たり、ボスにも当たります（3ダメージ、上限の対象）。
+4. **つららは撃って壊せる雑魚扱い**（HP 2、100点、30% で STAR CHIP）。ボスを倒すと残りは消えます。WARNING 後の「雑魚を出さない」の対象外です（ボスの攻撃なので）。
+5. **ダメージ上限は NOVA BURST には効きません**（BURST には元々「最大HPの8%」の上限があるため）。部位（parts）にも上限がかかります。
+6. **ボス用 BGM への切り替えは Phase 6**（BGM が Phase 6 のため）。WARNING は警報音と赤い帯・ボス名で表現しています。
+7. **BEST CLEAR はエンディングまで保存しません**。S1 クリア後はリザルト → タイトルで、スコアは BEST SCORE として保存します（CAMPAIGN COMPLETE 画面は削除）。BEST CLEAR は Phase 5 のエンディングで保存します。
+8. **ランクボーナスには難易度のスコア倍率を掛けています**（今は全難易度 ×1。倍率は Phase 6）。
+9. **通信ウィンドウは ENTER で文字送り／次へ**。放っておいても 2.5 秒で次へ進むので、スマホではタップ不要です。プレイは止まりません。
+10. **リザルトは ENTER を 1.5 秒受け付けません**（ランクが出る前に飛ばしてしまわないように）。
+11. **SENTINEL の弾と GLACIER MAW の「開いている途中の5方向弾」に 30 フレームの予告を付けました**（核がふくらみ、白い輪が縮む）。完了条件「ボスの攻撃に必ず予告がある」のため。撃つ間隔は変えていません。
+12. **ORB CORE と1作目の敵のコードは残しています**（Stage 1 では使わない。Phase 1〜3 の自動テスト用）。
+13. **「無理なく持てる装備」は S1 では武器 Lv2・オプションなしとして計測しました**。
+
 ### 今後の確認事項
 
-- Stage 1 の仮タイムラインの難易度は未調整（Phase 4 で本番の内容に置き換えるため）
+- 上の「ダメージ上限の値の提案」の要判断 1〜3
 - 目標性能（敵弾200発 + 敵40体で 60fps）の計測は、弾数が増える Phase 3〜5 で行う
 
 ## クイックテスト（手動確認）
@@ -502,15 +640,14 @@ sector-nova-2/
 - [ ] **DIFFICULTY** — ←→ で EASY / NORMAL / HARD が切り替わり、リロード後も残る
 - [ ] **SOUND / M キー** — ON/OFF が切り替わり、リロード後も残る
 - [ ] **BOSS RUSH** — 「???」でグレー表示、Enter で何も起きない
-- [ ] **NEW GAME** — Stage 1 FROST RING がスコア 0 で始まり、背景が青い
+- [ ] **NEW GAME** — LYRA のオープニングの後、Stage 1 FROST RING がスコア 0 で始まり、背景が青い
 - [ ] **タイムライン** — 敵が列・横並び・V字・左右交互などの形で順番に出てくる
 - [ ] **ポーズ** — P で止まり、P で再開。止まっている間は敵も出てこない
-- [ ] **デバッグ 9** — WARNING 直前に飛び、3秒後に ORB CORE が現れる
+- [ ] **デバッグ 9** — WARNING 直前に飛び、3秒後に GLACIER MAW が現れる
 - [ ] **WARNING** — 雑魚が出なくなり、残っていた敵弾が消える
-- [ ] **ORB CORE** — 3方向弾を撃ち、HP 50% 以下で赤いリングが出て攻撃が速くなる
-- [ ] **撃破** — 敵弾が消え、揺れながら爆発 → 大爆発 → 2秒後に CAMPAIGN COMPLETE
+- [ ] **撃破** — 敵弾が消え、揺れながら爆発 → 大爆発 → 2秒後にリザルト
 - [ ] **ゲームオーバー** — ライフ0で GAME OVER、Enter でタイトルへ
-- [ ] **CONTINUE / C** — タイトルで C を押すと Stage 1 から始まる
+- [ ] **CONTINUE / C** — タイトルで C を押すと Stage 1 から始まる（オープニングなし）
 - [ ] **セーブ分離** — localStorage に `sectorNova2_*` 以外のキーが作られない（1作目のセーブに影響しない）
 
 ### Phase 2 の確認（DEBUG_MODE、プレイ中）
@@ -546,6 +683,25 @@ sector-nova-2/
 - [ ] **終了** — 最後の敵がいなくなって3秒でタイトルに戻る
 - [ ] **難易度** — DIFFICULTY を EASY にすると敵弾が遅く、HARD にすると速く・多くなる
 
+### Phase 4-1 の確認（Stage 1 を通しで）
+
+DEBUG_MODE のままで確認します。右下の「TL 000.0s」がタイムラインの秒数です。
+
+- [ ] **オープニング** — NEW GAME → 暗い画面で LYRA「HELIOS IS BEING DEVOURED. / NOVA-II, YOU ARE OUR LAST LIGHT.」が1文字ずつ出る。ENTER で全文 → もう一度 ENTER で次へ（放っておいても進む）
+- [ ] **ステージ開始** — 「STAGE 1 / FROST RING」が揺れずに出て消える。下に LYRA「ENTERING FROST RING. / THE ICE HIDES THEIR SCOUTS.」。この間も自機は動かせる
+- [ ] **背景** — 右上に輪のある惑星がゆっくり流れ、氷の粒が斜めに舞う
+- [ ] **雑魚** — SHARD と WISP だけで始まり、52秒ごろから SNIPER が加わる。1作目の敵（赤い三角など）は出ない
+- [ ] **巨大隕石（23秒〜）** — 大きな岩がゆっくり降りる。触れると被弾し、岩は残る。壊すと破片が5方向に飛び、近くの雑魚が壊れる。破片は自機に当たらない
+- [ ] **GOLD SHARD（42秒）** — 金色の SHARD が右寄りに出る。すぐ倒すと NOVA CRYSTAL（虹色の大きな菱形）が落ちる。5秒以上たってから倒すと落ちない
+- [ ] **FROST SENTINEL（50秒）** — 水色の六角形。HP バーの右に ESCAPE 25 → 0。この間は雑魚が出ない（TL が止まる）。撃つ前に核がふくらみ白い輪が縮む。撃たずに待つと 25 秒で上へ逃げ、得点なしで TL が再開
+- [ ] **WARNING（108秒。デバッグ 9 で直行）** — 上下の赤い帯に斜線が流れ、「WARNING」が点滅（文字は動かない）、1秒後に「GLACIER MAW」。警報音が3回。LYRA「MASSIVE SIGNAL DETECTED!」
+- [ ] **GLACIER MAW** — 顎が閉じている間は撃っても HP がほとんど減らない。顎が動き始めてから開き、核が見えると大きく減る。開いた瞬間に5方向弾、開いている途中は核に白い輪が縮んでから5方向弾
+- [ ] **つらら** — 画面上から縦の影の帯が点滅し、少し後につららが落ちる。撃って壊せる
+- [ ] **怒り（HP 50% 以下）** — 目が赤くなり、開いている時間が長くなり、5方向弾が2連射になる
+- [ ] **リザルト** — 撃破の約2秒後「STAGE 1 CLEAR」。CLEAR TIME / BOSS TIME / DAMAGE TAKEN / MAX COMBO / PART BONUS が順に出て、ランク（S / A / B / C）と RANK BONUS / TOTAL。初回は NEW BEST RANK
+- [ ] **タイトルへ** — 「PRESS ENTER TO TITLE」が出てから ENTER でタイトル。BEST SCORE が更新されている
+- [ ] **NORMAL だけでクリア** — アイテムを取らずに（ゲージの BURST も使わずに）S1 をクリアできる
+
 ### タッチ操作の確認（スマホ。毎 Phase 確認）
 
 - [ ] **メニュー** — 行を1回タップで選択、もう1回タップで決定
@@ -554,3 +710,4 @@ sector-nova-2/
 - [ ] **ポーズ** — 2本指タップでポーズ、タップで再開
 - [ ] **ゲームオーバー** — タップでタイトルへ
 - [ ] **TEST RANGE**（Phase 3〜、DEBUG_MODE）— タイトルの TEST RANGE の行を2回タップで開始
+- [ ] **オープニング・ステージ開始・リザルト**（Phase 4-1〜）— タップで先へ進む（オープニングと通信は放っておいても進む）

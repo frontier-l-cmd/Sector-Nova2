@@ -2,6 +2,33 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 4-1] Stage 1 の完成 — 2026-10-06
+
+### 設計書
+
+- DESIGN.md（ルートと `sector-nova-2/` の両方）の Phase 4 を 4-1 / 4-2 / 4-3 に分割（それぞれの内容と完了条件）
+- 「14. ボス・中ボス」の共通ルールにボスの強さの方針を追記（武器は弱めない / HP は無理なく持てる装備で想定撃破時間に収まるように / 1秒あたりダメージのゆるい上限。上限の値は提案してから決める）
+
+### 追加
+
+- S1「FROST RING」の本番タイムライン（SHARD / WISP / 後半から SNIPER、巨大隕石5回、GOLD SHARD、中ボス、WARNING、ボス）
+- S1 の背景レイヤー: 輪のある惑星（星の奥）と漂う氷の粒（`background.js`）
+- ギミック「巨大隕石」（`gimmicks.js`）: 触れると被弾、壊すと敵だけに当たる破片5つ
+- 中ボス SENTINEL（`bosses/sentinel.js`。S1 は FROST SENTINEL、25秒で逃走・得点なし、出ている間はタイムラインが止まる）
+- ボス GLACIER MAW（`bosses/glacierMaw.js`。顎の開閉で弱点が出る、5方向弾、影で予告するつらら、HP 50% 以下で強化）
+- `BossBase` に中ボス（逃走）・1秒あたりダメージのゆるい上限（`damageCap`、超えた分は半分）・撃破演出の長さ指定
+- WARNING 演出（赤い帯と流れる斜線、点滅する WARNING、ボス名、警報音 `alarm`）
+- LYRA の通信ウィンドウと `story.js`（オープニング・S1・WARNING の台詞）
+- 状態 OPENING / STAGE_INTRO / STAGE_RESULT、リザルト画面とランク（`calcStageRank`）、`sectorNova2_bestRanks` の保存
+- S1 の NOVA CRYSTAL 条件（GOLD SHARD を出現から5秒以内に倒す）
+- ボスの撃破時間を実戦で計測した表と、ダメージ上限の値の提案（README）
+
+### 変更
+
+- Stage 1 から1作目の敵と ORB CORE を外した（コードは自動テスト用に残す）
+- S1 クリア後は CAMPAIGN COMPLETE ではなくリザルト → タイトル。BEST CLEAR はエンディングまで保存しない
+- デバッグキー 9 は中ボスが出ていれば中ボスも消して WARNING 直前へ
+
 ## [Phase 3] 雑魚敵 — 2026-10-06
 
 ### Phase 3 前の対応
