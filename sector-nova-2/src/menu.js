@@ -10,6 +10,17 @@ const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'b
 const TITLE_MENU_Y = 226;    // baseline of the first row
 const TITLE_MENU_ROW_H = 17;
 
+/**
+ * Large text with a drop shadow: same font, fixed offset, no motion.
+ * (Uses the current ctx.font / textAlign.)
+ */
+function drawShadowedText(ctx, text, x, y, color, shadowColor) {
+  ctx.fillStyle = shadowColor;
+  ctx.fillText(text, x + TEXT_SHADOW_OFFSET, y + TEXT_SHADOW_OFFSET);
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
+}
+
 class TitleMenu {
   constructor() {
     this.index = 0;
@@ -122,22 +133,13 @@ class TitleMenu {
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     const cx = CANVAS_WIDTH / 2;
-    const titleY = 104 + Math.sin(game.globalFrame * 0.03) * 5;
+    const titleY = 104;
     ctx.textAlign = 'center';
 
-    // Logo glow
-    ctx.fillStyle = COLORS.PLAYER_BULLET;
-    ctx.globalAlpha = 0.3;
-    ctx.font = 'bold 32px monospace';
-    ctx.fillText('SECTOR', cx, titleY);
-    ctx.fillText('NOVA 2', cx, titleY + 36);
-    ctx.globalAlpha = 1;
-
-    // Logo
-    ctx.fillStyle = COLORS.UI_WHITE;
+    // Logo (fixed position, fixed shadow)
     ctx.font = 'bold 30px monospace';
-    ctx.fillText('SECTOR', cx, titleY);
-    ctx.fillText('NOVA 2', cx, titleY + 36);
+    drawShadowedText(ctx, 'SECTOR', cx, titleY, COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
+    drawShadowedText(ctx, 'NOVA 2', cx, titleY + 36, COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
 
     // Subtitle
     ctx.fillStyle = COLORS.TITLE_SUBTITLE;
@@ -333,17 +335,9 @@ function drawCampaignCompleteScreen(ctx, game) {
   const cx = CANVAS_WIDTH / 2;
   const topY = 120;
 
-  ctx.fillStyle = COLORS.UI_YELLOW;
-  ctx.globalAlpha = 0.35;
-  ctx.font = 'bold 26px monospace';
-  ctx.fillText('CAMPAIGN', cx, topY);
-  ctx.fillText('COMPLETE', cx, topY + 30);
-  ctx.globalAlpha = 1;
-
-  ctx.fillStyle = COLORS.UI_WHITE;
   ctx.font = 'bold 24px monospace';
-  ctx.fillText('CAMPAIGN', cx, topY);
-  ctx.fillText('COMPLETE', cx, topY + 30);
+  drawShadowedText(ctx, 'CAMPAIGN', cx, topY, COLORS.UI_WHITE, COLORS.TEXT_SHADOW_GOLD);
+  drawShadowedText(ctx, 'COMPLETE', cx, topY + 30, COLORS.UI_WHITE, COLORS.TEXT_SHADOW_GOLD);
 
   ctx.strokeStyle = COLORS.UI_YELLOW;
   ctx.lineWidth = 1;

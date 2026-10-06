@@ -116,6 +116,11 @@ Title / menu: `TITLE_SUBTITLE #ffcc66` (the gold "ECLIPSE"), `MENU_DISABLED #3a4
   `MENU_DISABLED`; changeable values show `< VALUE >` while selected.
 - Use `ctx.save()/restore()` around any state changes (alpha, font, alignment).
 - Blinking prompts use `Math.floor(frame / 30) % 2`.
+- **Large text never moves.** Titles, logos, WARNING, banners and result headings stay at a
+  fixed position — no bobbing, shaking, or sliding (it is hard to read and can cause motion
+  sickness). Blinking (on/off or color change) is fine. A drop shadow uses the **same font at a
+  fixed offset** (`TEXT_SHADOW_OFFSET`, see `drawShadowedText()` in `src/menu.js`) — never a
+  larger font behind the text.
 
 ## 4. Sprites — Size & Shape Language
 

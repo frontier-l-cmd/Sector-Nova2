@@ -141,6 +141,7 @@ const COLORS = {
 
   // --- SECTOR NOVA 2: title / menu ---
   TITLE_SUBTITLE: '#ffcc66',       // "ECLIPSE" gold
+  TEXT_SHADOW_GOLD: '#6a5418',     // fixed drop shadow under gold-themed titles
   MENU_DISABLED: '#3a4450',
 };
 
@@ -215,6 +216,11 @@ const TIMELINE_SIDES_MARGIN = 30;          // 'sides' pattern x inset
 const TIMELINE_DEFAULT_SPACING = 30;       // px between row / v / column members
 const TIMELINE_V_DEPTH = 18;               // px each V rank trails the leader
 const WARNING_FRAMES = 180;                // 3s WARNING before the boss
+
+// --- Large text ---
+// Big titles never move; their drop shadow sits at this fixed offset
+// in the same font (STYLE_GUIDE.md 3).
+const TEXT_SHADOW_OFFSET = 2;
 
 // --- Game States ---
 const STATE = {
