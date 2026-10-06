@@ -53,21 +53,38 @@ const COLORS = {
   UI_RED: '#ff4444',
   UI_GREEN: '#44ff88',
   UI_DIM: '#667788',
-  POWERUP_GLOW: '#ffff44',
-  POWERUP_BODY: '#44ddff',
-  // Weapon / special item colors (SECTOR NOVA 1 set, replaced in Phase 2)
-  ITEM_TRIPLE: '#cc66ff',     // purple - TRIPLE BEAM
-  ITEM_PIERCE: '#44aaff',     // blue - PIERCE LASER
-  ITEM_FLAME: '#ff5544',      // red - FLAME VORTEX
-  ITEM_SHIELD: '#44ff88',     // green - SHIELD BARRIER
-  ITEM_LIFE: '#ffdd44',       // yellow - LIFE RECOVER
-  ITEM_MAX_LIFE: '#ff66cc',   // pink - MAX LIFE UP
-  LASER_BODY: '#66ddff',
-  LASER_GLOW: '#2299ff',
-  FLAME_BODY: '#ff7744',
-  FLAME_GLOW: '#ffbb55',
-  SHIELD_BODY: '#66ffaa',
-  SHIELD_GLOW: '#33cc77',
+  // --- Items (DESIGN.md 10): color + shape tell them apart ---
+  ITEM_SPREAD: '#ff9933',      // orange orb "S"
+  ITEM_RAIL: '#44aaff',        // blue orb "R"
+  ITEM_CHAIN: '#bb66ff',       // purple orb "C"
+  ITEM_HOMING: '#44ee88',      // green orb "H"
+  ITEM_OPTION: '#ffffff',      // white ring
+  ITEM_REFLECT: '#66eeff',     // cyan hexagon
+  ITEM_REPAIR: '#ffdd44',      // yellow cross
+  ITEM_HULL: '#ff66cc',        // pink heart
+  ITEM_STAR: '#ffcc33',        // gold small star
+  CRYSTAL_HUES: ['#ff5577', '#ffaa33', '#ffee55', '#55ff99', '#55ccff', '#aa77ff'], // NOVA CRYSTAL rainbow
+
+  // --- Player weapons (glow halo + bright core) ---
+  SPREAD_BULLET: '#ffbb66',
+  SPREAD_BULLET_GLOW: '#ff7722',
+  RAIL_BODY: '#66ddff',
+  RAIL_GLOW: '#2299ff',
+  CHAIN_BODY: '#cc88ff',
+  CHAIN_GLOW: '#8833dd',
+  HOMING_BODY: '#88ffbb',
+  HOMING_GLOW: '#22aa66',
+  OPTION_BODY: '#ddeeff',
+  OPTION_GLOW: '#66aaff',
+
+  // --- NOVA BURST / graze / gauge ---
+  BURST_RING: '#fff6cc',
+  BURST_GLOW: '#ffcc55',
+  GRAZE_SPARK: '#cfefff',
+  GAUGE_FILL: '#ffcc55',
+  GAUGE_FULL: '#fff6cc',
+  GAUGE_BG: '#2a2418',
+
   // SECTOR NOVA 1 enemy colors (provisional Stage 1 enemies)
   ENEMY_SHIELD: '#dddd55',
   ENEMY_SHIELD_DARK: '#888822',
@@ -131,11 +148,11 @@ const COLORS = {
 const PLAYER_SPEED = 4;
 const PLAYER_MAX_LIVES = 3;
 const PLAYER_STAGE_MAX_LIVES = 5;
-const PLAYER_FIRE_INTERVAL = 8; // frames between shots
 const PLAYER_BULLET_SPEED = 8;
 const PLAYER_HIT_RADIUS = 6; // smaller than visual
 const PLAYER_INVINCIBLE_FRAMES = 90; // 1.5 seconds at 60fps
 const PLAYER_BLINK_INTERVAL = 4;
+const PLAYER_ITEM_PICKUP_RADIUS = 8; // added to the hit radius for items
 
 // --- Enemies (SECTOR NOVA 1 set, used by the provisional Stage 1) ---
 const ENEMY_A_HP = 1;
@@ -221,41 +238,108 @@ const DIFFICULTY_SETTINGS = {
 };
 
 // --- Powerup ---
-const POWERUP_DROP_CHANCE = 0.08; // 8% chance on enemy kill (stages can override)
-const POWERUP_SPEED = 1.5;
+const POWERUP_DROP_CHANCE = 0.12; // chance on enemy kill (stages can override)
+const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;
 
-// --- Weapons (SECTOR NOVA 1 set, replaced by the level system in Phase 2) ---
+// --- Weapons (DESIGN.md 6): NORMAL + 4 weapons with Lv 1-3 ---
 const WEAPON_NORMAL = 'normal';
-const WEAPON_TRIPLE = 'tripleBeam';
-const WEAPON_PIERCE = 'pierceLaser';
-const WEAPON_FLAME = 'flameVortex';
-const ITEM_SHIELD = 'shieldBarrier';
-const ITEM_LIFE = 'lifeRecover';
-const ITEM_MAX_LIFE = 'maxLifeUp';
-const WEAPON_DURATION = 20 * 60; // 20 seconds at 60fps
-const SHIELD_DURATION = 20 * 60; // 20 seconds at 60fps
+const WEAPON_SPREAD = 'spread';
+const WEAPON_RAIL = 'rail';
+const WEAPON_CHAIN = 'chain';
+const WEAPON_HOMING = 'homing';
+const WEAPON_MAX_LEVEL = 3;
+const WEAPON_MAX_LEVEL_BONUS = 5000;     // same color picked at Lv3
+const WEAPON_MAX_LEVEL_GAUGE = 15;       // ... plus NOVA gauge %
 
-// TRIPLE BEAM
-const TRIPLE_FIRE_INTERVAL = 10;
-const TRIPLE_SIDE_SPEED = 2;
+// NORMAL: single straight shot
+const NORMAL_FIRE_INTERVAL = 8;          // frames between shots
+const NORMAL_DAMAGE = 1;
 
-// PIERCE LASER
-const LASER_FIRE_INTERVAL = 14;
-const LASER_BULLET_SPEED = 11;
-const LASER_DAMAGE = 2;
-const LASER_BOSS_DAMAGE = 2;
-const LASER_MOVE_PENALTY = 0.65; // player moves slower while equipped
+// SPREAD FAN: 3 / 4 / 5 ways
+const SPREAD_FIRE_INTERVAL = 10;
+const SPREAD_BULLET_SPEED = 8;
+const SPREAD_STEP = 0.16;                // radians between shots
+const SPREAD_DAMAGE = 1;
 
-// FLAME VORTEX
-const FLAME_FIRE_INTERVAL = 12;
-const FLAME_BULLET_SPEED = 5.6;
-const FLAME_BULLET_RADIUS = 4;
-const FLAME_DAMAGE = 1;
-const FLAME_LIFE = 58;
+// RAIL LANCER: piercing beam, each enemy hit once
+const RAIL_FIRE_INTERVAL = 12;
+const RAIL_BULLET_SPEED = 12;
+const RAIL_DAMAGE = 2;
+const RAIL_WIDTH_THIN = 3;               // collision half-width, Lv1
+const RAIL_WIDTH_THICK = 6;              // Lv2 / Lv3
+const RAIL_TWIN_OFFSET = 7;              // Lv3: two beams this far apart from center
+const RAIL_MOVE_SCALE = 0.75;            // ship speed while equipped
 
-// SHIELD BARRIER
-const SHIELD_RADIUS = 34;
+// CHAIN BOLT: lightning jumps to the nearest other enemy
+const CHAIN_FIRE_INTERVAL = 10;
+const CHAIN_BULLET_SPEED = 9;
+const CHAIN_DAMAGE = 1;                  // direct hit
+const CHAIN_JUMP_DAMAGE = 1;             // each jump
+const CHAIN_RANGE = 80;                  // px from the last enemy hit
+const CHAIN_ARC_FRAMES = 10;             // how long a lightning arc stays visible
+
+// HOMING NEEDLE: 1 / 2 / 3 needles that steer to the nearest enemy
+const HOMING_FIRE_INTERVAL = 14;
+const HOMING_BULLET_SPEED = 6;
+const HOMING_TURN_RATE = 0.12;           // radians per frame
+const HOMING_DAMAGE = 1;
+const HOMING_LIFE = 150;                 // frames
+
+// --- Item types (DESIGN.md 10). Weapon items use the weapon ids. ---
+const ITEM_OPTION = 'option';
+const ITEM_REFLECT = 'reflect';
+const ITEM_REPAIR = 'repair';
+const ITEM_HULL_UP = 'hullUp';
+const ITEM_STAR_CHIP = 'starChip';
+const ITEM_NOVA_CRYSTAL = 'novaCrystal';
+
+// --- Options (DESIGN.md 5) ---
+const OPTION_MAX = 2;
+const OPTION_POWER = 0.5;                // damage scale; options fire at Lv1
+const OPTION_FOLLOW = 0.18;              // lerp factor toward their slot
+const OPTION_OFFSET_X = 20;              // left / right rear slots
+const OPTION_OFFSET_Y = 12;
+const OPTION_CAP_BONUS = 3000;           // OPTION picked with 2 options
+
+// --- REFLECT SHIELD ---
+const REFLECT_DURATION = 20 * 60;
+const REFLECT_RADIUS = 60;               // enemy bullets reversed within this
+const REFLECT_DRAW_RADIUS = 20;
+const REFLECT_BULLET_DAMAGE = 1;
+
+// --- Recovery / score items ---
+const REPAIR_FULL_BONUS = 1000;
+const HULL_UP_FULL_BONUS = 1500;
+const STAR_CHIP_SCORE = 500;
+const STAR_CHIP_GAUGE = 10;
+
+// --- NOVA BURST (DESIGN.md 7) ---
+const GAUGE_MAX = 100;                   // percent
+const GAUGE_KILL = 2;
+const GAUGE_KILL_LARGE = 4;
+const GAUGE_GRAZE = 3;
+const GAUGE_PART_BREAK = 10;
+const LARGE_ENEMY_RADIUS = 13;           // enemies this big count as "large"
+const BURST_ENEMY_DAMAGE = 30;
+const BURST_BOSS_DAMAGE_RATIO = 0.08;    // cap: 8% of the boss's max HP
+const BURST_BULLET_SCORE = 10;           // per cleared hostile bullet
+const BURST_INVINCIBLE_FRAMES = 120;
+const BURST_RING_FRAMES = 40;
+
+// --- Graze (DESIGN.md 8) ---
+const GRAZE_RADIUS = 20;                 // px from the ship's center
+const GRAZE_SCORE = 20;
+
+// --- Combo (DESIGN.md 9) ---
+const COMBO_WINDOW = 90;                 // frames to the next kill
+const COMBO_TIERS = [                    // [min combo, multiplier], highest first
+  [50, 8],
+  [25, 4],
+  [10, 2],
+  [0, 1],
+];
+const COMBO_POPUP_FRAMES = 45;
 
 // --- SECTOR NOVA 1 enemies (continued) ---
 const ENEMY_SHIELD_HP = 4;

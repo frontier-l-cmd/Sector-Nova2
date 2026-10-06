@@ -9,21 +9,25 @@
 // names and become playable in Phase 4/5.
 // ============================================================
 
-// Item weights use the SECTOR NOVA 1 item set until Phase 2.
+// Item weights (DESIGN.md 10). STAR CHIP drops often; NOVA CRYSTAL
+// never drops at random.
 const DEFAULT_POWERUP_WEIGHTS = {
-  [WEAPON_TRIPLE]: 0.20,
-  [WEAPON_PIERCE]: 0.18,
-  [WEAPON_FLAME]: 0.14,
-  [ITEM_SHIELD]: 0.28,
-  [ITEM_LIFE]: 0.12,
-  [ITEM_MAX_LIFE]: 0.08,
+  [ITEM_STAR_CHIP]: 0.40,
+  [WEAPON_SPREAD]: 0.10,
+  [WEAPON_RAIL]: 0.08,
+  [WEAPON_CHAIN]: 0.08,
+  [WEAPON_HOMING]: 0.08,
+  [ITEM_OPTION]: 0.06,
+  [ITEM_REFLECT]: 0.08,
+  [ITEM_REPAIR]: 0.07,
+  [ITEM_HULL_UP]: 0.05,
 };
 
 const STAGES = {
   1: {
     stageNumber: 1,
     stageName: 'FROST RING',
-    itemDropRate: 0.08,
+    itemDropRate: POWERUP_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
     bossType: 'orbCore', // provisional; GLACIER MAW in Phase 4
     implemented: true,

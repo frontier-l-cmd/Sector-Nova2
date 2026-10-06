@@ -7,31 +7,36 @@
 // ============================================================
 
 /**
- * Player bullet - moves upward
+ * Player bullet - straight shot. `style` picks the colors (NORMAL,
+ * SPREAD, options); `damage` is already scaled for options.
  */
 class PlayerBullet {
-  constructor(x, y, vx, vy) {
+  constructor(x, y, vx, vy, opts) {
+    opts = opts || {};
     this.x = x;
     this.y = y;
     this.vx = vx || 0;
-    this.vy = vy || -PLAYER_BULLET_SPEED;
-    this.radius = 3;
+    this.vy = vy ?? -PLAYER_BULLET_SPEED;
+    this.radius = opts.radius ?? 3;
     this.alive = true;
-    this.damage = 1;
+    this.damage = opts.damage ?? NORMAL_DAMAGE;
+    this.kind = opts.kind || 'normal';
+    this.core = opts.core || COLORS.PLAYER_BULLET;
+    this.glow = opts.glow || COLORS.PLAYER_BULLET_GLOW;
   }
 
   update() {
     this.x += this.vx;
     this.y += this.vy;
     // Remove if off screen
-    if (this.y < -10 || this.x < -10 || this.x > CANVAS_WIDTH + 10) {
+    if (this.y < -10 || this.y > CANVAS_HEIGHT + 10 || this.x < -10 || this.x > CANVAS_WIDTH + 10) {
       this.alive = false;
     }
   }
 
   draw(ctx) {
     // Glow effect
-    ctx.fillStyle = COLORS.PLAYER_BULLET_GLOW;
+    ctx.fillStyle = this.glow;
     ctx.globalAlpha = 0.4;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
@@ -39,7 +44,7 @@ class PlayerBullet {
     ctx.globalAlpha = 1;
 
     // Core
-    ctx.fillStyle = COLORS.PLAYER_BULLET;
+    ctx.fillStyle = this.core;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();

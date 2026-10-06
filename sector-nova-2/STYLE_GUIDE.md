@@ -40,23 +40,32 @@ scattered across files).
   - **Red** — danger, enemy bullets, enrage, lives (`UI_RED`, `ENEMY_BULLET`).
   - **Green** — success / defensive shield / "stage clear" (`UI_GREEN`, `ITEM_SHIELD`).
 - **Per-role tints already defined:** enemies A/B/C, the SECTOR NOVA 1 enemy types
-  (`ENEMY_SHIELD/SPLIT/FORM/RUSH/TURRET`), weapons (`LASER_*`, `FLAME_*`, `SHIELD_*`),
-  items (`ITEM_TRIPLE` purple, `ITEM_PIERCE` blue, `ITEM_FLAME` red, `ITEM_SHIELD` green,
-  `ITEM_LIFE` yellow, `ITEM_MAX_LIFE` pink), and bosses.
+  (`ENEMY_SHIELD/SPLIT/FORM/RUSH/TURRET`), weapons (`SPREAD_*`, `RAIL_*`, `CHAIN_*`, `HOMING_*`),
+  items (`ITEM_*`, see below), and bosses.
 
-Item Colors (SECTOR NOVA 1 set — still in use until Phase 2 replaces items):
-- Purple: TRIPLE BEAM
-- Blue: PIERCE LASER
-- Red: FLAME VORTEX
-- Green: SHIELD BARRIER
-- Yellow: LIFE RECOVER
-- Pink: MAX LIFE UP
+Items (SECTOR NOVA 2) — **color and shape** both identify an item:
 
-Green items are defensive items, not weapon-changing items.
-Shield effects must not prevent the player from firing.
-Yellow items are recovery items, not weapon-changing items.
-Pink items increase max life for the current stage only.
-Recovery and max-life items must not change the current weapon or shield state.
+| Color | Shape | Item | Token |
+|---|---|---|---|
+| Orange | orb + "S" | SPREAD FAN | `ITEM_SPREAD` |
+| Blue | orb + "R" | RAIL LANCER | `ITEM_RAIL` |
+| Purple | orb + "C" | CHAIN BOLT | `ITEM_CHAIN` |
+| Green | orb + "H" | HOMING NEEDLE | `ITEM_HOMING` |
+| White | ring | OPTION | `ITEM_OPTION` |
+| Cyan | hexagon | REFLECT SHIELD | `ITEM_REFLECT` |
+| Yellow | cross | REPAIR | `ITEM_REPAIR` |
+| Pink | heart | HULL UP | `ITEM_HULL` |
+| Gold | small star | STAR CHIP | `ITEM_STAR` |
+| Rainbow (cycles) | large diamond | NOVA CRYSTAL | `CRYSTAL_HUES` |
+
+Only the four orbs change the weapon. REFLECT SHIELD must not prevent firing. Recovery
+items (REPAIR, HULL UP) must not change the weapon, shield, or options.
+
+Player weapon colors follow the item that grants them: SPREAD orange (`SPREAD_BULLET`),
+RAIL blue-cyan beams (`RAIL_BODY/GLOW`), CHAIN purple fading to white (`CHAIN_BODY/GLOW`,
+zigzag lightning), HOMING green needles (`HOMING_BODY/GLOW`). NORMAL stays cyan. Options are
+pale white-blue (`OPTION_BODY/GLOW`). NOVA BURST is white to gold (`BURST_RING`, `BURST_GLOW`),
+graze sparks are pale cyan (`GRAZE_SPARK`), and the NOVA gauge is gold (`GAUGE_*`).
 
 Keep saturation high and values bright against the dark background. Avoid pastel,
 grayscale, or photo-realistic gradients.
@@ -112,8 +121,9 @@ Title / menu: `TITLE_SUBTITLE #ffcc66` (the gold "ECLIPSE"), `MENU_DISABLED #3a4
 
 Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
 
-- **Player ship:** ~24 px wide, blue body + wings, orange/yellow engine flame, cyan cockpit.
-  Small hit radius (`PLAYER_HIT_RADIUS = 6`) relative to the visual.
+- **Player ship (NOVA-II):** ~24 px wide, slimmer and sharper than SECTOR NOVA 1: needle nose,
+  thin swept wings, **twin engines** with orange/yellow flames, cyan cockpit, blue `PLAYER_*` colors.
+  Small hit radius (`PLAYER_HIT_RADIUS = 6`) relative to the visual. Options are ~10 px arrowheads.
 - **Enemies:** radius roughly **7–14 px**. Each type has a distinct silhouette
   (diamond, winged oval, ringed circle, arrowhead, spiky hexagon, turret) and a
   light "eye/core" detail. New enemies should stay in this size band and follow the
@@ -150,7 +160,7 @@ Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
 ## 7. SECTOR NOVA 2 Additions (in progress)
 
 - **Draw order** (`Game.drawGameplay`): background → items → enemies → boss → hazards →
-  player → player bullets → **hostile bullets** → effects → HUD. Hostile bullets are
+  options → REFLECT SHIELD → player → player bullets → **hostile bullets** → effects → HUD. Hostile bullets are
   always drawn above clouds, darkness, and bright backdrops — never hide them.
 - **Telegraphs:** lasers, lightning, flares, falling ice, etc. use `Hazard`: a thin blinking
   `HAZARD_WARN` guide first (harmless), then a `HAZARD_GLOW` band with a white core.

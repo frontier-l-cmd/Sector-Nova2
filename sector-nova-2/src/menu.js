@@ -79,7 +79,7 @@ class TitleMenu {
     switch (item) {
       case 'newGame':
         game.audio.play('select');
-        game.startFromStage(1);
+        game.startFromStage(1, true);
         break;
       case 'continue':
         game.audio.play('select');
@@ -194,7 +194,7 @@ class TitleMenu {
     ctx.font = '7px monospace';
     ctx.fillText('UP/DOWN: SELECT   LEFT/RIGHT: CHANGE', cx, 384);
     ctx.fillText('ENTER: OK   C: CONTINUE   1-6: STAGE', cx, 396);
-    ctx.fillText('IN GAME  MOVE: ARROWS/WASD  SHOT: SPACE', cx, 408);
+    ctx.fillText('MOVE: ARROWS/WASD  SHOT: SPACE  BURST: X', cx, 408);
     ctx.fillText('P: PAUSE   M: SOUND ON/OFF', cx, 420);
     if ('ontouchstart' in window) {
       ctx.fillStyle = COLORS.UI_GREEN;
@@ -202,7 +202,7 @@ class TitleMenu {
     }
     if (DEBUG_MODE) {
       ctx.fillStyle = COLORS.UI_YELLOW;
-      ctx.fillText('DEBUG: IN GAME 1-5 WEAPON  9 SKIP TO BOSS', cx, 438);
+      ctx.fillText('DEBUG 1-4 WPN 5 LV 6 OPT 7 RFL 8 NOVA 9 SKIP 0 INV', cx, 438);
     }
 
     // Credit

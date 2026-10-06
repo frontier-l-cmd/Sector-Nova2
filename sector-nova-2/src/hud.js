@@ -3,14 +3,20 @@
 // ------------------------------------------------------------
 // In-play overlay, drawn inside the canvas (no DOM HUD).
 // Layout follows DESIGN.md 15-4:
-//   top-left    : lives            top-center : score
-//   top-right   : stage            top (boss) : boss name + HP bar
-//   bottom-left : weapon panel
-// Phase 2 adds combo, NOVA gauge, crystals and options; Phase 4
-// adds the LYRA comm window and the full WARNING presentation.
+//   top-left     : lives
+//   top-center   : score
+//   top-right    : NOVA CRYSTAL count + stage, combo and multiplier
+//                  with the remaining-time bar, "x4!" popup
+//   top (boss)   : boss name + HP bar (left of the combo column)
+//   bottom-left  : weapon name + Lv dots, options, REFLECT timer
+//   bottom-right : NOVA gauge, "BURST READY" blinking when full
+// The LYRA comm window and the full WARNING arrive in Phase 4.
 // ============================================================
 
 const HUD_BAR_HEIGHT = 16;
+const HUD_RIGHT = CANVAS_WIDTH - 4;
+const HUD_COMBO_BAR_W = 60;
+const HUD_GAUGE_W = 70;
 
 class HUD {
   /** Everything drawn above the playfield during play. */
@@ -22,7 +28,9 @@ class HUD {
     } else if (!game.boss) {
       this.drawStageLabel(ctx, game);
     }
+    this.drawCombo(ctx, game);
     this.drawWeaponPanel(ctx, game);
+    this.drawGauge(ctx, game);
     if (DEBUG_MODE) this.drawDebugInfo(ctx, game);
     ctx.restore();
 
@@ -56,7 +64,7 @@ class HUD {
     ctx.font = '10px monospace';
     ctx.textAlign = 'left';
     const label = 'SCORE ';
-    const digits = String(game.score).padStart(8, '0');
+    const digits = String(Math.floor(game.score)).padStart(8, '0');
     const labelW = ctx.measureText(label).width;
     const startX = CANVAS_WIDTH / 2 - (labelW + ctx.measureText(digits).width) / 2;
     ctx.fillStyle = COLORS.UI_WHITE;
@@ -64,10 +72,18 @@ class HUD {
     ctx.fillStyle = COLORS.UI_YELLOW;
     ctx.fillText(digits, startX + labelW, 12);
 
-    // Stage (top-right)
+    // Stage (top-right) and NOVA CRYSTAL count to its left.
     ctx.textAlign = 'right';
     ctx.fillStyle = COLORS.UI_WHITE;
-    ctx.fillText('STAGE ' + game.stage.stageNumber, CANVAS_WIDTH - 4, 12);
+    const stageText = 'ST' + game.stage.stageNumber;
+    ctx.fillText(stageText, HUD_RIGHT, 12);
+    const crystalX = HUD_RIGHT - ctx.measureText(stageText).width - 8;
+    // Crystals from CONTINUE / STAGE SELECT runs are shown in gray
+    // (they do not count toward the TRUE END).
+    const crystalColor = game.runFromNewGame ? COLORS.CRYSTAL_HUES[4] : COLORS.UI_DIM;
+    ctx.fillStyle = crystalColor;
+    ctx.fillText(String(game.crystalStages.size), crystalX, 12);
+    drawDiamond(ctx, crystalX - ctx.measureText('0').width - 6, 8, 3, 5, crystalColor);
   }
 
   drawStageLabel(ctx, game) {
@@ -78,15 +94,16 @@ class HUD {
   }
 
   drawBossBar(ctx, boss) {
-    ctx.font = '10px monospace';
-    ctx.fillStyle = COLORS.UI_WHITE;
-    ctx.textAlign = 'center';
-    ctx.fillText(boss.name, CANVAS_WIDTH / 2, 28);
+    const barX = 8;
+    const barY = 30;
+    const barW = CANVAS_WIDTH - HUD_COMBO_BAR_W - 28;
+    const barH = 5;
 
-    const barX = 40;
-    const barY = 32;
-    const barW = CANVAS_WIDTH - 80;
-    const barH = 6;
+    ctx.font = '9px monospace';
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.textAlign = 'left';
+    ctx.fillText(boss.name, barX, 27);
+
     ctx.fillStyle = '#333';
     ctx.fillRect(barX, barY, barW, barH);
     ctx.fillStyle = boss.isEnraged ? COLORS.UI_RED : COLORS.UI_GREEN;
@@ -99,75 +116,138 @@ class HUD {
     if (boss.phases.length > 1) {
       ctx.font = '7px monospace';
       ctx.fillStyle = COLORS.UI_YELLOW;
-      ctx.fillText(boss.phaseName, CANVAS_WIDTH / 2, barY + barH + 9);
+      ctx.fillText(boss.phaseName, barX, barY + barH + 9);
     }
   }
 
-  /**
-   * Bottom-left weapon / shield panel (SECTOR NOVA 1 timed weapons;
-   * becomes weapon name + Lv dots and options in Phase 2).
-   */
+  /** Top-right: "COMBO 23 x2", remaining-time bar, multiplier popup. */
+  drawCombo(ctx, game) {
+    const combo = game.combo;
+    if (combo.count > 0) {
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 8px monospace';
+      const mul = combo.multiplier;
+      ctx.fillStyle = mul >= 8 ? COLORS.UI_RED : mul >= 4 ? COLORS.ITEM_SPREAD
+        : mul >= 2 ? COLORS.UI_YELLOW : COLORS.UI_WHITE;
+      ctx.fillText('COMBO ' + combo.count + ' ×' + mul, HUD_RIGHT, 26);
+
+      const x = HUD_RIGHT - HUD_COMBO_BAR_W;
+      ctx.fillStyle = '#222';
+      ctx.fillRect(x, 29, HUD_COMBO_BAR_W, 2);
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      ctx.fillRect(x, 29, HUD_COMBO_BAR_W * combo.timeRatio, 2);
+    }
+
+    if (combo.popupTimer > 0) {
+      const t = 1 - combo.popupTimer / COMBO_POPUP_FRAMES;
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 12px monospace';
+      ctx.globalAlpha = 1 - t * 0.8;
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      ctx.fillText(combo.popupText, HUD_RIGHT, 44 - t * 6);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /** Bottom-left: weapon + Lv dots, options, REFLECT SHIELD timer. */
   drawWeaponPanel(ctx, game) {
     const player = game.player;
     const def = player.weaponDef;
     const x = 6;
-    const y = CANVAS_HEIGHT - 34;
+    let y = CANVAS_HEIGHT - 28;
 
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-
-    let weaponName = def.name;
-    if (player.weaponType === WEAPON_TRIPLE) weaponName = 'TRIPLE';
-    if (player.weaponType === WEAPON_PIERCE) weaponName = 'LASER';
-    if (player.weaponType === WEAPON_FLAME) weaponName = 'FLAME';
-
-    ctx.font = '8px monospace';
-    ctx.fillStyle = COLORS.UI_DIM;
-    ctx.fillText('WPN:', x, y);
     ctx.font = 'bold 8px monospace';
     ctx.fillStyle = def.color;
-    ctx.fillText(weaponName, x + 25, y);
+    ctx.fillText(def.name, x, y);
 
-    if (player.weaponType !== WEAPON_NORMAL && player.weaponTimer > 0) {
-      ctx.font = '8px monospace';
-      ctx.fillStyle = COLORS.UI_WHITE;
-      ctx.fillText(player.weaponSecondsLeft + 's', x + 70, y);
-
-      // Remaining-time bar, flashing when almost out.
-      const barW = 90;
-      const pct = player.weaponTimer / WEAPON_DURATION;
-      ctx.fillStyle = '#222';
-      ctx.fillRect(x, y + 4, barW, 4);
-      const low = player.weaponTimer < 180;
-      ctx.fillStyle = (low && Math.floor(game.globalFrame / 6) % 2 === 0)
-        ? COLORS.UI_RED : def.color;
-      ctx.fillRect(x, y + 4, barW * pct, 4);
+    // Lv dots (filled = current level); NORMAL has no level.
+    if (player.hasLevel) {
+      const dotsX = x + ctx.measureText(def.name).width + 6;
+      for (let i = 0; i < WEAPON_MAX_LEVEL; i++) {
+        ctx.beginPath();
+        ctx.arc(dotsX + i * 8, y - 3, 2.5, 0, Math.PI * 2);
+        if (i < player.weaponLevel) {
+          ctx.fillStyle = def.color;
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = COLORS.UI_DIM;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
     }
 
-    const shieldY = y + 18;
+    // Options
+    y += 11;
     ctx.font = '8px monospace';
     ctx.fillStyle = COLORS.UI_DIM;
-    ctx.fillText('SHD:', x, shieldY);
-    ctx.font = 'bold 8px monospace';
-    ctx.fillStyle = player.shieldActive ? COLORS.ITEM_SHIELD : COLORS.UI_DIM;
-    ctx.fillText(player.shieldActive ? 'ON' : 'OFF', x + 25, shieldY);
-    if (player.shieldActive && player.shieldTimer > 0) {
-      ctx.font = '8px monospace';
-      ctx.fillStyle = COLORS.UI_WHITE;
-      ctx.fillText(player.shieldSecondsLeft + 's', x + 48, shieldY);
+    ctx.fillText('OPT', x, y);
+    for (let i = 0; i < OPTION_MAX; i++) {
+      ctx.beginPath();
+      ctx.arc(x + 24 + i * 9, y - 3, 3, 0, Math.PI * 2);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = i < player.options.length ? COLORS.ITEM_OPTION : COLORS.MENU_DISABLED;
+      ctx.stroke();
+    }
+
+    // REFLECT SHIELD time left
+    if (player.reflectActive) {
+      ctx.fillStyle = COLORS.ITEM_REFLECT;
+      ctx.fillText('REFLECT ' + player.reflectSecondsLeft + 's', x + 48, y);
     }
   }
 
-  /** DEBUG_MODE: timeline clock and object counts (bottom-right). */
+  /** Bottom-right: NOVA gauge; "BURST READY" blinks when full. */
+  drawGauge(ctx, game) {
+    const player = game.player;
+    const x = HUD_RIGHT - HUD_GAUGE_W;
+    const y = CANVAS_HEIGHT - 12;
+    const ratio = player.gauge / GAUGE_MAX;
+
+    ctx.textAlign = 'right';
+    ctx.font = '8px monospace';
+    ctx.fillStyle = COLORS.UI_DIM;
+    ctx.fillText('NOVA', x - 4, y + 5);
+
+    ctx.fillStyle = COLORS.GAUGE_BG;
+    ctx.fillRect(x, y, HUD_GAUGE_W, 6);
+    const full = player.burstReady;
+    const blink = Math.floor(game.globalFrame / 10) % 2 === 0;
+    ctx.fillStyle = full && blink ? COLORS.GAUGE_FULL : COLORS.GAUGE_FILL;
+    ctx.fillRect(x, y, HUD_GAUGE_W * ratio, 6);
+    ctx.strokeStyle = COLORS.UI_DIM;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, HUD_GAUGE_W, 6);
+
+    if (full) {
+      if (blink) {
+        ctx.font = 'bold 8px monospace';
+        ctx.fillStyle = COLORS.GAUGE_FULL;
+        ctx.fillText('BURST READY [X]', HUD_RIGHT, y - 4);
+      }
+    } else {
+      ctx.font = '7px monospace';
+      ctx.fillStyle = COLORS.UI_DIM;
+      ctx.fillText(Math.floor(player.gauge) + '%', HUD_RIGHT, y - 3);
+    }
+  }
+
+  /** DEBUG_MODE: timeline clock, object counts, invincibility flag. */
   drawDebugInfo(ctx, game) {
     ctx.font = '7px monospace';
     ctx.textAlign = 'right';
     ctx.fillStyle = COLORS.UI_DIM;
     const t = game.timeline ? game.timeline.seconds.toFixed(1).padStart(5, '0') : '--';
     ctx.fillText('TL ' + t + 's' + (game.timeline && game.timeline.paused ? ' P' : ''),
-      CANVAS_WIDTH - 4, CANVAS_HEIGHT - 14);
+      HUD_RIGHT, CANVAS_HEIGHT - 38);
     ctx.fillText('E' + game.enemies.length + ' B' + game.enemyBullets.length,
-      CANVAS_WIDTH - 4, CANVAS_HEIGHT - 5);
+      HUD_RIGHT, CANVAS_HEIGHT - 30);
+    if (game.debugInvincible) {
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      ctx.fillText('INVINCIBLE', HUD_RIGHT, CANVAS_HEIGHT - 46);
+    }
   }
 
   /** Pre-boss WARNING (Phase 1 version; full presentation in Phase 4). */
@@ -199,4 +279,16 @@ class HUD {
     ctx.fillText(banner.text, CANVAS_WIDTH / 2, y + 2);
     ctx.restore();
   }
+}
+
+/** Small diamond icon (NOVA CRYSTAL). */
+function drawDiamond(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - h);
+  ctx.lineTo(x - w, y);
+  ctx.lineTo(x, y + h);
+  ctx.lineTo(x + w, y);
+  ctx.closePath();
+  ctx.fill();
 }

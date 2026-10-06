@@ -8,7 +8,8 @@
 //  - Routing: sfx bus + bgm bus -> master -> speakers.
 //  - M toggles mute; the setting is saved.
 //
-// Phase 1 skeleton: three test effects (shot / explode / select).
+// Effects so far: shot / explode / select (Phase 1), hit / item /
+// graze / burst (Phase 2).
 // The full effect list and the BGM step sequencer come later.
 // ============================================================
 
@@ -30,6 +31,36 @@ const SFX_DEFS = {
     layers: [
       { noise: true, filter: 2400, filterEnd: 200, duration: 0.28, volume: 0.35 },
       { wave: 'triangle', freq: 180, freqEnd: 40, duration: 0.22, volume: 0.3 },
+    ],
+  },
+  // Player hit: harsh falling square over a noise crunch.
+  hit: {
+    layers: [
+      { wave: 'square', freq: 440, freqEnd: 70, duration: 0.3, volume: 0.18 },
+      { noise: true, filter: 1500, filterEnd: 300, duration: 0.2, volume: 0.3 },
+    ],
+  },
+  // Item pickup: quick rising triangle arpeggio.
+  item: {
+    layers: [
+      { wave: 'triangle', freq: 660, duration: 0.05, volume: 0.2 },
+      { wave: 'triangle', freq: 880, duration: 0.05, volume: 0.2, delay: 0.05 },
+      { wave: 'triangle', freq: 1320, duration: 0.08, volume: 0.2, delay: 0.1 },
+    ],
+  },
+  // Graze: very short high tick, thinned for bullet curtains.
+  graze: {
+    minInterval: 0.04,
+    layers: [
+      { wave: 'square', freq: 2400, freqEnd: 1800, duration: 0.025, volume: 0.04 },
+    ],
+  },
+  // NOVA BURST: long noise sweep with a rising tone.
+  burst: {
+    layers: [
+      { noise: true, filter: 400, filterEnd: 6000, duration: 0.6, volume: 0.4 },
+      { wave: 'triangle', freq: 110, freqEnd: 880, duration: 0.5, volume: 0.3 },
+      { wave: 'square', freq: 220, freqEnd: 1760, duration: 0.4, volume: 0.06 },
     ],
   },
   // Two-step chime for menu cursor moves and decisions.

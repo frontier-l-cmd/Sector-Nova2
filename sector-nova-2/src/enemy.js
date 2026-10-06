@@ -23,13 +23,18 @@ class Enemy {
   /**
    * Check if off screen (below)
    */
+  /** Large enemies give more NOVA gauge when destroyed. */
+  get large() {
+    return this.radius >= LARGE_ENEMY_RADIUS;
+  }
+
   isOffScreen() {
     return this.y > CANVAS_HEIGHT + 30;
   }
 
   /**
    * Apply damage from a player attack.
-   * `source` is one of: 'bullet' | 'laser' | 'explosion'.
+   * `source` is one of: 'bullet' | 'rail' | 'chain' | 'burst'.
    * Subclasses (e.g. ShieldEnemy) may reduce damage by source/direction.
    * Returns the actual damage dealt.
    */
@@ -278,10 +283,10 @@ class ShieldEnemy extends Enemy {
   }
 
   applyDamage(amount, source) {
-    // Frontal weapons (bullets / laser hitting the plate) are reduced.
-    // Splash-style damage bypasses the shield.
+    // Frontal weapons (bullets / rail hitting the plate) are reduced.
+    // Chain lightning and NOVA BURST bypass the shield.
     let dmg = amount;
-    if (source === 'bullet' || source === 'laser') {
+    if (source === 'bullet' || source === 'rail') {
       dmg = Math.max(1, amount * ENEMY_SHIELD_FRONT_REDUCTION);
     }
     this.hp -= dmg;
@@ -422,7 +427,7 @@ class SplitEnemy extends Enemy {
 
 // ============================================================
 // Formation Enemy: spawns in lines (handled by the spawner).
-// Straight, fast mover — a vertical column is shredded by PIERCE LASER.
+// Straight, fast mover — a vertical column is shredded by RAIL LANCER.
 // ============================================================
 class FormationEnemy extends Enemy {
   constructor(x, y) {

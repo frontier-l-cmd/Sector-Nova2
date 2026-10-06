@@ -66,10 +66,92 @@ class ScreenFlash {
 /**
  * Manages all visual effects
  */
+/**
+ * CHAIN BOLT lightning: a jagged purple-to-white line between two
+ * points, re-jittered every frame while it fades.
+ */
+class LightningArc {
+  constructor(x1, y1, x2, y2) {
+    this.x1 = x1;
+    this.y1 = y1;
+    this.x2 = x2;
+    this.y2 = y2;
+    this.life = CHAIN_ARC_FRAMES;
+    this.alive = true;
+  }
+
+  update() {
+    if (--this.life <= 0) this.alive = false;
+  }
+
+  draw(ctx) {
+    const steps = 6;
+    const dx = this.x2 - this.x1;
+    const dy = this.y2 - this.y1;
+    const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+    const nx = -dy / len;
+    const ny = dx / len;
+    const pts = [[this.x1, this.y1]];
+    for (let i = 1; i < steps; i++) {
+      const j = randFloat(-6, 6);
+      pts.push([this.x1 + dx * i / steps + nx * j, this.y1 + dy * i / steps + ny * j]);
+    }
+    pts.push([this.x2, this.y2]);
+
+    const alpha = this.life / CHAIN_ARC_FRAMES;
+    const strokes = [[COLORS.CHAIN_GLOW, 4, 0.5], [COLORS.CHAIN_BODY, 2, 1], [COLORS.UI_WHITE, 1, 1]];
+    for (const [color, width, a] of strokes) {
+      ctx.globalAlpha = alpha * a;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+/**
+ * NOVA BURST shockwave: white-gold ring expanding from the ship.
+ */
+class BurstRing {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.life = BURST_RING_FRAMES;
+    this.alive = true;
+  }
+
+  update() {
+    if (--this.life <= 0) this.alive = false;
+  }
+
+  draw(ctx) {
+    const t = 1 - this.life / BURST_RING_FRAMES; // 0 -> 1
+    const r = 10 + t * CANVAS_HEIGHT;
+    ctx.globalAlpha = (1 - t) * 0.5;
+    ctx.strokeStyle = COLORS.BURST_GLOW;
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1 - t;
+    ctx.strokeStyle = COLORS.BURST_RING;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+}
+
 class EffectsManager {
   constructor() {
     this.particles = [];
     this.flashes = [];
+    this.shapes = []; // lightning arcs, burst rings
   }
 
   /**
@@ -142,7 +224,32 @@ class EffectsManager {
     }
   }
 
+  /** CHAIN BOLT jump between two points. */
+  lightning(x1, y1, x2, y2) {
+    this.shapes.push(new LightningArc(x1, y1, x2, y2));
+  }
+
+  /** Small pale sparks around the ship when a bullet grazes it. */
+  grazeSpark(x, y) {
+    for (let i = 0; i < 3; i++) {
+      const angle = randFloat(0, Math.PI * 2);
+      const speed = randFloat(1, 2.5);
+      this.particles.push(new Particle(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed,
+        1.5, COLORS.GRAZE_SPARK, randInt(6, 12)));
+    }
+  }
+
+  /** NOVA BURST: expanding ring + white-gold flash. */
+  burst(x, y) {
+    this.shapes.push(new BurstRing(x, y));
+    this.flashes.push(new ScreenFlash(COLORS.BURST_RING, 24));
+  }
+
   update() {
+    for (let i = this.shapes.length - 1; i >= 0; i--) {
+      this.shapes[i].update();
+      if (!this.shapes[i].alive) this.shapes.splice(i, 1);
+    }
     // Update particles
     for (let i = this.particles.length - 1; i >= 0; i--) {
       this.particles[i].update();
@@ -160,6 +267,9 @@ class EffectsManager {
   }
 
   draw(ctx) {
+    for (const s of this.shapes) {
+      s.draw(ctx);
+    }
     for (const p of this.particles) {
       p.draw(ctx);
     }
@@ -171,5 +281,6 @@ class EffectsManager {
   clear() {
     this.particles = [];
     this.flashes = [];
+    this.shapes = [];
   }
 }

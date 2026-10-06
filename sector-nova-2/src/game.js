@@ -5,7 +5,8 @@
 // lists. Stage content comes from timeline.js, bosses from boss.js
 // and src/bosses/, the HUD from hud.js, menus and full-screen
 // overlays from menu.js, the backdrop from background.js and sound
-// from audio.js.
+// from audio.js. Combo lives in scoring.js; graze, NOVA BURST and
+// item effects are resolved here.
 //
 // The Game is also the "world" bosses act on: addEnemyBullets(),
 // addHazard(), clearHostiles(), onBossDefeated(),
@@ -23,6 +24,7 @@ class Game {
     this.stageManager = new StageManager();
     this.titleMenu = new TitleMenu();
     this.hud = new HUD();
+    this.combo = new ComboCounter();
     this.difficulty = loadDifficulty();
     this.touch = new TouchControls(this, canvas);
 
@@ -38,6 +40,9 @@ class Game {
     this.newBestScore = false;
     this.newBestClearScore = false;
     this.globalFrame = 0; // drives blinking UI in every state
+    this.crystalStages = new Set(); // stages whose NOVA CRYSTAL was taken
+    this.runFromNewGame = false;    // TRUE END counts only NEW GAME runs
+    this.debugInvincible = false;   // debug key 0
 
     this.titleMenu.reset();
     if (DEBUG_MODE) validateTimelines();
@@ -77,15 +82,18 @@ class Game {
   }
 
   /**
-   * Start a clean run from an implemented, unlocked stage
-   * (NEW GAME / CONTINUE / STAGE SELECT all start with score 0).
+   * Start a run from an implemented, unlocked stage. Every start
+   * from the title begins with score 0, NORMAL, no options and an
+   * empty gauge (DESIGN.md 15-7). `fromNewGame` marks NEW GAME runs.
    */
-  startFromStage(stageNumber) {
+  startFromStage(stageNumber, fromNewGame) {
     if (!isStagePlayable(stageNumber)) return false;
     this.stageManager.setStage(stageNumber);
 
     this.player = new Player();
     this.score = 0;
+    this.crystalStages = new Set();
+    this.runFromNewGame = !!fromNewGame && stageNumber === 1;
     this.scoreSaved = false;
     this.newBestScore = false;
     this.newBestClearScore = false;
@@ -106,6 +114,7 @@ class Game {
     this.scoreSaved = false;
     this.newBestScore = false;
     this.newBestClearScore = false;
+    this.combo.reset();
     this.background.setTheme('title');
     this.titleMenu.reset();
     this.state = STATE.TITLE;
@@ -126,9 +135,9 @@ class Game {
   }
 
   /**
-   * Prepare the current stage: fresh timeline and backdrop. Keeps the
-   * score for normal progression but resets the player's condition
-   * (SECTOR NOVA 1 rules; Phase 2 adds weapon / gauge carry-over).
+   * Prepare the current stage (DESIGN.md 15-7). Score, weapon + Lv,
+   * options, NOVA gauge and crystals carry over; lives, the HULL UP
+   * cap, REFLECT SHIELD, position and a short invincibility reset.
    */
   beginStage() {
     this.clearStageObjects();
@@ -136,18 +145,21 @@ class Game {
     this.background.setTheme(this.stage.stageNumber);
     this.playTime = 0;
     this.stageClearTimer = 0;
+    this.combo.reset();
 
-    this.player.x = CANVAS_WIDTH / 2;
-    this.player.y = CANVAS_HEIGHT - 60;
-    this.player.maxLives = PLAYER_MAX_LIVES;
-    this.player.lives = this.player.maxLives;
-    this.player.alive = true;
-    this.player.weaponType = WEAPON_NORMAL;
-    this.player.weaponTimer = 0;
-    this.player.shieldActive = false;
-    this.player.shieldTimer = 0;
-    this.player.fireTimer = 0;
-    this.player.invincibleTimer = PLAYER_INVINCIBLE_FRAMES;
+    const p = this.player;
+    p.x = CANVAS_WIDTH / 2;
+    p.y = CANVAS_HEIGHT - 60;
+    p.maxLives = PLAYER_MAX_LIVES;
+    p.lives = p.maxLives;
+    p.alive = true;
+    p.reflectTimer = 0;
+    p.fireTimer = 0;
+    p.invincibleTimer = PLAYER_INVINCIBLE_FRAMES;
+    for (const o of p.options) {
+      o.x = p.x;
+      o.y = p.y + OPTION_OFFSET_Y;
+    }
   }
 
   // ============================================================
@@ -224,6 +236,7 @@ class Game {
     this.playTime++;
     this.background.update();
     this.handleDebugKeys();
+    this.combo.update();
 
     // --- Stage script ---
     this.timeline.update(ev => this.handleTimelineEvent(ev));
@@ -231,6 +244,7 @@ class Game {
     // --- Player ---
     this.player.update(this.input);
     this.touch.applyDrag(this.player);
+    if (this.input.burst) this.useBurst();
     if (this.input.shoot) {
       const shots = this.player.shoot();
       if (shots.length) {
@@ -238,7 +252,7 @@ class Game {
         this.audio.play('shot');
       }
     }
-    for (const b of this.playerBullets) b.update();
+    for (const b of this.playerBullets) b.update(this);
     this.playerBullets = this.playerBullets.filter(b => b.alive);
 
     // --- Enemies ---
@@ -371,7 +385,8 @@ class Game {
   }
 
   onBossPartDestroyed(boss, part) {
-    this.score += part.score;
+    this.score += part.score * this.combo.multiplier;
+    this.player.addGauge(GAUGE_PART_BREAK);
     this.effects.explode(part.x(boss), part.y(boss), 14);
     this.audio.play('explode');
   }
@@ -380,101 +395,18 @@ class Game {
   // COLLISIONS
   // ============================================================
   checkCollisions() {
+    this.checkPlayerShots();
+    this.checkItems();
+
+    // Everything below can hurt the player.
+    if (!this.player.alive || this.player.isInvincible) return;
     const px = this.player.x;
     const py = this.player.y;
     const pr = this.player.hitRadius;
 
-    // --- Player bullets vs enemies ---
-    for (const bullet of this.playerBullets) {
-      if (!bullet.alive) continue;
-
-      for (const enemy of this.enemies) {
-        if (!enemy.alive) continue;
-
-        if (circleCollision(bullet.x, bullet.y, bullet.radius, enemy.x, enemy.y, enemy.radius)) {
-          if (bullet.kind === 'laser') {
-            // PIERCE LASER: damage each enemy once, keep travelling.
-            if (bullet.hitSet.indexOf(enemy) !== -1) continue;
-            bullet.hitSet.push(enemy);
-            enemy.applyDamage(bullet.damage, 'laser');
-            this.effects.hitSpark(bullet.x, bullet.y);
-            if (enemy.hp <= 0) this.destroyEnemy(enemy);
-            // No break: the beam pierces through.
-          } else if (bullet.kind === 'flame') {
-            bullet.alive = false;
-            enemy.applyDamage(bullet.damage, 'bullet');
-            this.effects.explode(bullet.x, bullet.y, 6, 2.2);
-            if (enemy.hp <= 0) this.destroyEnemy(enemy);
-            break;
-          } else {
-            // NORMAL bullet.
-            bullet.alive = false;
-            enemy.applyDamage(bullet.damage, 'bullet');
-            this.effects.hitSpark(bullet.x, bullet.y);
-            if (enemy.hp <= 0) this.destroyEnemy(enemy);
-            break; // Each bullet hits only one enemy
-          }
-        }
-      }
-    }
-
-    // --- Player bullets vs boss (parts first, then the core) ---
-    if (this.boss && this.boss.isTargetable) {
-      for (const bullet of this.playerBullets) {
-        if (!bullet.alive) continue;
-        const target = this.boss.findHitTarget(bullet.x, bullet.y, bullet.radius);
-        if (!target) continue;
-
-        if (bullet.kind === 'laser') {
-          if (bullet.hitSet.indexOf(target) !== -1) continue;
-          bullet.hitSet.push(target);
-          this.boss.applyHit(target, LASER_BOSS_DAMAGE, 'laser', this);
-          this.effects.hitSpark(bullet.x, bullet.y);
-        } else {
-          bullet.alive = false;
-          this.boss.applyHit(target, bullet.damage, 'bullet', this);
-          if (bullet.kind === 'flame') this.effects.explode(bullet.x, bullet.y, 6, 2.2);
-          else this.effects.hitSpark(bullet.x, bullet.y);
-        }
-        this.score += BOSS_HIT_SCORE;
-      }
-    }
-
-    // --- Powerups vs player ---
-    // Invincibility only blocks damage; living players can still collect items.
-    if (this.player.alive) {
-      for (const p of this.powerups) {
-        if (!p.alive) continue;
-
-        if (circleCollision(px, py, pr + 8, p.x, p.y, p.radius)) {
-          p.alive = false;
-          if (p.type === ITEM_SHIELD) {
-            this.player.setShield();
-            this.score += 500;
-          } else if (p.type === ITEM_LIFE) {
-            if (!this.player.heal(1)) {
-              this.score += 1000;
-            }
-          } else if (p.type === ITEM_MAX_LIFE) {
-            if (!this.player.increaseMaxLives(1)) {
-              this.score += 1500;
-            }
-          } else {
-            this.player.setWeapon(p.type); // equip / overwrite special weapon
-            this.score += 500;
-          }
-          this.effects.powerupPickup(p.x, p.y);
-        }
-      }
-    }
-
-    // Skip damage collision checks if invincible or dead
-    if (!this.player.alive || this.player.isInvincible) return;
-
     // --- Enemies vs player ---
     for (const enemy of this.enemies) {
-      if (!enemy.alive) continue;
-
+      if (!enemy.alive || this.debugInvincible) continue;
       if (circleCollision(px, py, pr, enemy.x, enemy.y, enemy.radius)) {
         enemy.alive = false;
         this.effects.explode(enemy.x, enemy.y);
@@ -482,14 +414,17 @@ class Game {
       }
     }
 
-    // --- Hostile bullets vs player ---
+    // --- Hostile bullets vs player (hit, else graze) ---
     for (const bullet of this.enemyBullets) {
       if (!bullet.alive) continue;
-
       if (circleCollision(px, py, pr, bullet.x, bullet.y, bullet.radius)) {
+        if (this.player.isInvincible || this.debugInvincible) continue;
         bullet.alive = false;
         this.effects.hitSpark(bullet.x, bullet.y);
         this.hitPlayer();
+      } else if (!bullet.grazed && !this.player.isInvincible &&
+                 circleCollision(px, py, GRAZE_RADIUS, bullet.x, bullet.y, bullet.radius)) {
+        this.graze(bullet);
       }
     }
 
@@ -499,42 +434,235 @@ class Game {
     }
   }
 
-  // ============================================================
-  // KILL / WEAPON HELPERS
-  // ============================================================
+  /** Player projectiles (incl. options and reflected bullets) vs enemies and boss. */
+  checkPlayerShots() {
+    for (const bullet of this.playerBullets) {
+      if (!bullet.alive) continue;
 
-  /**
-   * Apply one hit to the player, letting SHIELD BARRIER block it first.
-   * Invincibility frames from the first hit absorb the rest this frame.
-   */
-  hitPlayer() {
-    const x = this.player.x;
-    const y = this.player.y;
-    if (this.player.isInvincible || !this.player.alive) return;
-    if (this.player.blockHitWithShield()) {
-      this.effects.hitSpark(x, y);
-      this.effects.explode(x, y, 8, 2.5);
-      return;
+      for (const enemy of this.enemies) {
+        if (!enemy.alive) continue;
+        if (!circleCollision(bullet.x, bullet.y, bullet.radius, enemy.x, enemy.y, enemy.radius)) continue;
+
+        if (bullet.kind === 'rail') {
+          // RAIL LANCER: damage each enemy once, keep travelling.
+          if (bullet.hitSet.indexOf(enemy) !== -1) continue;
+          bullet.hitSet.push(enemy);
+          this.damageEnemy(enemy, bullet.damage, 'rail');
+          this.effects.hitSpark(bullet.x, bullet.y);
+          continue; // pierces
+        }
+        bullet.alive = false;
+        this.effects.hitSpark(bullet.x, bullet.y);
+        this.damageEnemy(enemy, bullet.damage, bullet.kind === 'chain' ? 'chain' : 'bullet');
+        if (bullet.kind === 'chain') this.chainLightning(enemy, bullet);
+        break; // other shots hit only one enemy
+      }
     }
-    if (this.player.takeDamage()) {
-      this.effects.explode(x, y, 20, 5);
+
+    // --- Player shots vs boss (parts first, then the core) ---
+    if (!this.boss || !this.boss.isTargetable) return;
+    for (const bullet of this.playerBullets) {
+      if (!bullet.alive) continue;
+      const target = this.boss.findHitTarget(bullet.x, bullet.y, bullet.radius);
+      if (!target) continue;
+
+      if (bullet.kind === 'rail') {
+        if (bullet.hitSet.indexOf(target) !== -1) continue;
+        bullet.hitSet.push(target);
+      } else {
+        bullet.alive = false;
+      }
+      this.boss.applyHit(target, bullet.damage, bullet.kind === 'rail' ? 'rail' : 'bullet', this);
+      this.effects.hitSpark(bullet.x, bullet.y);
+      this.score += BOSS_HIT_SCORE;
     }
   }
 
+  damageEnemy(enemy, amount, source) {
+    enemy.applyDamage(amount, source);
+    if (enemy.hp <= 0) this.destroyEnemy(enemy);
+  }
+
   /**
-   * DEBUG hotkeys (in play only):
-   *   1 = NORMAL  2 = TRIPLE  3 = LASER  4 = FLAME  5 = SHIELD
-   *   9 = skip to just before the WARNING
-   * Phase 2 replaces 1-8 / 0 with the SECTOR NOVA 2 set.
+   * CHAIN BOLT: from the enemy just hit, jump to the nearest other
+   * enemy within CHAIN_RANGE, `bolt.chains` times.
+   */
+  chainLightning(first, bolt) {
+    const hit = [first];
+    let from = first;
+    for (let i = 0; i < bolt.chains; i++) {
+      let next = null;
+      let best = CHAIN_RANGE;
+      for (const e of this.enemies) {
+        if (!e.alive || hit.includes(e)) continue;
+        const d = dist(from.x, from.y, e.x, e.y);
+        if (d <= best) {
+          best = d;
+          next = e;
+        }
+      }
+      if (!next) return;
+      this.effects.lightning(from.x, from.y, next.x, next.y);
+      hit.push(next);
+      this.damageEnemy(next, bolt.jumpDamage, 'chain');
+      from = next;
+    }
+  }
+
+  /** Items vs player. Invincibility only blocks damage; items are always collectable. */
+  checkItems() {
+    if (!this.player.alive) return;
+    const pr = this.player.hitRadius + PLAYER_ITEM_PICKUP_RADIUS;
+    for (const p of this.powerups) {
+      if (!p.alive) continue;
+      if (circleCollision(this.player.x, this.player.y, pr, p.x, p.y, p.radius)) {
+        p.alive = false;
+        this.collectItem(p.type);
+        this.effects.powerupPickup(p.x, p.y);
+      }
+    }
+  }
+
+  /** Apply one item's effect (DESIGN.md 10). */
+  collectItem(type) {
+    const player = this.player;
+    this.audio.play('item');
+    switch (type) {
+      case ITEM_OPTION:
+        if (!player.addOption()) this.score += OPTION_CAP_BONUS;
+        return;
+      case ITEM_REFLECT:
+        player.setReflect();
+        return;
+      case ITEM_REPAIR:
+        if (!player.heal(1)) this.score += REPAIR_FULL_BONUS;
+        return;
+      case ITEM_HULL_UP:
+        if (!player.increaseMaxLives(1)) this.score += HULL_UP_FULL_BONUS;
+        return;
+      case ITEM_STAR_CHIP:
+        this.score += STAR_CHIP_SCORE;
+        player.addGauge(STAR_CHIP_GAUGE);
+        return;
+      case ITEM_NOVA_CRYSTAL:
+        this.crystalStages.add(this.stage.stageNumber);
+        return;
+      default:
+        // Weapon items
+        if (player.collectWeapon(type) === 'max') {
+          this.score += WEAPON_MAX_LEVEL_BONUS;
+          player.addGauge(WEAPON_MAX_LEVEL_GAUGE);
+        }
+    }
+  }
+
+  // ============================================================
+  // GRAZE / BURST / DAMAGE
+  // ============================================================
+
+  /** A hostile bullet passed close by (once per bullet). */
+  graze(bullet) {
+    bullet.grazed = true;
+    this.player.addGauge(GAUGE_GRAZE);
+    this.score += GRAZE_SCORE * this.combo.multiplier;
+    this.effects.grazeSpark(
+      (this.player.x + bullet.x) / 2,
+      (this.player.y + bullet.y) / 2
+    );
+    this.audio.play('graze');
+  }
+
+  /**
+   * NOVA BURST (X, gauge full): clears hostile bullets (10 pts each),
+   * 30 damage to small enemies on screen, capped damage to the boss,
+   * 120 frames of invincibility.
+   */
+  useBurst() {
+    const player = this.player;
+    if (!player.alive || !player.burstReady) return false;
+    player.gauge = 0;
+    player.invincibleTimer = Math.max(player.invincibleTimer, BURST_INVINCIBLE_FRAMES);
+
+    this.score += this.enemyBullets.length * BURST_BULLET_SCORE;
+    for (const b of this.enemyBullets) this.effects.hitSpark(b.x, b.y);
+    this.clearHostiles();
+
+    for (const e of this.enemies) {
+      if (e.alive && isOnScreen(e.x, e.y)) this.damageEnemy(e, BURST_ENEMY_DAMAGE, 'burst');
+    }
+    if (this.boss && this.boss.isTargetable && this.boss.isVulnerable()) {
+      const dmg = Math.min(BURST_ENEMY_DAMAGE, this.boss.maxHp * BURST_BOSS_DAMAGE_RATIO);
+      this.boss.applyHit(this.boss, dmg, 'burst', this);
+    }
+
+    this.effects.burst(player.x, player.y);
+    this.audio.play('burst');
+    return true;
+  }
+
+  /**
+   * Apply one hit to the player. REFLECT SHIELD blocks it first and
+   * turns nearby enemy bullets around; otherwise the ship loses a
+   * life, a weapon level and an option, and the combo breaks.
+   */
+  hitPlayer() {
+    const player = this.player;
+    if (player.isInvincible || !player.alive || this.debugInvincible) return;
+    const x = player.x;
+    const y = player.y;
+
+    if (player.reflectActive) {
+      player.reflectTimer = 0;
+      player.invincibleTimer = PLAYER_INVINCIBLE_FRAMES;
+      this.reflectBullets(x, y);
+      this.effects.explode(x, y, 10, 2.5);
+      this.audio.play('item');
+      return;
+    }
+
+    this.combo.break();
+    this.audio.play('hit');
+    if (player.takeDamage()) {
+      this.effects.explode(x, y, 20, 5);
+    } else {
+      this.effects.hitSpark(x, y);
+    }
+  }
+
+  /** REFLECT SHIELD: hostile bullets within REFLECT_RADIUS fly back at enemies. */
+  reflectBullets(x, y) {
+    const kept = [];
+    for (const b of this.enemyBullets) {
+      if (b.alive && dist(x, y, b.x, b.y) <= REFLECT_RADIUS) {
+        this.playerBullets.push(new ReflectedBullet(b.x, b.y, -b.vx, -b.vy));
+      } else {
+        kept.push(b);
+      }
+    }
+    this.enemyBullets = kept;
+  }
+
+  /**
+   * DEBUG hotkeys (in play only, DESIGN.md 3):
+   *   1-4 = SPREAD / RAIL / CHAIN / HOMING   5 = current weapon Lv +1
+   *   6 = option +1   7 = REFLECT SHIELD   8 = NOVA gauge full
+   *   9 = skip to just before the WARNING   0 = invincibility on/off
    */
   handleDebugKeys() {
     if (!DEBUG_MODE) return;
-    if (this.input.isJustPressed('Digit1')) this.player.setWeapon(WEAPON_NORMAL);
-    if (this.input.isJustPressed('Digit2')) this.player.setWeapon(WEAPON_TRIPLE);
-    if (this.input.isJustPressed('Digit3')) this.player.setWeapon(WEAPON_PIERCE);
-    if (this.input.isJustPressed('Digit4')) this.player.setWeapon(WEAPON_FLAME);
-    if (this.input.isJustPressed('Digit5')) this.player.setShield();
-    if (this.input.isJustPressed('Digit9')) this.debugSkipToWarning();
+    const input = this.input;
+    const player = this.player;
+    WEAPON_ORDER.forEach((type, i) => {
+      if (input.isJustPressed('Digit' + (i + 1))) {
+        player.setWeapon(type, player.hasLevel ? player.weaponLevel : 1);
+      }
+    });
+    if (input.isJustPressed('Digit5')) player.levelUp();
+    if (input.isJustPressed('Digit6')) player.addOption();
+    if (input.isJustPressed('Digit7')) player.setReflect();
+    if (input.isJustPressed('Digit8')) player.addGauge(GAUGE_MAX);
+    if (input.isJustPressed('Digit9')) this.debugSkipToWarning();
+    if (input.isJustPressed('Digit0')) this.debugInvincible = !this.debugInvincible;
   }
 
   debugSkipToWarning() {
@@ -545,14 +673,16 @@ class Game {
   }
 
   /**
-   * Handle an enemy that has been reduced to 0 HP: score, explosion,
-   * item drop, and any split offspring. Queued minions are flushed
-   * after the collision pass to avoid mutating the list mid-loop.
+   * Handle an enemy that has been reduced to 0 HP: combo, score,
+   * gauge, explosion, item drop, and any split offspring. Queued
+   * minions are flushed after the collision pass.
    */
   destroyEnemy(enemy) {
     if (!enemy.alive) return;
     enemy.alive = false;
-    this.score += enemy.score;
+    const mult = this.combo.addKill();
+    this.score += enemy.score * mult;
+    this.player.addGauge(enemy.large ? GAUGE_KILL_LARGE : GAUGE_KILL);
     this.effects.explode(enemy.x, enemy.y);
     this.audio.play('explode');
 
@@ -607,9 +737,9 @@ class Game {
     // Hazard guides / strikes sit under ships and bullets.
     for (const h of this.hazards) h.draw(ctx);
 
-    // Shield barrier (drawn under the ship)
-    if (this.player.shieldActive && this.player.alive) {
-      drawShieldBarrier(ctx, this.player.x, this.player.y, this.playTime);
+    this.player.drawOptions(ctx);
+    if (this.player.reflectActive && this.player.alive) {
+      drawReflectShield(ctx, this.player.x, this.player.y, this.playTime, this.player.reflectSecondsLeft);
     }
     this.player.draw(ctx);
 

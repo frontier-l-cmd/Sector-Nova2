@@ -1,6 +1,68 @@
 // ============================================================
-// SECTOR NOVA 2 - Player
+// SECTOR NOVA 2 - Player (NOVA-II) and Options
+// ------------------------------------------------------------
+// NOVA-II: slim twin-engine ship, ~24 px wide, hit radius 6.
+//
+// Weapon rules (DESIGN.md 6):
+//   - NORMAL is always there and has no level.
+//   - A weapon item switches to that weapon. Same color: Lv +1
+//     (Lv3 again = bonus). Different color: switch, keep the Lv.
+//   - Getting hit: Lv -1; at Lv1 the ship falls back to NORMAL.
+//     A hit blocked by REFLECT SHIELD changes nothing.
+// Options (max 2) trail behind, fire the same weapon at Lv1 and
+// half power, and one is lost per hit. The NOVA gauge (0-100)
+// lives here because it carries over between stages.
 // ============================================================
+
+/**
+ * Small escort craft. Follows a slot beside / behind the ship with
+ * a little lag and fires the ship's weapon at Lv1, half power.
+ */
+class OptionCraft {
+  constructor(slot, x, y) {
+    this.slot = slot; // -1 = left, 1 = right
+    this.x = x;
+    this.y = y;
+    this.frame = 0;
+  }
+
+  update(player) {
+    const tx = player.x + this.slot * OPTION_OFFSET_X;
+    const ty = player.y + OPTION_OFFSET_Y;
+    this.x += (tx - this.x) * OPTION_FOLLOW;
+    this.y += (ty - this.y) * OPTION_FOLLOW;
+    this.frame++;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    const pulse = 1 + Math.sin(this.frame * 0.2) * 0.15;
+
+    ctx.fillStyle = COLORS.OPTION_GLOW;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.arc(0, 0, 7 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Small arrowhead body
+    ctx.fillStyle = COLORS.OPTION_BODY;
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(-4, 4);
+    ctx.lineTo(0, 2);
+    ctx.lineTo(4, 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = COLORS.PLAYER_COCKPIT;
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
 
 class Player {
   constructor() {
@@ -17,53 +79,107 @@ class Player {
     this.invincibleTimer = 0;
     this.alive = true;
     this.engineFrame = 0;
-    // --- Weapon system ---
+    // --- Weapon ---
     this.weaponType = WEAPON_NORMAL;
-    this.weaponTimer = 0; // frames remaining on a special weapon
-    // --- Defensive item system ---
-    this.shieldActive = false;
-    this.shieldTimer = 0;
-  }
-
-  /**
-   * Equip a special weapon (from item pickup). Overwrites any current
-   * special weapon and resets its 20s timer. Normal has no timer.
-   */
-  setWeapon(type) {
-    this.weaponType = type;
-    this.weaponTimer = (type === WEAPON_NORMAL) ? 0 : WEAPON_DURATION;
-    this.fireTimer = 0; // allow an immediate shot with the new weapon
-  }
-
-  /**
-   * Grant a one-hit shield without changing the current weapon.
-   */
-  setShield() {
-    this.shieldActive = true;
-    this.shieldTimer = SHIELD_DURATION;
+    this.weaponLevel = 1; // ignored while NORMAL
+    // --- Options ---
+    this.options = [];
+    // --- REFLECT SHIELD ---
+    this.reflectTimer = 0;
+    // --- NOVA gauge (0-100) ---
+    this.gauge = 0;
   }
 
   get weaponDef() {
     return WEAPONS[this.weaponType] || WEAPONS[WEAPON_NORMAL];
   }
 
-  /** Seconds left on the current special weapon (0 for normal). */
-  get weaponSecondsLeft() {
-    return Math.ceil(this.weaponTimer / 60);
+  get hasLevel() {
+    return this.weaponType !== WEAPON_NORMAL;
   }
 
-  get shieldSecondsLeft() {
-    return Math.ceil(this.shieldTimer / 60);
+  get isInvincible() {
+    return this.invincibleTimer > 0;
   }
+
+  get reflectActive() {
+    return this.reflectTimer > 0;
+  }
+
+  get reflectSecondsLeft() {
+    return Math.ceil(this.reflectTimer / 60);
+  }
+
+  get burstReady() {
+    return this.gauge >= GAUGE_MAX;
+  }
+
+  // --- Weapon rules ------------------------------------------------
+
+  /**
+   * Weapon item pickup. Returns 'new' | 'levelUp' | 'switch' | 'max'
+   * ('max' = same color at Lv3; the caller pays the bonus).
+   */
+  collectWeapon(type) {
+    if (!this.hasLevel) {
+      this.setWeapon(type, 1);
+      return 'new';
+    }
+    if (type === this.weaponType) {
+      if (this.weaponLevel >= WEAPON_MAX_LEVEL) return 'max';
+      this.weaponLevel++;
+      return 'levelUp';
+    }
+    this.setWeapon(type, this.weaponLevel);
+    return 'switch';
+  }
+
+  setWeapon(type, level) {
+    this.weaponType = type;
+    this.weaponLevel = clamp(level || 1, 1, WEAPON_MAX_LEVEL);
+    this.fireTimer = 0; // allow an immediate shot with the new weapon
+  }
+
+  levelUp() {
+    if (this.hasLevel) this.weaponLevel = Math.min(WEAPON_MAX_LEVEL, this.weaponLevel + 1);
+  }
+
+  /** Hit penalty: Lv -1, or back to NORMAL from Lv1. */
+  levelDown() {
+    if (!this.hasLevel) return;
+    if (this.weaponLevel > 1) this.weaponLevel--;
+    else this.weaponType = WEAPON_NORMAL;
+  }
+
+  // --- Options / shield / gauge ---------------------------------------
+
+  /** Add an option; returns false when already at OPTION_MAX. */
+  addOption() {
+    if (this.options.length >= OPTION_MAX) return false;
+    const slot = this.options.some(o => o.slot === -1) ? 1 : -1;
+    this.options.push(new OptionCraft(slot, this.x, this.y + OPTION_OFFSET_Y));
+    return true;
+  }
+
+  loseOption() {
+    this.options.pop();
+  }
+
+  setReflect() {
+    this.reflectTimer = REFLECT_DURATION;
+  }
+
+  addGauge(amount) {
+    this.gauge = clamp(this.gauge + amount, 0, GAUGE_MAX);
+  }
+
+  // --- Update / fire ---------------------------------------------------
 
   update(input) {
     if (!this.alive) return;
 
-    // --- Movement ---
-    // PIERCE LASER slows the ship slightly while equipped.
-    const speed = this.weaponType === WEAPON_PIERCE
-      ? PLAYER_SPEED * LASER_MOVE_PENALTY
-      : PLAYER_SPEED;
+    // --- Movement (RAIL LANCER slows the ship) ---
+    const speed = this.weaponType === WEAPON_RAIL ? PLAYER_SPEED * RAIL_MOVE_SCALE : PLAYER_SPEED;
     let dx = 0;
     let dy = 0;
     if (input.left) dx -= speed;
@@ -77,79 +193,44 @@ class Player {
       dy *= 0.707;
     }
 
-    this.x += dx;
-    this.y += dy;
+    this.x = clamp(this.x + dx, 12, CANVAS_WIDTH - 12);
+    this.y = clamp(this.y + dy, 12, CANVAS_HEIGHT - 12);
 
-    // Clamp to screen bounds (with padding for visual size)
-    this.x = clamp(this.x, 12, CANVAS_WIDTH - 12);
-    this.y = clamp(this.y, 12, CANVAS_HEIGHT - 12);
-
-    // --- Fire rate ---
     if (this.fireTimer > 0) this.fireTimer--;
-
-    // --- Invincibility ---
     if (this.invincibleTimer > 0) this.invincibleTimer--;
+    if (this.reflectTimer > 0) this.reflectTimer--;
 
-    // --- Weapon timer ---
-    if (this.weaponTimer > 0) {
-      this.weaponTimer--;
-      if (this.weaponTimer <= 0) {
-        this.weaponType = WEAPON_NORMAL;
-      }
-    }
-
-    // --- Shield timer ---
-    if (this.shieldTimer > 0) {
-      this.shieldTimer--;
-      if (this.shieldTimer <= 0) {
-        this.shieldActive = false;
-      }
-    }
-
-    // --- Engine animation ---
+    for (const o of this.options) o.update(this);
     this.engineFrame++;
   }
 
-  /**
-   * Fire bullets according to the current weapon.
-   */
+  /** Fire the current weapon (and the options). Returns projectiles. */
   shoot() {
     if (!this.alive || this.fireTimer > 0) return [];
-
     const def = this.weaponDef;
     this.fireTimer = def.fireInterval;
-    return def.fire(this);
+    const shots = def.fire(this.x, this.y, this.hasLevel ? this.weaponLevel : 1, 1);
+    for (const o of this.options) shots.push(...def.fire(o.x, o.y + 6, 1, OPTION_POWER));
+    return shots;
   }
 
   /**
-   * Take damage. Returns true if player died.
+   * Take a real hit (REFLECT is handled by the game first).
+   * Returns true if the player died.
    */
   takeDamage() {
     if (this.invincibleTimer > 0) return false;
-    if (this.blockHitWithShield()) return false;
 
     this.lives--;
     this.invincibleTimer = PLAYER_INVINCIBLE_FRAMES;
-    // Getting hit knocks the player back to the normal weapon.
-    this.weaponType = WEAPON_NORMAL;
-    this.weaponTimer = 0;
+    this.levelDown();
+    this.loseOption();
 
     if (this.lives <= 0) {
       this.alive = false;
       return true;
     }
     return false;
-  }
-
-  /**
-   * Consume the shield to block one hit. The active weapon is unchanged.
-   */
-  blockHitWithShield() {
-    if (!this.shieldActive) return false;
-    this.shieldActive = false;
-    this.shieldTimer = 0;
-    this.invincibleTimer = PLAYER_INVINCIBLE_FRAMES;
-    return true;
   }
 
   heal(amount) {
@@ -169,8 +250,11 @@ class Player {
     return maxIncreased || this.lives > beforeLives;
   }
 
-  get isInvincible() {
-    return this.invincibleTimer > 0;
+  // --- Draw -------------------------------------------------------------
+
+  drawOptions(ctx) {
+    if (!this.alive) return;
+    for (const o of this.options) o.draw(ctx);
   }
 
   draw(ctx) {
@@ -184,91 +268,78 @@ class Player {
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    // --- Engine flame ---
+    // --- Twin engine flames ---
     const flicker = Math.sin(this.engineFrame * 0.5) * 2;
-    const flameLen = 8 + flicker;
+    const flameLen = 7 + flicker;
+    for (const ex of [-4, 4]) {
+      ctx.fillStyle = COLORS.PLAYER_ENGINE;
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      ctx.arc(ex, 10, 4 + flicker * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
 
-    // Outer flame glow
-    ctx.fillStyle = COLORS.PLAYER_ENGINE;
-    ctx.globalAlpha = 0.3;
-    ctx.beginPath();
-    ctx.arc(0, 10, 6 + flicker * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.moveTo(ex - 2, 8);
+      ctx.lineTo(ex, 8 + flameLen);
+      ctx.lineTo(ex + 2, 8);
+      ctx.closePath();
+      ctx.fill();
 
-    // Main flame
-    ctx.fillStyle = COLORS.PLAYER_ENGINE;
-    ctx.beginPath();
-    ctx.moveTo(-4, 6);
-    ctx.lineTo(0, 6 + flameLen);
-    ctx.lineTo(4, 6);
-    ctx.closePath();
-    ctx.fill();
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      ctx.beginPath();
+      ctx.moveTo(ex - 1, 8);
+      ctx.lineTo(ex, 8 + flameLen * 0.6);
+      ctx.lineTo(ex + 1, 8);
+      ctx.closePath();
+      ctx.fill();
+    }
 
-    // Inner flame (bright)
-    ctx.fillStyle = COLORS.UI_YELLOW;
-    ctx.beginPath();
-    ctx.moveTo(-2, 6);
-    ctx.lineTo(0, 6 + flameLen * 0.6);
-    ctx.lineTo(2, 6);
-    ctx.closePath();
-    ctx.fill();
-
-    // --- Ship body ---
-    // Wings
+    // --- Swept wings (thin, sharp) ---
     ctx.fillStyle = COLORS.PLAYER_WING;
-    ctx.beginPath();
-    ctx.moveTo(-12, 4);
-    ctx.lineTo(-6, -4);
-    ctx.lineTo(-3, 6);
-    ctx.lineTo(-10, 8);
-    ctx.closePath();
-    ctx.fill();
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(3 * s, -2);
+      ctx.lineTo(12 * s, 6);
+      ctx.lineTo(12 * s, 9);
+      ctx.lineTo(4 * s, 5);
+      ctx.closePath();
+      ctx.fill();
+    }
 
-    ctx.beginPath();
-    ctx.moveTo(12, 4);
-    ctx.lineTo(6, -4);
-    ctx.lineTo(3, 6);
-    ctx.lineTo(10, 8);
-    ctx.closePath();
-    ctx.fill();
+    // --- Engine nacelles ---
+    ctx.fillStyle = COLORS.PLAYER_WING;
+    ctx.fillRect(-6, 2, 4, 7);
+    ctx.fillRect(2, 2, 4, 7);
 
-    // Main body
+    // --- Main body: long narrow needle nose ---
     ctx.fillStyle = COLORS.PLAYER_BODY;
     ctx.beginPath();
-    ctx.moveTo(0, -12);      // nose
-    ctx.lineTo(-5, -2);
-    ctx.lineTo(-6, 6);
+    ctx.moveTo(0, -14);      // nose
+    ctx.lineTo(-3, -4);
+    ctx.lineTo(-4, 6);
     ctx.lineTo(0, 8);
-    ctx.lineTo(6, 6);
-    ctx.lineTo(5, -2);
+    ctx.lineTo(4, 6);
+    ctx.lineTo(3, -4);
     ctx.closePath();
     ctx.fill();
 
     // Cockpit
     ctx.fillStyle = COLORS.PLAYER_COCKPIT;
     ctx.beginPath();
-    ctx.arc(0, -2, 3, 0, Math.PI * 2);
+    ctx.ellipse(0, -3, 1.8, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Cockpit highlight
+    // Highlights
     ctx.fillStyle = COLORS.UI_WHITE;
-    ctx.globalAlpha = 0.6;
-    ctx.beginPath();
-    ctx.arc(-1, -3, 1, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(-0.5, -12, 1, 6);
     ctx.globalAlpha = 1;
 
-    // Nose highlight
-    ctx.fillStyle = COLORS.UI_WHITE;
-    ctx.globalAlpha = 0.4;
-    ctx.fillRect(-1, -11, 2, 4);
-    ctx.globalAlpha = 1;
-
-    // Wing tips (small accents)
+    // Wing-tip accents
     ctx.fillStyle = COLORS.PLAYER_ENGINE;
-    ctx.fillRect(-12, 3, 2, 3);
-    ctx.fillRect(10, 3, 2, 3);
+    ctx.fillRect(-12, 6, 1.5, 3);
+    ctx.fillRect(10.5, 6, 1.5, 3);
 
     ctx.restore();
   }

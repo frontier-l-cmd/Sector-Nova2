@@ -1,24 +1,29 @@
 // ============================================================
-// SECTOR NOVA 2 - Powerup / Item Drops
+// SECTOR NOVA 2 - Items (DESIGN.md 10)
 // ------------------------------------------------------------
-// Enemies have a chance to drop a colored item that grants a
-// special weapon or defensive shield on pickup:
-//   purple -> TRIPLE BEAM
-//   blue  -> PIERCE LASER
-//   red   -> FLAME VORTEX
-//   green -> SHIELD BARRIER
-//   yellow -> LIFE RECOVER
-//   pink -> MAX LIFE UP
-// Items drift slowly downward and are removed off screen.
+// Enemies drop items at the stage's rate; the type is a weighted
+// pick from the stage's powerupWeights. Items drift slowly down and
+// can be collected even while invincible. Color AND shape tell
+// them apart:
+//   orange orb "S" SPREAD FAN      blue orb "R"   RAIL LANCER
+//   purple orb "C" CHAIN BOLT      green orb "H"  HOMING NEEDLE
+//   white ring     OPTION          cyan hexagon   REFLECT SHIELD
+//   yellow cross   REPAIR          pink heart     HULL UP
+//   gold star      STAR CHIP       rainbow gem    NOVA CRYSTAL (hidden)
+// Effects are applied in Game.collectItem().
 // ============================================================
 
 const POWERUP_TYPES = [
-  { type: WEAPON_TRIPLE, color: COLORS.ITEM_TRIPLE, letter: 'T' },
-  { type: WEAPON_PIERCE, color: COLORS.ITEM_PIERCE, letter: 'L' },
-  { type: WEAPON_FLAME, color: COLORS.ITEM_FLAME, letter: 'F' },
-  { type: ITEM_SHIELD, color: COLORS.ITEM_SHIELD, letter: 'S' },
-  { type: ITEM_LIFE, color: COLORS.ITEM_LIFE, letter: '+' },
-  { type: ITEM_MAX_LIFE, color: COLORS.ITEM_MAX_LIFE, letter: 'M' },
+  { type: WEAPON_SPREAD, color: COLORS.ITEM_SPREAD, shape: 'orb', letter: 'S' },
+  { type: WEAPON_RAIL, color: COLORS.ITEM_RAIL, shape: 'orb', letter: 'R' },
+  { type: WEAPON_CHAIN, color: COLORS.ITEM_CHAIN, shape: 'orb', letter: 'C' },
+  { type: WEAPON_HOMING, color: COLORS.ITEM_HOMING, shape: 'orb', letter: 'H' },
+  { type: ITEM_OPTION, color: COLORS.ITEM_OPTION, shape: 'ring' },
+  { type: ITEM_REFLECT, color: COLORS.ITEM_REFLECT, shape: 'hexagon' },
+  { type: ITEM_REPAIR, color: COLORS.ITEM_REPAIR, shape: 'cross' },
+  { type: ITEM_HULL_UP, color: COLORS.ITEM_HULL, shape: 'heart' },
+  { type: ITEM_STAR_CHIP, color: COLORS.ITEM_STAR, shape: 'star' },
+  { type: ITEM_NOVA_CRYSTAL, color: COLORS.CRYSTAL_HUES[0], shape: 'crystal' },
 ];
 
 function powerupDefFor(type) {
@@ -26,33 +31,27 @@ function powerupDefFor(type) {
 }
 
 /**
- * Pick a random item type.
+ * Weighted random item type. NOVA CRYSTAL is never random.
  */
 function randomPowerupType(weights) {
-  if (weights) {
-    let total = 0;
-    for (const def of POWERUP_TYPES) {
-      total += weights[def.type] || 0;
-    }
-    if (total > 0) {
-      let roll = Math.random() * total;
-      for (const def of POWERUP_TYPES) {
-        roll -= weights[def.type] || 0;
-        if (roll <= 0) return def.type;
-      }
-    }
+  let total = 0;
+  for (const def of POWERUP_TYPES) total += weights[def.type] || 0;
+  let roll = Math.random() * total;
+  for (const def of POWERUP_TYPES) {
+    roll -= weights[def.type] || 0;
+    if (roll <= 0 && weights[def.type]) return def.type;
   }
-  return POWERUP_TYPES[randInt(0, POWERUP_TYPES.length - 1)].type;
+  return ITEM_STAR_CHIP;
 }
 
 class Powerup {
   constructor(x, y, type, weights) {
     this.x = x;
     this.y = y;
-    this.type = type || randomPowerupType(weights);
+    this.type = type || randomPowerupType(weights || {});
     this.def = powerupDefFor(this.type);
     this.speed = POWERUP_SPEED;
-    this.radius = POWERUP_RADIUS;
+    this.radius = this.def.shape === 'crystal' ? POWERUP_RADIUS + 3 : POWERUP_RADIUS;
     this.alive = true;
     this.frame = 0;
   }
@@ -69,17 +68,32 @@ class Powerup {
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    const pulse = 1 + Math.sin(this.frame * 0.1) * 0.2;
+    const pulse = 1 + Math.sin(this.frame * 0.1) * 0.15;
+    const color = this.def.shape === 'crystal'
+      ? COLORS.CRYSTAL_HUES[Math.floor(this.frame / 6) % COLORS.CRYSTAL_HUES.length]
+      : this.def.color;
 
     // Glow
-    ctx.fillStyle = this.def.color;
-    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.22;
     ctx.beginPath();
-    ctx.arc(0, 0, 13 * pulse, 0, Math.PI * 2);
+    ctx.arc(0, 0, (this.radius + 5) * pulse, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // Outer ring
+    switch (this.def.shape) {
+      case 'orb': this.drawOrb(ctx, color, pulse); break;
+      case 'ring': this.drawRing(ctx, color, pulse); break;
+      case 'hexagon': this.drawHexagon(ctx, color); break;
+      case 'cross': this.drawCross(ctx, color); break;
+      case 'heart': this.drawHeart(ctx, color); break;
+      case 'star': this.drawStar(ctx, color, 6, 2.5); break;
+      case 'crystal': this.drawCrystal(ctx, color); break;
+    }
+    ctx.restore();
+  }
+
+  drawOrb(ctx, color, pulse) {
     ctx.strokeStyle = COLORS.UI_WHITE;
     ctx.lineWidth = 1;
     ctx.globalAlpha = 0.7;
@@ -87,20 +101,116 @@ class Powerup {
     ctx.arc(0, 0, this.radius * pulse + 1, 0, Math.PI * 2);
     ctx.stroke();
     ctx.globalAlpha = 1;
-
-    // Body
-    ctx.fillStyle = this.def.color;
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(0, 0, this.radius * pulse, 0, Math.PI * 2);
     ctx.fill();
-
-    // Letter
     ctx.fillStyle = COLORS.UI_WHITE;
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(this.def.letter, 0, 1);
+  }
 
-    ctx.restore();
+  drawRing(ctx, color, pulse) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 6 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = COLORS.OPTION_GLOW;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, 9 * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  drawHexagon(ctx, color) {
+    ctx.rotate(this.frame * 0.04);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = COLORS.UI_WHITE;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 3) * i;
+      const px = Math.cos(a) * 8;
+      const py = Math.sin(a) * 8;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawCross(ctx, color) {
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.fillRect(-3.5, -8.5, 7, 17);
+    ctx.fillRect(-8.5, -3.5, 17, 7);
+    ctx.fillStyle = color;
+    ctx.fillRect(-2.5, -7.5, 5, 15);
+    ctx.fillRect(-7.5, -2.5, 15, 5);
+  }
+
+  drawHeart(ctx, color) {
+    ctx.fillStyle = color;
+    ctx.strokeStyle = COLORS.UI_WHITE;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, 8);
+    ctx.bezierCurveTo(-11, 0, -7, -9, 0, -4);
+    ctx.bezierCurveTo(7, -9, 11, 0, 0, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(-5, -4, 2, 2);
+  }
+
+  drawStar(ctx, color, outer, inner) {
+    ctx.rotate(this.frame * 0.05);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? outer : inner;
+      const a = -Math.PI / 2 + (Math.PI / 5) * i;
+      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawCrystal(ctx, color) {
+    // Tall diamond with a bright inner facet
+    ctx.fillStyle = color;
+    ctx.strokeStyle = COLORS.UI_WHITE;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, -13);
+    ctx.lineTo(-8, 0);
+    ctx.lineTo(0, 13);
+    ctx.lineTo(8, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(-3, 0);
+    ctx.lineTo(0, 3);
+    ctx.closePath();
+    ctx.fill();
   }
 }
