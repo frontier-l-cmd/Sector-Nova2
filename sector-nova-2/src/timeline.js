@@ -118,38 +118,35 @@ const STAGE_TIMELINES = {
   // ----------------------------------------------------------
   // Stage 2 DEAD HARBOR (DESIGN.md 12): + GUN DECK / MINE LAYER /
   // CARRIER. HARBOR SENTINEL at 50s, then the narrow passage (CAUTION
-  // at 54s, walls from 57s; GUN DECKs and the odd NOVA CRYSTAL panel
+  // at 54s, walls from 57s; a GUN DECK and the odd NOVA CRYSTAL panel
   // are built into the walls), DOCK TITAN at 111s.
+  // Enemy fire is kept within DESIGN.md 17 (S2 = 1.3x S1): few
+  // shooters (one MINE LAYER, one SNIPER, the wall GUN DECK) and quiet
+  // gaps; most of the traffic is SHARD / WISP and CARRIER drones.
   // ----------------------------------------------------------
   2: [
-    // Opening: the harbor guns
+    // Opening
     { t: 2.0, spawn: 'SHARD', x: 'center', count: 3, interval: 20, pattern: 'line' },
     { t: 4.5, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 38 },
-    { t: 7.0, spawn: 'GUN_DECK', x: 90 },
-    { t: 7.0, spawn: 'GUN_DECK', x: 230 },
-    { t: 10.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
-    { t: 11.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
-    { t: 14.0, spawn: 'MINE_LAYER', x: 'left', y: 120 },
+    { t: 8.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 9.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 12.0, spawn: 'CARRIER', x: 'center' },
     { t: 17.0, spawn: 'SHARD', count: 6, interval: 20, pattern: 'sides' },
-    { t: 20.0, spawn: 'GUN_DECK', x: 160 },
-    { t: 22.0, spawn: 'CARRIER', x: 'center' },
+    { t: 21.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'v' },
 
-    // Middle
-    { t: 26.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
-    { t: 28.0, spawn: 'MINE_LAYER', x: 'right', y: 150 },
+    // Middle (a breather at 23-26s, then the MINE LAYER on its own)
+    { t: 26.0, spawn: 'MINE_LAYER', x: 'left', y: 120 },
     { t: 31.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
-    { t: 34.0, spawn: 'GUN_DECK', x: 70 },
-    { t: 34.0, spawn: 'GUN_DECK', x: 250 },
-    { t: 36.0, spawn: 'SNIPER', x: 160 },
-    { t: 39.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'v' },
-    { t: 42.0, spawn: 'CARRIER', x: 100 },
-    { t: 45.0, spawn: 'SHARD', x: 'player', count: 3, interval: 14, pattern: 'line' },
+    { t: 35.0, spawn: 'CARRIER', x: 100 },
+    { t: 40.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
+    { t: 44.0, spawn: 'SNIPER', x: 160 },
+    { t: 46.0, spawn: 'SHARD', x: 'player', count: 3, interval: 14, pattern: 'line' },
 
     // Mid-boss (the timeline waits until it is beaten or flees)
     { t: 50.0, event: 'midboss', type: 'sentinel' },
     { t: 52.0, spawn: 'SHARD', x: 'center', count: 4, pattern: 'row', spacing: 34 },
 
-    // The narrow passage: light traffic inside, the wall guns do the work
+    // The narrow passage: light traffic inside, one GUN DECK in the wall
     { t: 54.0, event: 'wall', type: 'passage' },
     { t: 60.0, spawn: 'SHARD', x: 'player', count: 3, interval: 16, pattern: 'line' },
     { t: 64.0, spawn: 'WISP', x: 'player', count: 3, interval: 18, pattern: 'wave' },
@@ -157,16 +154,13 @@ const STAGE_TIMELINES = {
     { t: 72.0, spawn: 'WISP', x: 'player', count: 3, interval: 18, pattern: 'wave' },
     { t: 76.0, spawn: 'SHARD', x: 'player', count: 3, interval: 16, pattern: 'line' },
 
-    // Late: everything together
+    // Late: drones and small fry, no gunners before the boss
     { t: 82.0, spawn: 'CARRIER', x: 'center' },
-    { t: 84.0, spawn: 'SNIPER', x: 80 },
-    { t: 84.5, spawn: 'SNIPER', x: 240 },
-    { t: 88.0, spawn: 'MINE_LAYER', x: 'left', y: 140 },
-    { t: 90.0, spawn: 'GUN_DECK', x: 80 },
-    { t: 90.0, spawn: 'GUN_DECK', x: 240 },
-    { t: 93.0, spawn: 'SHARD', count: 8, interval: 15, pattern: 'sides' },
-    { t: 96.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
-    { t: 99.0, spawn: 'SNIPER', x: 'center' },
+    { t: 86.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 87.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 91.0, spawn: 'SHARD', count: 8, interval: 15, pattern: 'sides' },
+    { t: 95.0, spawn: 'CARRIER', x: 220 },
+    { t: 98.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
     { t: 101.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
     { t: 104.0, spawn: 'SHARD', x: 'player', count: 3, interval: 12, pattern: 'line' },
 

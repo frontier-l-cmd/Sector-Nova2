@@ -9,8 +9,8 @@
 //   S2 narrow passage ('wall' event): "CAUTION: NARROW PASSAGE" for
 //   3 seconds, then metal walls scroll in from the top on both sides
 //   with the floor. The gap is never under PASSAGE_MIN_GAP. Touching
-//   a wall hurts and pushes the ship back. GUN DECKs sit on the wall
-//   edges, and one odd-colored wall panel hides the NOVA CRYSTAL.
+//   a wall hurts and pushes the ship back. A GUN DECK sits on a wall
+//   edge, and one odd-colored wall panel hides the NOVA CRYSTAL.
 // Later stages add theirs here (S3 lightning / clouds, ...).
 // ============================================================
 
@@ -142,16 +142,12 @@ const PASSAGE_PROFILE_S2 = [
   [720, 0, 0],
 ];
 
-// Things built into the walls: GUN DECKs on the edges and the one
+// Things built into the walls: a GUN DECK on the edge and the one
 // odd panel (NOVA CRYSTAL). d along the passage, side of the wall.
+// (One gun only, to stay within the S2 enemy-fire guideline.)
 const PASSAGE_EMBEDS_S2 = [
-  { d: 120, side: 'left', type: 'GUN_DECK' },
-  { d: 200, side: 'right', type: 'GUN_DECK' },
   { d: 360, side: 'right', type: 'GUN_DECK' },
   { d: 375, side: 'left', type: 'PANEL' },
-  { d: 470, side: 'left', type: 'GUN_DECK' },
-  { d: 545, side: 'right', type: 'GUN_DECK' },
-  { d: 620, side: 'left', type: 'GUN_DECK' },
 ];
 
 /** Interpolate a profile at distance d. Returns [left, right]. */
