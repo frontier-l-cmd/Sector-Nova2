@@ -72,10 +72,19 @@ function highestImplementedStage() {
   return highest;
 }
 
+/**
+ * Highest stage STAGE SELECT offers: the unlocked stage, or in
+ * DEBUG_MODE every implemented stage (for testing; the saved unlock
+ * is not changed).
+ */
+function highestSelectableStage() {
+  return DEBUG_MODE ? Math.max(highestImplementedStage(), getUnlockedStage()) : getUnlockedStage();
+}
+
 function isStagePlayable(stageNumber) {
   const stage = STAGES[stageNumber];
   if (stage && stage.test) return !!stage.implemented;
-  return !!(stage && stage.implemented && stageNumber <= getUnlockedStage());
+  return !!(stage && stage.implemented && stageNumber <= highestSelectableStage());
 }
 
 function loadUnlockedStage() {

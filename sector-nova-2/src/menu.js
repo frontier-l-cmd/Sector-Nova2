@@ -40,7 +40,7 @@ class TitleMenu {
 
   update(game) {
     const input = game.input;
-    this.stageCursor = clamp(this.stageCursor, 1, getUnlockedStage());
+    this.stageCursor = clamp(this.stageCursor, 1, highestSelectableStage());
 
     // Shortcuts kept from SECTOR NOVA 1: C = continue, 1-6 = stage
     // (0 = TEST RANGE in DEBUG_MODE).
@@ -77,7 +77,7 @@ class TitleMenu {
       game.setDifficulty(DIFFICULTY_LEVELS[(i + dir + n) % n]);
       game.audio.play('select');
     } else if (item === 'stageSelect') {
-      const next = clamp(this.stageCursor + dir, 1, getUnlockedStage());
+      const next = clamp(this.stageCursor + dir, 1, highestSelectableStage());
       if (next !== this.stageCursor) {
         this.stageCursor = next;
         game.audio.play('select');

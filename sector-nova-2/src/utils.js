@@ -666,6 +666,8 @@ const TOUCH_BURST_X = CANVAS_WIDTH - 34;   // BURST button center (bottom-right,
 const TOUCH_BURST_Y = CANVAS_HEIGHT - 66;  // just above the NOVA gauge)
 const TOUCH_BURST_RADIUS = 18;
 const TOUCH_BURST_HIT_MARGIN = 8;          // finger slack around the button
+const TOUCH_STAGE_ARROW_X = 176;           // title STAGE SELECT value: taps from here change the stage
+const TOUCH_STAGE_ARROW_SPLIT = 230;       // left of this = -1, right = +1
 
 // --- Audio (audio.js) ---
 const AUDIO_MASTER_VOLUME = 0.3;

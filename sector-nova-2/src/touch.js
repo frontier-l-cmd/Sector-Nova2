@@ -6,7 +6,9 @@
 // through InputHandler.
 //
 //   Title       : tap a row to select it, tap it again to decide
-//                 (DIFFICULTY / SOUND rows change on each tap)
+//                 (DIFFICULTY / SOUND rows change on each tap;
+//                 on STAGE SELECT the "< STAGE n >" value is a pair
+//                 of arrows and the label starts the stage)
 //   Play        : drag anywhere to move (relative), auto-fire while
 //                 touching; BURST button bottom-right (usable only
 //                 with a full gauge); two-finger tap = pause
@@ -113,6 +115,12 @@ class TouchControls {
     const menu = this.game.titleMenu;
     const i = Math.floor((p.y - (TITLE_MENU_Y - 11)) / TITLE_MENU_ROW_H);
     if (i < 0 || i >= TITLE_MENU_ITEMS.length) return;
+    // STAGE SELECT: on the selected row, the "< STAGE n >" value works
+    // as arrows (left part -1, right part +1); the label starts it.
+    if (i === menu.index && menu.selected === 'stageSelect' && p.x >= TOUCH_STAGE_ARROW_X) {
+      menu.change('stageSelect', p.x >= TOUCH_STAGE_ARROW_SPLIT ? 1 : -1, this.game);
+      return;
+    }
     if (i === menu.index) {
       this.game.input.tapAction('enter');
     } else {
