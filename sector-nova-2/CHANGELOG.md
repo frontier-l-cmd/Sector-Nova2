@@ -2,6 +2,31 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 4-3] Stage 3 の完成 — 2026-10-08
+
+### 設計書
+
+- DESIGN.md（ルートと `sector-nova-2/` の両方）の「17. バランスの原則」に「各ステージで出るアイテムの期待値は、前のステージと同じかそれ以上にする」を追記
+
+### 追加
+
+- S3「STORM VEIL」のタイムライン（MIRROR / PHASE GHOST が加わる、嵐と雲、GOLD GHOST、中ボス、WARNING、ボス）
+- S3 の背景レイヤー: 2段の速さで流れる雲の層と遠くの稲光（`background.js`）
+- ギミック「落雷と雲」（`gimmicks.js` の `StormWeather` / `CloudBand` / `createLightning`）: 60 フレーム予告の落雷（同時に最大2本）、不透明度 0.7 の雲の帯。敵弾・予告・アイテム・自機は雲の上に描く
+- `Hazard` の `emphasis`（スマホでも読める予告: 点滅する太い線＋落ちる幅の点線枠＋上下の「!」）と `tag`
+- 中ボス STORM SENTINEL（SENTINEL の S3 の色、HP 90）
+- ボス THUNDER RAY（`bosses/thunderRay.js`）: 雷撃（HP 50% 以下で横の雷も）、尾の7方向弾、雲潜り（無敵の影 → 帯と波紋の予告 → 下から体当たりで通過）。HP 340、上限 8
+- ボスの体当たり判定（`contactRadius` を持つボスだけ）
+- S3 開始時の LYRA の通信、落雷の効果音 `thunder`
+- S3 の NOVA CRYSTAL: 自分の雲の中の GOLD GHOST を倒す
+- S3 のアイテムの確率 15%（`STAGE3_ITEM_DROP_CHANCE`、期待値 17.10 ≥ S2 16.32）
+- README に S3 の撃破時間・敵弾の量・アイテムの期待値の表
+
+### 変更
+
+- S2 クリア後は、リザルト → S3 のステージ紹介へ進む（S3 クリア後はタイトルへ）
+- デバッグキー 9 で WARNING 直前に飛ぶ時、嵐と雲も消す
+
 ## [Phase 4-2] Stage 2 の完成 — 2026-10-06
 
 ### 追加

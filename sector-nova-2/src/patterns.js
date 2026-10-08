@@ -104,6 +104,10 @@ const Patterns = {
  *   'circle' : disc at (x, y) with `radius` (impact / shadow)
  * `follow(hazard)` runs every frame to move the origin (boss-mounted
  * lasers). `onActivate(hazard)` runs once when the strike begins.
+ * `emphasis: true` (vline / hline) makes the warning easier to read on
+ * a phone: the strike width is outlined with dashes, the guide line is
+ * thicker and "!" markers sit at both screen edges. `tag` names the
+ * hazard's kind (e.g. 'lightning') for counting.
  */
 class Hazard {
   constructor(opts) {
@@ -122,6 +126,8 @@ class Hazard {
     this.warnColor = opts.warnColor || COLORS.HAZARD_WARN;
     this.follow = opts.follow || null;
     this.onActivate = opts.onActivate || null;
+    this.emphasis = !!opts.emphasis;
+    this.tag = opts.tag || null;
     this.timer = 0;
     this.alive = true;
   }
@@ -175,7 +181,8 @@ class Hazard {
       ctx.strokeStyle = this.warnColor;
       ctx.fillStyle = this.warnColor;
       ctx.lineWidth = 1;
-      this.drawShape(ctx, 2, true);
+      if (this.emphasis) this.drawEmphasis(ctx);
+      else this.drawShape(ctx, 2, true);
     } else {
       const fade = 0.75 + Math.sin(this.timer * 0.8) * 0.25;
       ctx.globalAlpha = 0.35 * fade;
@@ -188,6 +195,38 @@ class Hazard {
       this.drawShape(ctx, Math.max(2, this.width * 0.35), false);
     }
     ctx.restore();
+  }
+
+  /**
+   * Phone-readable warning (vline / hline only): dashed outline of the
+   * strike width, a 3 px guide line and "!" markers at both edges.
+   * Still never filled, so it reads as "not yet".
+   */
+  drawEmphasis(ctx) {
+    const half = this.width / 2;
+    const vertical = this.shape === 'vline';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.lineDashOffset = -this.timer;
+    if (vertical) ctx.strokeRect(this.x - half + 0.5, -2, this.width - 1, CANVAS_HEIGHT + 4);
+    else ctx.strokeRect(-2, this.y - half + 0.5, CANVAS_WIDTH + 4, this.width - 1);
+    ctx.setLineDash([]);
+    this.drawShape(ctx, 3, true);
+    // "!" markers in a small triangle at both ends of the line
+    const ends = vertical ? [[this.x, 44], [this.x, CANVAS_HEIGHT - 14]] : [[14, this.y], [CANVAS_WIDTH - 14, this.y]];
+    for (const [mx, my] of ends) {
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = COLORS.LIGHTNING_MARK;
+      ctx.beginPath();
+      ctx.moveTo(mx, my - 9);
+      ctx.lineTo(mx + 9, my + 7);
+      ctx.lineTo(mx - 9, my + 7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = COLORS.BG_DARK;
+      ctx.fillRect(mx - 1, my - 4, 2, 6);
+      ctx.fillRect(mx - 1, my + 3, 2, 2);
+    }
   }
 
   /** Fill (or outline, for warnings) the shape at the given thickness. */

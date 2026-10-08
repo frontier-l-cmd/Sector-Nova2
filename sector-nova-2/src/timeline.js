@@ -168,6 +168,75 @@ const STAGE_TIMELINES = {
     { t: 108.0, event: 'warning' },
     { t: 111.0, event: 'boss', type: 'dockTitan' },
   ],
+
+  // ----------------------------------------------------------
+  // Stage 3 STORM VEIL (DESIGN.md 12): + MIRROR / PHASE GHOST.
+  // Gimmick: lightning (the storm, plus a few scripted bolts) and
+  // cloud bands that hide enemies (never bullets). GOLD GHOST waits in
+  // its own cloud (NOVA CRYSTAL). STORM SENTINEL at 50s, THUNDER RAY at
+  // 111s. Fire is kept within DESIGN.md 17 (S3 = about 1.6x S1).
+  // ----------------------------------------------------------
+  3: [
+    // Opening: MIRROR and PHASE GHOST, still clear skies
+    { t: 2.0, spawn: 'SHARD', x: 'center', count: 3, interval: 20, pattern: 'line' },
+    { t: 4.5, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 5.5, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 9.0, spawn: 'MIRROR', x: 100 },
+    { t: 9.0, spawn: 'MIRROR', x: 220 },
+    { t: 13.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
+    { t: 16.0, event: 'gimmickStart', type: 'clouds' },
+    { t: 17.0, spawn: 'PHASE_GHOST', x: 110 },
+    { t: 17.0, spawn: 'PHASE_GHOST', x: 210 },
+    { t: 21.0, spawn: 'SHARD', count: 6, interval: 20, pattern: 'sides' },
+
+    // Middle: the storm begins (a single bolt first, then the storm)
+    { t: 23.0, event: 'hazard', type: 'lightning', x: 'player' },
+    { t: 26.0, event: 'gimmickStart', type: 'storm' },
+    { t: 26.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 29.0, spawn: 'SNIPER', x: 160 },
+    { t: 31.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
+    { t: 34.0, spawn: 'MIRROR', x: 160 },
+    { t: 36.0, spawn: 'PHASE_GHOST', x: 'center' },
+    { t: 38.0, spawn: 'GUN_DECK', x: 80 },
+    { t: 40.0, event: 'goldEnemy', type: 'GHOST', x: 240, inCloud: true },  // NOVA CRYSTAL
+    { t: 43.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'v' },
+    { t: 46.0, spawn: 'SNIPER', x: 80 },
+    { t: 46.5, spawn: 'SNIPER', x: 240 },
+    { t: 48.0, event: 'gimmickEnd', type: 'storm' },
+
+    // Mid-boss (the timeline waits until it is beaten or flees)
+    { t: 50.0, event: 'midboss', type: 'sentinel' },
+    { t: 52.0, spawn: 'SHARD', x: 'center', count: 4, pattern: 'row', spacing: 34 },
+
+    // Late: storm again
+    { t: 54.0, event: 'gimmickStart', type: 'storm' },
+    { t: 56.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 57.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 60.0, spawn: 'MINE_LAYER', x: 'right', y: 130 },
+    { t: 63.0, spawn: 'PHASE_GHOST', x: 100 },
+    { t: 63.0, spawn: 'PHASE_GHOST', x: 220 },
+    { t: 66.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 69.0, spawn: 'MIRROR', x: 100 },
+    { t: 69.0, spawn: 'MIRROR', x: 220 },
+    { t: 72.0, spawn: 'SNIPER', x: 'center' },
+    { t: 75.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 78.0, spawn: 'GUN_DECK', x: 240 },
+    { t: 80.0, spawn: 'SHARD', count: 8, interval: 15, pattern: 'sides' },
+    { t: 84.0, spawn: 'PHASE_GHOST', x: 'center', count: 3, pattern: 'row', spacing: 70 },
+    { t: 88.0, spawn: 'SNIPER', x: 120 },
+    { t: 90.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 94.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 95.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 98.0, event: 'gimmickEnd', type: 'storm' },
+    { t: 99.0, spawn: 'MIRROR', x: 160 },
+    { t: 101.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 103.0, event: 'gimmickEnd', type: 'clouds' },
+    { t: 104.0, spawn: 'SHARD', x: 'player', count: 3, interval: 12, pattern: 'line' },
+
+    // Boss
+    { t: 108.0, event: 'warning' },
+    { t: 111.0, event: 'boss', type: 'thunderRay' },
+  ],
 };
 
 // ------------------------------------------------------------

@@ -134,6 +134,12 @@ const COLORS = {
   CAUTION_BAND: '#2a2410', CAUTION_STRIPE: '#ffcc22',
   FLOOR_LINE: '#222a35', FLOOR_RIVET: '#3a4554',
 
+  // --- Stage 3 (Phase 4-3) ---
+  SENTINEL_STORM: '#b8a8d8', SENTINEL_STORM_DARK: '#4a3e66', SENTINEL_STORM_CORE: '#f4f0ff',
+  RAY_BODY: '#4e4280', RAY_DARK: '#271f45', RAY_EDGE: '#c8b8ff', RAY_SPARK: '#fff6a8', RAY_EYE: '#ffe14d',
+  CLOUD_BODY: '#4a4460', CLOUD_LIGHT: '#6c6488', CLOUD_FAR: '#2a2440',
+  LIGHTNING_MARK: '#ffe14d',      // "!" markers on lightning warnings
+
   // --- SECTOR NOVA 2: stage palettes ---
   // The journey runs cold blue -> gray -> purple -> red -> orange ->
   // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
@@ -439,6 +445,30 @@ const TITAN_ARM_SCORE = 1000;
 const TITAN_ARM_WARN_FRAMES = 40;          // shadow lane before it drops
 const TITAN_ARM_FALL_SPEED = 0.8;
 
+// THUNDER RAY: S3 boss (DESIGN.md 14). A giant ray.
+const THUNDER_RAY_HP = 340;                // design 240; raised so the max loadout needs >= 25s (README)
+const THUNDER_RAY_DAMAGE_CAP = 8;          // decided (DESIGN.md 14)
+const THUNDER_RAY_SCORE = 20000;
+const THUNDER_RAY_RADIUS = 26;             // body hit radius (and ramming)
+const THUNDER_RAY_TARGET_Y = 86;
+const THUNDER_RAY_SWAY = 70;
+const THUNDER_RAY_SWAY_SPEED = 0.008;
+const THUNDER_RAY_BOLT_WIDTH = 16;         // attack A lightning
+const THUNDER_RAY_BOLT_WARN = 60;
+const THUNDER_RAY_BOLT_ACTIVE = 20;
+const THUNDER_RAY_BOLT_SPACING = 80;       // between the 2-3 bolts
+const THUNDER_RAY_BOLT_REST = 70;
+const THUNDER_RAY_TAIL_CHARGE = 30;        // attack C telegraph
+const THUNDER_RAY_FAN_COUNT = 7;
+const THUNDER_RAY_FAN_STEP = 0.2;
+const THUNDER_RAY_FAN_SPEED = 2.4;
+const THUNDER_RAY_FAN_REST = 70;
+const THUNDER_RAY_SINK_FRAMES = 30;        // attack B: fade into the clouds
+const THUNDER_RAY_RIPPLE_FRAMES = 60;      // ripple warning where it will rise
+const THUNDER_RAY_RUSH_SPEED = 9;          // px per frame, bottom -> top
+const THUNDER_RAY_RETURN_FRAMES = 50;
+const THUNDER_RAY_DIVE_REST = 60;
+
 // --- Stage gimmicks (gimmicks.js) ---
 // S1 giant asteroid: shoot it, its fragments hit enemies only
 const ASTEROID_HP = 12;
@@ -458,6 +488,18 @@ const PASSAGE_PUSHBACK = 10;               // px the ship is pushed back from a 
 const WALL_PANEL_HP = 6;
 const WALL_PANEL_SCORE = 1000;
 const WALL_PANEL_RADIUS = 10;
+
+// S3 storm: lightning strikes and cloud bands
+const LIGHTNING_WARN_FRAMES = 60;          // DESIGN.md 12: 60f blinking line
+const LIGHTNING_ACTIVE_FRAMES = 20;
+const LIGHTNING_WIDTH = 16;
+const LIGHTNING_MAX = 2;                   // at once
+const STORM_STRIKE_INTERVAL = 110;         // frames between strikes while the storm is on
+const CLOUD_ALPHA = 0.7;                   // DESIGN.md 12
+const CLOUD_SPEED = PHASE_GHOST_SPEED;     // GOLD GHOST stays inside its cloud
+const CLOUD_INTERVAL = 170;                // frames between new cloud bands
+const CLOUD_MIN_HEIGHT = 50;
+const CLOUD_MAX_HEIGHT = 80;
 
 // --- NOVA CRYSTAL conditions ---
 const GOLD_SHARD_WINDOW = 5 * 60;          // S1: destroy within 5s of appearing
@@ -523,6 +565,7 @@ const DIFFICULTY_SETTINGS = {
 // --- Powerup ---
 const POWERUP_DROP_CHANCE = 0.12; // chance on enemy kill (stages can override)
 const STAGE2_ITEM_DROP_CHANCE = 0.17; // S2 has fewer droppers (fire guideline); keeps items about S1's level
+const STAGE3_ITEM_DROP_CHANCE = 0.15; // DESIGN.md 17: expected items >= the previous stage (S3 17.1 vs S2 16.3)
 const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;
 

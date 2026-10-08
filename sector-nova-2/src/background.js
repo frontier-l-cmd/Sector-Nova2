@@ -7,8 +7,8 @@
 //
 // Stage-specific layers come through `layers`: S1 has a ringed
 // planet and drifting ice, S2 a metal floor with blinking warning
-// lights; clouds, veins, flares and the core arrive with their
-// stages (Phase 4-3 onward). A layer is an object created by a
+// lights, S3 layered violet-gray clouds with distant lightning; veins,
+// flares and the core arrive with their stages (Phase 5). A layer is an object created by a
 // factory with update(frame) and draw(ctx). Layers that need the
 // heat shimmer can render to an offscreen canvas and draw it in
 // horizontal strips; only the background ever shimmers. Layers with
@@ -286,8 +286,98 @@ class WarningLightLayer {
   }
 }
 
+// ------------------------------------------------------------
+// S3 STORM VEIL layers
+// ------------------------------------------------------------
+
+/**
+ * Soft cloud shapes scrolling at their own speed (two of these make
+ * the multi-layer scroll). Far layers sit behind the stars.
+ */
+class StormCloudLayer {
+  constructor(speed, alpha, count, color) {
+    this.speed = speed;
+    this.alpha = alpha;
+    this.color = color;
+    this.far = true;
+    this.puffs = [];
+    for (let i = 0; i < count; i++) {
+      this.puffs.push({ x: Math.random() * CANVAS_WIDTH, y: Math.random() * CANVAS_HEIGHT, r: randFloat(30, 60), w: randFloat(1.6, 2.6) });
+    }
+  }
+
+  update() {
+    for (const p of this.puffs) {
+      p.y += this.speed;
+      if (p.y - p.r > CANVAS_HEIGHT) {
+        p.y = -p.r;
+        p.x = Math.random() * CANVAS_WIDTH;
+      }
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
+    for (const p of this.puffs) {
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, p.r * p.w, p.r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+/**
+ * Distant lightning: every few seconds the sky flickers faintly and a
+ * thin bolt shows far away. Background only and kept dim, so it never
+ * hides bullets or warnings.
+ */
+class DistantLightningLayer {
+  constructor() {
+    this.far = true;
+    this.timer = randInt(120, 240);
+    this.flash = 0;
+    this.bolt = null;
+  }
+
+  update() {
+    if (this.flash > 0) this.flash--;
+    if (--this.timer > 0) return;
+    this.timer = randInt(150, 300);
+    this.flash = 14;
+    const pts = [];
+    let x = randInt(30, CANVAS_WIDTH - 30);
+    for (let y = 0; y < CANVAS_HEIGHT * 0.5; y += 18) {
+      pts.push([x, y]);
+      x += randInt(-14, 14);
+    }
+    this.bolt = pts;
+  }
+
+  draw(ctx) {
+    if (this.flash <= 0) return;
+    const k = this.flash / 14;
+    const on = this.flash > 10 || (this.flash > 4 && this.flash < 8);
+    ctx.save();
+    ctx.globalAlpha = 0.07 * k;
+    ctx.fillStyle = COLORS.STORM_BOLT;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    if (on && this.bolt) {
+      ctx.globalAlpha = 0.25 * k;
+      ctx.strokeStyle = COLORS.STORM_ACCENT;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      this.bolt.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
 // Theme per screen / stage: gradient top->bottom, nebula tints, and
-// stage-specific layer factories (S1-S2 done; S3+ arrive with their stages).
+// stage-specific layer factories (S1-S3 done; S4+ arrive with their stages).
 const BACKGROUND_THEMES = {
   title: {
     top: COLORS.BG_NEBULA,
@@ -311,7 +401,11 @@ const BACKGROUND_THEMES = {
     top: COLORS.STORM_BG_TOP,
     bottom: COLORS.STORM_BG_BOTTOM,
     nebulae: ['#241c34', '#1c1a2c', '#16121f'],
-    layers: [],
+    layers: [
+      () => new DistantLightningLayer(),
+      () => new StormCloudLayer(0.25, 0.35, 6, COLORS.CLOUD_FAR),
+      () => new StormCloudLayer(0.55, 0.25, 5, COLORS.CLOUD_BODY),
+    ],
   },
   4: { // ECLIPSE HIVE - dark red-violet
     top: COLORS.HIVE_BG_TOP,

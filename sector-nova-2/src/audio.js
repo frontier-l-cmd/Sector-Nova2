@@ -9,7 +9,7 @@
 //  - M toggles mute; the setting is saved.
 //
 // Effects so far: shot / explode / select (Phase 1), hit / item /
-// graze / burst (Phase 2), alarm (Phase 4-1).
+// graze / burst (Phase 2), alarm (Phase 4-1), thunder (Phase 4-3).
 // The full effect list and the BGM step sequencer come later.
 // ============================================================
 
@@ -68,6 +68,14 @@ const SFX_DEFS = {
     layers: [0, 0.55, 1.1].map(delay => (
       { wave: 'square', freq: 880, freqEnd: 440, duration: 0.45, volume: 0.12, delay }
     )),
+  },
+  // Lightning strike (Phase 4-3): sharp crack over a low rumble.
+  thunder: {
+    minInterval: 0.08,
+    layers: [
+      { noise: true, filter: 6000, filterEnd: 500, duration: 0.25, volume: 0.3 },
+      { noise: true, filter: 300, filterEnd: 80, duration: 0.6, volume: 0.25, delay: 0.05 },
+    ],
   },
   // Two-step chime for menu cursor moves and decisions.
   select: {

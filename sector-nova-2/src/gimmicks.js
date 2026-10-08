@@ -11,7 +11,13 @@
 //   with the floor. The gap is never under PASSAGE_MIN_GAP. Touching
 //   a wall hurts and pushes the ship back. A GUN DECK sits on a wall
 //   edge, and one odd-colored wall panel hides the NOVA CRYSTAL.
-// Later stages add theirs here (S3 lightning / clouds, ...).
+//   S3 storm ('gimmickStart' / 'gimmickEnd' with type 'storm' or
+//   'clouds', and 'hazard' for single strikes): lightning bolts warn
+//   with a blinking line for 60 frames, then strike for 20 (at most 2
+//   at once). Cloud bands (opacity 0.7) drift down: enemies under a
+//   cloud are hidden, but hostile bullets and warnings are always
+//   drawn above the clouds.
+// Later stages add theirs here (S4 flesh walls, ...).
 // ============================================================
 
 class Asteroid extends Enemy {
@@ -333,6 +339,150 @@ class WallPanel extends Enemy {
     ctx.globalAlpha = 1;
     ctx.fillStyle = COLORS.WALL_DARK;
     for (const [bx, by] of [[-8, -8], [6, -8], [-8, 6], [6, 6]]) ctx.fillRect(bx, by, 2, 2);
+    ctx.restore();
+  }
+}
+
+// ------------------------------------------------------------
+// S3 storm: lightning and cloud bands
+// ------------------------------------------------------------
+
+/** One lightning bolt as a telegraphed Hazard (phone-readable warning). */
+function createLightning(x, opts) {
+  return new Hazard({
+    shape: 'vline',
+    x: clamp(x, LIGHTNING_WIDTH, CANVAS_WIDTH - LIGHTNING_WIDTH),
+    width: (opts && opts.width) || LIGHTNING_WIDTH,
+    warnFrames: (opts && opts.warnFrames) || LIGHTNING_WARN_FRAMES,
+    activeFrames: LIGHTNING_ACTIVE_FRAMES,
+    color: COLORS.STORM_BOLT,
+    emphasis: true,
+    tag: 'lightning',
+    onActivate: (opts && opts.onActivate) || null,
+  });
+}
+
+/**
+ * A drifting cloud band. Its lumpy shape is painted once to an
+ * offscreen canvas and drawn at CLOUD_ALPHA.
+ */
+class CloudBand {
+  constructor(y, x0, x1, height) {
+    this.y = y;
+    this.x0 = x0;
+    this.x1 = x1;
+    this.height = height;
+    const w = Math.ceil(x1 - x0) + 40;
+    const h = height + 30;
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = w;
+    this.canvas.height = h;
+    const g = this.canvas.getContext('2d');
+    const puffs = Math.max(4, Math.round(w / 26));
+    for (let i = 0; i < puffs; i++) {
+      const px = 20 + (w - 40) * (i / (puffs - 1));
+      const r = height * randFloat(0.42, 0.6);
+      g.fillStyle = COLORS.CLOUD_BODY;
+      g.beginPath();
+      g.arc(px, h / 2 + randFloat(-height * 0.12, height * 0.12), r, 0, Math.PI * 2);
+      g.fill();
+    }
+    // Light rim on top
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = COLORS.CLOUD_LIGHT;
+    g.fillRect(0, 0, w, h * 0.3);
+  }
+
+  update() {
+    this.y += CLOUD_SPEED;
+  }
+
+  get offScreen() {
+    return this.y - this.height > CANVAS_HEIGHT + 20;
+  }
+
+  /** True if (x, y) is inside the band (for tests / hiding checks). */
+  covers(x, y) {
+    return x >= this.x0 && x <= this.x1 && Math.abs(y - this.y) <= this.height / 2;
+  }
+
+  draw(ctx) {
+    ctx.drawImage(this.canvas, this.x0 - 20, this.y - this.canvas.height / 2);
+  }
+}
+
+class StormWeather {
+  constructor() {
+    this.clouds = [];
+    this.cloudsOn = false;
+    this.stormOn = false;
+    this.cloudTimer = 0;
+    this.strikeTimer = STORM_STRIKE_INTERVAL / 2;
+    this.strikeCount = 0;
+    this.side = 0;
+  }
+
+  start(type) {
+    if (type === 'clouds') {
+      this.cloudsOn = true;
+      this.cloudTimer = 0;
+    } else if (type === 'storm') {
+      this.stormOn = true;
+      this.strikeTimer = STORM_STRIKE_INTERVAL / 2;
+    }
+  }
+
+  stop(type) {
+    if (type === 'clouds') this.cloudsOn = false;
+    else if (type === 'storm') this.stormOn = false;
+  }
+
+  /** A band covering roughly two thirds of the width, alternating sides. */
+  addBand(y, x) {
+    const height = randInt(CLOUD_MIN_HEIGHT, CLOUD_MAX_HEIGHT);
+    let x0;
+    let x1;
+    if (x !== undefined) {
+      x0 = clamp(x - 90, 0, CANVAS_WIDTH);
+      x1 = clamp(x + 90, 0, CANVAS_WIDTH);
+    } else {
+      const w = CANVAS_WIDTH * randFloat(0.55, 0.7);
+      this.side = 1 - this.side;
+      x0 = this.side === 0 ? -10 : CANVAS_WIDTH - w + 10;
+      x1 = x0 + w;
+    }
+    const band = new CloudBand(y ?? -height, x0, x1, height);
+    this.clouds.push(band);
+    return band;
+  }
+
+  update(world) {
+    if (this.cloudsOn && --this.cloudTimer <= 0) {
+      this.cloudTimer = CLOUD_INTERVAL;
+      this.addBand();
+    }
+    for (const c of this.clouds) c.update();
+    this.clouds = this.clouds.filter(c => !c.offScreen);
+
+    if (this.stormOn && !world.spawnsLocked && --this.strikeTimer <= 0) {
+      this.strikeTimer = STORM_STRIKE_INTERVAL;
+      // Every other bolt falls near the ship; the rest anywhere.
+      const x = this.strikeCount++ % 2 === 0
+        ? world.player.x + randInt(-20, 20)
+        : randInt(30, CANVAS_WIDTH - 30);
+      world.addLightning(x);
+    }
+  }
+
+  get active() {
+    return this.cloudsOn || this.stormOn || this.clouds.length > 0;
+  }
+
+  draw(ctx) {
+    if (!this.clouds.length) return;
+    ctx.save();
+    ctx.globalAlpha = CLOUD_ALPHA;
+    for (const c of this.clouds) c.draw(ctx);
     ctx.restore();
   }
 }

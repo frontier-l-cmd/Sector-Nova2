@@ -10,7 +10,7 @@
 // ============================================================
 
 // Name and colors per stage. Later stages add their entries
-// (STORM / HIVE / CORONA) in Phase 4-3 onward.
+// (HIVE / CORONA) in Phase 5.
 const SENTINEL_STAGES = {
   1: {
     name: 'FROST SENTINEL',
@@ -23,6 +23,12 @@ const SENTINEL_STAGES = {
     body: COLORS.SENTINEL_HARBOR,
     dark: COLORS.SENTINEL_HARBOR_DARK,
     core: COLORS.SENTINEL_HARBOR_CORE,
+  },
+  3: {
+    name: 'STORM SENTINEL',
+    body: COLORS.SENTINEL_STORM,
+    dark: COLORS.SENTINEL_STORM_DARK,
+    core: COLORS.SENTINEL_STORM_CORE,
   },
 };
 

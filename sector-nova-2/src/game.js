@@ -85,6 +85,7 @@ class Game {
     this.boss = null;
     this.timeline = null;
     this.passage = null;      // S2 narrow passage (gimmicks.js)
+    this.weather = null;      // S3 storm: lightning + cloud bands (gimmicks.js)
     this.warningTimer = 0;
     this.warningBossName = '';
     this.spawnsLocked = false;
@@ -286,6 +287,7 @@ class Game {
       this.passage.update(this);
       if (!this.passage.alive) this.passage = null;
     }
+    if (this.weather) this.weather.update(this);
 
     // --- Player ---
     this.player.update(this.input);
@@ -460,17 +462,35 @@ class Game {
         const gold = ENEMY_FACTORIES['GOLD_' + ev.entry.type];
         if (!gold || this.spawnsLocked) return;
         const enemy = gold(resolveTimelineX(ev.entry.x, this.player), TIMELINE_SPAWN_Y);
-        enemy.crystalDeadline = this.playTime + (ev.entry.window ? ev.entry.window * FPS : GOLD_SHARD_WINDOW);
+        if (ev.entry.inCloud) {
+          // S3: the GOLD GHOST hides in its own cloud; any kill counts
+          // (it can only be hit while it is visible).
+          enemy.crystalDrop = true;
+          if (!this.weather) this.weather = new StormWeather();
+          this.weather.addBand(enemy.y, enemy.x);
+        } else {
+          enemy.crystalDeadline = this.playTime + (ev.entry.window ? ev.entry.window * FPS : GOLD_SHARD_WINDOW);
+        }
         this.enemies.push(enemy);
         return;
       }
+      case 'gimmickStart':
+      case 'gimmickEnd':
+        // S3 storm: 'storm' (lightning) and 'clouds' switch on / off.
+        if (!this.weather) this.weather = new StormWeather();
+        if (ev.kind === 'gimmickStart') this.weather.start(ev.entry.type);
+        else this.weather.stop(ev.entry.type);
+        return;
+      case 'hazard':
+        // A single scripted lightning bolt.
+        if (!this.spawnsLocked) this.addLightning(resolveTimelineX(ev.entry.x, this.player));
+        return;
       case 'wall':
         // S2 narrow passage: CAUTION first, then the walls scroll in.
         if (!this.spawnsLocked) this.passage = new NarrowPassage();
         return;
       default:
-        // gimmickStart / gimmickEnd / hazard arrive with the stages
-        // that use them (Phase 4-3 onward).
+        // Other kinds arrive with the stages that use them (Phase 5).
         if (DEBUG_MODE) console.warn('timeline: "' + ev.kind + '" is not implemented yet');
     }
   }
@@ -487,6 +507,10 @@ class Game {
     this.spawnsLocked = true;
     this.enemyBullets = [];
     this.hazards = [];
+    if (this.weather) { // the storm calms down for the boss
+      this.weather.stop('storm');
+      this.weather.stop('clouds');
+    }
     this.audio.play('alarm');
     this.comm.show('boss');
   }
@@ -510,6 +534,18 @@ class Game {
 
   addHazard(hazard) {
     this.hazards.push(hazard);
+  }
+
+  /**
+   * S3 lightning bolt (stage gimmick): at most LIGHTNING_MAX at once.
+   * Returns the hazard, or null if the sky is already full.
+   */
+  addLightning(x) {
+    const active = this.hazards.filter(h => h.alive && h.tag === 'lightning').length;
+    if (active >= LIGHTNING_MAX) return null;
+    const bolt = createLightning(x, { onActivate: () => this.audio.play('thunder') });
+    this.addHazard(bolt);
+    return bolt;
   }
 
   /** Enemies created by bosses (icicles, eggs, ...). */
@@ -586,6 +622,12 @@ class Game {
     // --- Hazards vs player ---
     for (const hazard of this.hazards) {
       if (hazard.hitsCircle(px, py, pr)) this.hitPlayer();
+    }
+
+    // --- Ramming boss (THUNDER RAY rising from the clouds) ---
+    const boss = this.boss;
+    if (boss && boss.contactRadius > 0 && circleCollision(px, py, pr, boss.x, boss.y, boss.contactRadius)) {
+      this.hitPlayer();
     }
   }
 
@@ -838,6 +880,7 @@ class Game {
     }
     if (!this.timeline.skipTo('warning')) return;
     this.passage = null;
+    this.weather = null;
     this.enemies = [];
     this.enemyBullets = [];
     this.hazards = [];
@@ -931,10 +974,15 @@ class Game {
 
   drawGameplay(ctx) {
     if (this.passage) this.passage.draw(ctx); // walls sit on the floor, under everything
-    for (const p of this.powerups) p.draw(ctx);
+    // Items stay visible above the S3 clouds; elsewhere under the enemies.
+    if (!this.weather) for (const p of this.powerups) p.draw(ctx);
     for (const e of this.enemies) if (e.drawLinks) e.drawLinks(ctx);
     for (const e of this.enemies) e.draw(ctx);
     if (this.boss) this.boss.draw(ctx);
+    if (this.weather) {
+      this.weather.draw(ctx); // enemies may hide under clouds; bullets never do
+      for (const p of this.powerups) p.draw(ctx);
+    }
 
     // Hazard guides / strikes sit under ships and bullets.
     for (const h of this.hazards) h.draw(ctx);

@@ -123,6 +123,16 @@ turrets.
 | HARBOR SENTINEL | `SENTINEL_HARBOR #9aa8ba`, `SENTINEL_HARBOR_DARK`, `SENTINEL_HARBOR_CORE #ffcc22` | the shared hexagon in steel gray with a yellow core |
 | DOCK TITAN | `DOCK_BODY / DARK / PLATE`, `DOCK_STRIPE`, `DOCK_CORE #ff7a3d`, `DOCK_CORE_HOT`, `DOCK_MISSILE` | wide hull, crane beam with hazard stripes, arm turrets with twin barrels; the core shows armor lines while an arm is left |
 
+### Stage 3 objects and bosses (SECTOR NOVA 2, Phase 4-3)
+
+| Object | Tokens | Notes |
+|---|---|---|
+| S3 background | `STORM_BG_TOP/BOTTOM`, `CLOUD_FAR`, `CLOUD_BODY`, `STORM_BOLT`, `STORM_ACCENT` | two cloud layers at different speeds behind the stars; a faint sky flicker with a thin distant bolt (background only, very dim) |
+| Cloud bands | `CLOUD_BODY #4a4460`, `CLOUD_LIGHT` | lumpy bands drawn at 0.7 opacity over enemies; never over bullets, warnings, items or the ship |
+| Lightning | `HAZARD_WARN`, `STORM_BOLT`, `LIGHTNING_MARK #ffe14d` | phone-readable warning: blinking 3 px line, dashed outline of the strike width, yellow "!" triangles at both screen edges |
+| STORM SENTINEL | `SENTINEL_STORM #b8a8d8`, `SENTINEL_STORM_DARK`, `SENTINEL_STORM_CORE` | the shared hexagon in violet gray with a white core |
+| THUNDER RAY | `RAY_BODY / DARK`, `RAY_EDGE #c8b8ff`, `RAY_SPARK`, `RAY_EYE` | broad diamond ray, lighter spine, gill slits, sparks running along the wing edges; tail points down at the ship |
+
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
 | Kind | Tokens | Notes |
@@ -207,6 +217,11 @@ Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
   `ICICLE_SHADOW` lane (40 frames, harmless) instead.
 - **Boss shot telegraph:** before an aimed volley the core swells and a thin white ring closes
   in on it (30 frames). GLACIER MAW's jaw starts moving 20 frames before the mouth is open.
+- **Clouds** (S3) are drawn after enemies and the boss, before items, hazards, the ship and
+  all bullets. Enemies may hide under them; nothing that can hurt the player may.
+- **Emphasized warnings** (`Hazard` with `emphasis: true`, S3 lightning) and the THUNDER RAY
+  dive lane use the same language: dashed outline of the danger area, a blinking guide and
+  yellow "!" triangles. They are never filled.
 - **Walls** (S2 passage) are drawn first in the playfield, under items, enemies and bullets;
   they never block bullets. The broken DOCK TITAN arm telegraphs its fall with a blinking
   `DOCK_STRIPE` shadow lane (40 frames).

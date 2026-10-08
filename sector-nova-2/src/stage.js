@@ -4,8 +4,8 @@
 // Each stage describes its name, background theme, item drops and
 // boss. Enemy appearances come from STAGE_TIMELINES (timeline.js).
 //
-// Stages 1-2 are complete (Phase 4-1 / 4-2). Stages 3-6 are declared
-// with their final names and become playable in Phase 4-3 onward.
+// Stages 1-3 are complete (Phase 4-1 to 4-3). Stages 4-6 are declared
+// with their final names and become playable in Phase 5.
 // ============================================================
 
 // Item weights (DESIGN.md 10). STAR CHIP drops often; NOVA CRYSTAL
@@ -53,7 +53,16 @@ const STAGES = {
     story: 'stage2',
     implemented: true,
   },
-  3: { stageNumber: 3, stageName: 'STORM VEIL', bossType: 'thunderRay', implemented: false },
+  3: {
+    stageNumber: 3,
+    stageName: 'STORM VEIL',
+    itemDropRate: STAGE3_ITEM_DROP_CHANCE,
+    powerupWeights: DEFAULT_POWERUP_WEIGHTS,
+    bossType: 'thunderRay',
+    bossExpectedTime: [50, 70],
+    story: 'stage3',
+    implemented: true,
+  },
   4: { stageNumber: 4, stageName: 'ECLIPSE HIVE', bossType: 'hiveMother', implemented: false },
   5: { stageNumber: 5, stageName: 'CORONA ZONE', bossType: 'coronaSerpent', implemented: false },
   6: { stageNumber: 6, stageName: 'HELIOS CORE', bossType: 'eclipseCrown', implemented: false },
