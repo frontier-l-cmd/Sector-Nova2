@@ -522,6 +522,7 @@ const DIFFICULTY_SETTINGS = {
 
 // --- Powerup ---
 const POWERUP_DROP_CHANCE = 0.12; // chance on enemy kill (stages can override)
+const STAGE2_ITEM_DROP_CHANCE = 0.17; // S2 has fewer droppers (fire guideline); keeps items about S1's level
 const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;
 

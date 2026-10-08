@@ -46,7 +46,7 @@ const STAGES = {
   2: {
     stageNumber: 2,
     stageName: 'DEAD HARBOR',
-    itemDropRate: POWERUP_DROP_CHANCE,
+    itemDropRate: STAGE2_ITEM_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
     bossType: 'dockTitan',
     bossExpectedTime: [45, 60],
