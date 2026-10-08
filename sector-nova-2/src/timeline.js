@@ -237,6 +237,68 @@ const STAGE_TIMELINES = {
     { t: 108.0, event: 'warning' },
     { t: 111.0, event: 'boss', type: 'thunderRay' },
   ],
+
+  // ----------------------------------------------------------
+  // Stage 4 ECLIPSE HIVE (DESIGN.md 12): + SWARM / LINK GUARD.
+  // Gimmick: the flesh wall maze (CAUTION at 54s, rows from ~56s to
+  // ~79s; one odd-patterned block holds the NOVA CRYSTAL). No LINK
+  // GUARD near the maze, so every block can always be shot open.
+  // HIVE SENTINEL at 50s, HIVE MOTHER at 111s. Fire is kept within
+  // DESIGN.md 17 (S4 = about 1.9x S1).
+  // ----------------------------------------------------------
+  4: [
+    // Opening: the swarm
+    { t: 2.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 5.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
+    { t: 8.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 9.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 12.0, spawn: 'LINK_GUARD', x: 'center' },
+    { t: 12.0, spawn: 'GUN_DECK', x: 120 },                  // shielded by the guard
+    { t: 12.0, spawn: 'GUN_DECK', x: 200 },
+    { t: 17.0, spawn: 'SWARM', x: 'player', count: 7, pattern: 'v', spacing: 22 },
+    { t: 21.0, spawn: 'SHARD', count: 6, interval: 20, pattern: 'sides' },
+
+    // Middle
+    { t: 25.0, spawn: 'MINE_LAYER', x: 'left', y: 120 },
+    { t: 28.0, spawn: 'PHASE_GHOST', x: 100 },
+    { t: 28.0, spawn: 'PHASE_GHOST', x: 220 },
+    { t: 31.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 34.0, spawn: 'SNIPER', x: 80 },
+    { t: 34.5, spawn: 'SNIPER', x: 240 },
+    { t: 37.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 40.0, spawn: 'CARRIER', x: 'center' },
+    { t: 43.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 46.0, spawn: 'SWARM', x: 'player', count: 7, pattern: 'v', spacing: 22 },
+
+    // Mid-boss (the timeline waits until it is beaten or flees)
+    { t: 50.0, event: 'midboss', type: 'sentinel' },
+    { t: 52.0, spawn: 'SHARD', x: 'center', count: 4, pattern: 'row', spacing: 34 },
+
+    // The flesh wall maze: little else around it
+    { t: 54.0, event: 'wall', type: 'flesh' },
+    { t: 62.0, spawn: 'SWARM', x: 'center', count: 5, pattern: 'v', spacing: 22 },
+    { t: 70.0, spawn: 'SHARD', x: 'player', count: 3, interval: 16, pattern: 'line' },
+
+    // Late
+    { t: 81.0, spawn: 'LINK_GUARD', x: 'center' },
+    { t: 81.0, spawn: 'MIRROR', x: 100 },
+    { t: 81.0, spawn: 'MIRROR', x: 220 },
+    { t: 84.0, spawn: 'MINE_LAYER', x: 'right', y: 140 },
+    { t: 87.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 90.0, spawn: 'SNIPER', x: 'center' },
+    { t: 92.0, spawn: 'GUN_DECK', x: 160 },
+    { t: 94.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 95.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 97.0, spawn: 'SNIPER', x: 100 },
+    { t: 98.0, spawn: 'SNIPER', x: 220 },
+    { t: 99.0, spawn: 'SWARM', x: 'player', count: 7, pattern: 'v', spacing: 22 },
+    { t: 102.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 104.0, spawn: 'SHARD', x: 'player', count: 3, interval: 12, pattern: 'line' },
+
+    // Boss
+    { t: 108.0, event: 'warning' },
+    { t: 111.0, event: 'boss', type: 'hiveMother' },
+  ],
 };
 
 // ------------------------------------------------------------

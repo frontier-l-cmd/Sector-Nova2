@@ -86,6 +86,7 @@ class Game {
     this.timeline = null;
     this.passage = null;      // S2 narrow passage (gimmicks.js)
     this.weather = null;      // S3 storm: lightning + cloud bands (gimmicks.js)
+    this.maze = null;         // S4 flesh wall maze (gimmicks.js)
     this.warningTimer = 0;
     this.warningBossName = '';
     this.spawnsLocked = false;
@@ -145,6 +146,7 @@ class Game {
     this.combo.reset();
     this.comm.clear();
     this.background.setTheme('title');
+    setHostileBulletOutline(false);
     this.titleMenu.reset();
     this.state = STATE.TITLE;
   }
@@ -165,6 +167,7 @@ class Game {
     this.clearStageObjects();
     this.timeline = new TimelineRunner(STAGE_TIMELINES[this.stage.stageNumber]);
     this.background.setTheme(this.stage.stageNumber);
+    setHostileBulletOutline(this.background.theme.bulletOutline); // S4: outlined bullets
     this.playTime = 0;
     this.stateTimer = 0;
     this.combo.reset();
@@ -288,6 +291,10 @@ class Game {
       if (!this.passage.alive) this.passage = null;
     }
     if (this.weather) this.weather.update(this);
+    if (this.maze) {
+      this.maze.update(this);
+      if (!this.maze.alive) this.maze = null;
+    }
 
     // --- Player ---
     this.player.update(this.input);
@@ -486,8 +493,11 @@ class Game {
         if (!this.spawnsLocked) this.addLightning(resolveTimelineX(ev.entry.x, this.player));
         return;
       case 'wall':
-        // S2 narrow passage: CAUTION first, then the walls scroll in.
-        if (!this.spawnsLocked) this.passage = new NarrowPassage();
+        if (this.spawnsLocked) return;
+        // S4 flesh walls (rows of blocks) or S2 narrow passage; both
+        // show CAUTION first.
+        if (ev.entry.type === 'flesh') this.maze = new FleshMaze();
+        else this.passage = new NarrowPassage();
         return;
       default:
         // Other kinds arrive with the stages that use them (Phase 5).
@@ -881,6 +891,7 @@ class Game {
     if (!this.timeline.skipTo('warning')) return;
     this.passage = null;
     this.weather = null;
+    this.maze = null;
     this.enemies = [];
     this.enemyBullets = [];
     this.hazards = [];

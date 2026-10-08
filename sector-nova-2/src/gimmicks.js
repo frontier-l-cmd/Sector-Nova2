@@ -17,7 +17,12 @@
 //   at once). Cloud bands (opacity 0.7) drift down: enemies under a
 //   cloud are hidden, but hostile bullets and warnings are always
 //   drawn above the clouds.
-// Later stages add theirs here (S4 flesh walls, ...).
+//   S4 flesh wall maze ('wall' event, type 'flesh'): "CAUTION / FLESH
+//   WALLS", then rows of flesh blocks (HP 3) drift down, each row with
+//   a 2-block gap in a new place. Touching a block hurts (it stays);
+//   every block can be shot open, so there is always a way through.
+//   One odd-patterned block hides the NOVA CRYSTAL.
+// Later stages add theirs here (S5 flares, ...).
 // ============================================================
 
 class Asteroid extends Enemy {
@@ -484,5 +489,148 @@ class StormWeather {
     ctx.globalAlpha = CLOUD_ALPHA;
     for (const c of this.clouds) c.draw(ctx);
     ctx.restore();
+  }
+}
+
+// ------------------------------------------------------------
+// S4 flesh wall maze
+// ------------------------------------------------------------
+
+// Gap column (left block of the 2-block gap) for each row, top row
+// first. Every row's gap is in a new place, and each block can be shot.
+const FLESH_MAZE_S4 = {
+  gaps: [4, 1, 6, 3, 7, 2, 5, 0, 4, 7, 1, 5],
+  odd: { row: 6, col: 2 },   // the odd-patterned block (NOVA CRYSTAL)
+};
+
+/** One flesh block: terrain that hurts on touch and opens when shot. */
+class FleshBlock extends Enemy {
+  constructor(x, y, odd) {
+    super(x, y, odd ? 'FLESH_ODD' : 'FLESH_BLOCK');
+    this.hp = FLESH_BLOCK_HP;
+    this.score = FLESH_BLOCK_SCORE;
+    this.radius = 14;            // touch / hit circle inside the 32x24 block
+    this.survivesRam = true;     // touching it hurts the ship, the block stays
+    this.noDrop = true;          // terrain, not an enemy that drops items
+    this.odd = !!odd;
+    this.crystalDrop = this.odd; // S4 NOVA CRYSTAL
+    this.pulse = Math.random() * Math.PI * 2;
+    this.flash = 0;
+  }
+
+  applyDamage(amount) {
+    this.hp -= amount;
+    this.flash = 4;
+    return amount;
+  }
+
+  update() {
+    this.frame++;
+    this.y += FLESH_FALL_SPEED;
+    if (this.flash > 0) this.flash--;
+    if (this.isOffScreen()) this.alive = false;
+  }
+
+  draw(ctx) {
+    const w = FLESH_BLOCK_W - 2;
+    const h = FLESH_BLOCK_H - 2;
+    const breathe = Math.sin(this.frame * 0.06 + this.pulse) * 1;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    // Membrane outline: a pale rim no enemy or bullet has
+    ctx.fillStyle = COLORS.FLESH_MEMBRANE;
+    roundRectPath(ctx, -w / 2 - 1, -h / 2 - 1 - breathe / 2, w + 2, h + 2 + breathe, 7);
+    ctx.fill();
+    ctx.fillStyle = this.flash > 0 ? COLORS.FLESH_LIGHT : (this.odd ? COLORS.FLESH_ODD : COLORS.FLESH_BODY);
+    roundRectPath(ctx, -w / 2, -h / 2 - breathe / 2, w, h + breathe, 6);
+    ctx.fill();
+    if (this.odd) {
+      // A different pattern: pale spots in a ring
+      ctx.fillStyle = COLORS.FLESH_ODD_LIGHT;
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI * 2 * i) / 6 + this.frame * 0.01;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * 8, Math.sin(a) * 5, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Dark folds (striped flesh)
+      ctx.strokeStyle = COLORS.FLESH_DARK;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-w / 2 + 4, -3); ctx.quadraticCurveTo(-2, -7, w / 2 - 4, -2);
+      ctx.moveTo(-w / 2 + 4, 4); ctx.quadraticCurveTo(2, 0, w / 2 - 4, 5);
+      ctx.stroke();
+    }
+    // Damage shows as darker cracks
+    if (this.hp < FLESH_BLOCK_HP) {
+      ctx.strokeStyle = COLORS.FLESH_DARK;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-6, -h / 2 + 2); ctx.lineTo(-2, 0); ctx.lineTo(-7, h / 2 - 2);
+      if (this.hp < FLESH_BLOCK_HP - 1) { ctx.moveTo(6, -h / 2 + 2); ctx.lineTo(3, 2); ctx.lineTo(8, h / 2 - 2); }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+/** Rounded rectangle path helper. */
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+class FleshMaze {
+  constructor(layout) {
+    this.layout = layout || FLESH_MAZE_S4;
+    this.caution = FLESH_CAUTION_FRAMES;
+    this.row = 0;
+    this.rowTimer = 0;
+    this.alive = true;
+  }
+
+  get cautionActive() {
+    return this.caution > 0;
+  }
+
+  /** Blocks of one row (every column except the gap). */
+  buildRow(index) {
+    const gap = this.layout.gaps[index];
+    const blocks = [];
+    for (let c = 0; c < FLESH_COLUMNS; c++) {
+      if (c >= gap && c < gap + FLESH_GAP_COLUMNS) continue;
+      const odd = this.layout.odd && this.layout.odd.row === index && this.layout.odd.col === c;
+      blocks.push(new FleshBlock((c + 0.5) * FLESH_BLOCK_W, -FLESH_BLOCK_H / 2, odd));
+    }
+    return blocks;
+  }
+
+  update(world) {
+    if (this.caution > 0) {
+      this.caution--;
+      return;
+    }
+    if (this.row >= this.layout.gaps.length) {
+      this.alive = false;
+      return;
+    }
+    if (--this.rowTimer <= 0) {
+      this.rowTimer = Math.round(FLESH_ROW_SPACING / FLESH_FALL_SPEED);
+      for (const b of this.buildRow(this.row)) world.addEnemy(b);
+      this.row++;
+    }
   }
 }

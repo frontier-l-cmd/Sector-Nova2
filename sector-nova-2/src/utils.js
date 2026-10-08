@@ -140,6 +140,15 @@ const COLORS = {
   CLOUD_BODY: '#4a4460', CLOUD_LIGHT: '#6c6488', CLOUD_FAR: '#2a2440',
   LIGHTNING_MARK: '#ffe14d',      // "!" markers on lightning warnings
 
+  // --- Stage 4 (Phase 5-1) ---
+  BULLET_OUTLINE: '#fff0f6',      // light ring around hostile bullets where the backdrop is red (S4)
+  SENTINEL_HIVE: '#c45a8a', SENTINEL_HIVE_DARK: '#4a1430', SENTINEL_HIVE_CORE: '#ffe0ee',
+  FLESH_BODY: '#7a3d4e', FLESH_DARK: '#3e1a26', FLESH_LIGHT: '#b8737f', FLESH_MEMBRANE: '#e8b8a8',
+  FLESH_ODD: '#5a6e3a', FLESH_ODD_LIGHT: '#c8e08a',   // the one odd-patterned block (NOVA CRYSTAL)
+  HIVE_MOTHER_BODY: '#8a2a5a', HIVE_MOTHER_DARK: '#3a0c26', HIVE_MOTHER_SAC: '#d0607e',
+  HIVE_MOTHER_GLOW: '#ffb0d0', HIVE_MOTHER_EYE: '#ffe14d',
+  EGG_SHELL: '#e0c8b0', EGG_DARK: '#7a5a48', EGG_GLOW: '#ff8fb8',
+
   // --- SECTOR NOVA 2: stage palettes ---
   // The journey runs cold blue -> gray -> purple -> red -> orange ->
   // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
@@ -469,6 +478,32 @@ const THUNDER_RAY_RUSH_SPEED = 9;          // px per frame, bottom -> top
 const THUNDER_RAY_RETURN_FRAMES = 50;
 const THUNDER_RAY_DIVE_REST = 60;
 
+// HIVE MOTHER: S4 boss (DESIGN.md 14). Eggs, hatching, spiral.
+const HIVE_MOTHER_HP = 600;                // design 280; raised so the max loadout needs >= 30s (README)
+const HIVE_MOTHER_DAMAGE_CAP = 8;          // decided (DESIGN.md 14)
+const HIVE_MOTHER_SCORE = 25000;
+const HIVE_MOTHER_RADIUS = 30;
+const HIVE_MOTHER_TARGET_Y = 84;
+const HIVE_MOTHER_SWAY = 50;
+const HIVE_MOTHER_SWAY_SPEED = 0.007;
+const HIVE_MOTHER_EGG_INTERVAL = 4 * 60;   // DESIGN.md 14: an egg every 4 seconds
+const HIVE_MOTHER_EGG_WARN = 30;           // the sac glows before an egg drops
+const HIVE_MOTHER_SPIRAL_CHARGE = 30;      // the core glows before a spiral
+const HIVE_MOTHER_SPIRAL_FRAMES = 150;     // length of one spiral
+const HIVE_MOTHER_SPIRAL_REST = 120;
+const HIVE_MOTHER_SPIRAL_EVERY = 16;       // frames between volleys
+const HIVE_MOTHER_SPIRAL_EVERY_ENRAGED = 22;
+const HIVE_MOTHER_SPIRAL_ARMS = 2;
+const HIVE_MOTHER_SPIRAL_TURN = 0.16;      // radians per volley (slow rotation)
+const HIVE_MOTHER_SPIRAL_SPEED = 1.8;
+const EGG_HP = 6;
+const EGG_SCORE = 200;
+const EGG_RADIUS = 9;
+const EGG_SPEED = 0.5;
+const EGG_HATCH_FRAMES = 5 * 60;           // DESIGN.md 14
+const EGG_HATCH_FRAMES_ENRAGED = 4 * 60;
+const EGG_CRACK_FRAMES = 60;               // shell cracks and shakes before hatching
+
 // --- Stage gimmicks (gimmicks.js) ---
 // S1 giant asteroid: shoot it, its fragments hit enemies only
 const ASTEROID_HP = 12;
@@ -500,6 +535,17 @@ const CLOUD_SPEED = PHASE_GHOST_SPEED;     // GOLD GHOST stays inside its cloud
 const CLOUD_INTERVAL = 170;                // frames between new cloud bands
 const CLOUD_MIN_HEIGHT = 50;
 const CLOUD_MAX_HEIGHT = 80;
+
+// S4 flesh wall maze: rows of blocks with a gap, shoot to open more
+const FLESH_COLUMNS = 10;                  // blocks per row (32 px each)
+const FLESH_BLOCK_W = CANVAS_WIDTH / FLESH_COLUMNS;
+const FLESH_BLOCK_H = 24;
+const FLESH_BLOCK_HP = 3;                  // DESIGN.md 12
+const FLESH_BLOCK_SCORE = 20;
+const FLESH_GAP_COLUMNS = 2;               // gap of each row (64 px)
+const FLESH_FALL_SPEED = 1.0;
+const FLESH_ROW_SPACING = 72;              // px between rows
+const FLESH_CAUTION_FRAMES = 150;          // CAUTION before the first row shows
 
 // --- NOVA CRYSTAL conditions ---
 const GOLD_SHARD_WINDOW = 5 * 60;          // S1: destroy within 5s of appearing
@@ -566,6 +612,7 @@ const DIFFICULTY_SETTINGS = {
 const POWERUP_DROP_CHANCE = 0.12; // chance on enemy kill (stages can override)
 const STAGE2_ITEM_DROP_CHANCE = 0.17; // S2 has fewer droppers (fire guideline); keeps items about S1's level
 const STAGE3_ITEM_DROP_CHANCE = 0.15; // DESIGN.md 17: expected items >= the previous stage (S3 17.1 vs S2 16.3)
+const STAGE4_ITEM_DROP_CHANCE = 0.15; // S4 >= S3 (README)
 const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;
 

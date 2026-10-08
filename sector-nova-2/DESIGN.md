@@ -771,10 +771,33 @@ Phase 4 は3回に分けて進める。
 
 ### Phase 5: Stage 4〜6
 
-- S4〜S6の背景・ギミック・タイムライン
-- HIVE MOTHER、CORONA SERPENT、NEBULA HEART（侵食体）、ECLIPSE CROWN（3形態）
+Phase 5 は3回に分けて進める。各回とも「17. バランスの原則」（敵弾の量の目安・アイテムの期待値）と「14. ボス・中ボス」の方針（ダメージ上限・撃破時間）を最初から守る。
+
+#### Phase 5-1: Stage 4
+
+- S4「ECLIPSE HIVE」の背景・肉の壁の迷路のギミック・タイムライン
+- 中ボスSENTINEL（S4の色）、ボスHIVE MOTHER（卵・孵化・螺旋弾）
+- `story.js` のS4分
+- S4のNOVA CRYSTAL条件（模様の違う壁ブロック）
+
+**完了条件**: S1→S4を通しで遊べる / ギミックとボスの攻撃に必ず予告がある / 暗い赤紫の背景でも敵弾が見える / 迷路は撃てば必ず通れる / ボスの撃破時間が「14. ボス・中ボス」の方針に収まる
+
+#### Phase 5-2: Stage 5
+
+- S5「CORONA ZONE」の背景（熱の揺らぎ）・太陽フレアのギミック・タイムライン
+- 中ボスSENTINEL（S5の色）、ボスCORONA SERPENT（体節）
+- `story.js` のS5分
+- S5のNOVA CRYSTAL条件（体節を全部壊してから頭を倒す）
+
+**完了条件**: S1→S5を通しで遊べる / ギミックとボスの攻撃に必ず予告がある / 明るい背景でも敵弾・自機が見える / ボスの撃破時間が「14. ボス・中ボス」の方針に収まる
+
+#### Phase 5-3: Stage 6・最終ボス・エンディング
+
+- S6「HELIOS CORE」の背景・恒星の引力のギミック・タイムライン
+- 中ボスNEBULA HEART（侵食体）、最終ボスECLIPSE CROWN（3形態）
+- `story.js` のS6分
+- S6のNOVA CRYSTAL条件（NEBULA HEARTをNOVA BURSTを使わずに倒す）
 - NORMAL END / BAD END
-- S4〜S6のNOVA CRYSTAL条件
 
 **完了条件**: S1〜S6を通しでクリアできる / 第2形態の暗闇でも敵弾が見える / 60秒切れでBAD ENDになる
 

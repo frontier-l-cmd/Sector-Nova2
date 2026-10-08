@@ -6,7 +6,7 @@
 // character at a time, holds it, then shows the next queued message.
 // ENTER shows the whole message at once / skips to the next one.
 // Play never stops for a message.
-// Lines for S4-S6 are added with their stages (Phase 5).
+// Lines for S5-S6 are added with their stages (Phase 5-2 onward).
 // ============================================================
 
 const STORY = {
@@ -21,6 +21,9 @@ const STORY = {
   ],
   stage3: [
     ['STORM VEIL. LIGHTNING EVERYWHERE.', 'TRUST THE WARNING LINES.'],
+  ],
+  stage4: [
+    ['THIS IS THEIR NEST.', 'BURN IT FROM THE INSIDE.'],
   ],
   boss: [
     ['MASSIVE SIGNAL DETECTED!'],

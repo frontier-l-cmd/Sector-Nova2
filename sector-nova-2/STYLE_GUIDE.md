@@ -133,6 +133,18 @@ turrets.
 | STORM SENTINEL | `SENTINEL_STORM #b8a8d8`, `SENTINEL_STORM_DARK`, `SENTINEL_STORM_CORE` | the shared hexagon in violet gray with a white core |
 | THUNDER RAY | `RAY_BODY / DARK`, `RAY_EDGE #c8b8ff`, `RAY_SPARK`, `RAY_EYE` | broad diamond ray, lighter spine, gill slits, sparks running along the wing edges; tail points down at the ship |
 
+### Stage 4 objects and bosses (SECTOR NOVA 2, Phase 5-1)
+
+| Object | Tokens | Notes |
+|---|---|---|
+| S4 background | `HIVE_BG_TOP/BOTTOM`, `HIVE_VEIN` | branching veins scrolling slowly and pulsing; kept dark |
+| Bullet outline | `BULLET_OUTLINE #fff0f6` | 1.5 px light ring around every hostile bullet, only where the backdrop shares the bullets' red hue (theme `bulletOutline`, S4) |
+| Flesh blocks | `FLESH_BODY / DARK / LIGHT`, `FLESH_MEMBRANE #e8b8a8` | rounded flesh slabs with a pale membrane rim and dark folds — a shape and rim no enemy or bullet has; flash pale and crack when hit |
+| Odd flesh block | `FLESH_ODD #5a6e3a`, `FLESH_ODD_LIGHT` | greenish with a ring of pale spots (NOVA CRYSTAL) |
+| HIVE SENTINEL | `SENTINEL_HIVE #c45a8a`, `SENTINEL_HIVE_DARK`, `SENTINEL_HIVE_CORE` | the shared hexagon in red-violet with a pale core |
+| HIVE MOTHER | `HIVE_MOTHER_BODY / DARK / SAC / GLOW`, `HIVE_MOTHER_EYE` | queen with legs, a pulsing segmented abdomen, a sac that flashes before an egg, a core that glows before a spiral |
+| Egg | `EGG_SHELL`, `EGG_DARK`, `EGG_GLOW` | pale shell with a shape moving inside; the glow grows and the shell cracks and shakes before hatching |
+
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
 | Kind | Tokens | Notes |
@@ -217,6 +229,11 @@ Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
   `ICICLE_SHADOW` lane (40 frames, harmless) instead.
 - **Boss shot telegraph:** before an aimed volley the core swells and a thin white ring closes
   in on it (30 frames). GLACIER MAW's jaw starts moving 20 frames before the mouth is open.
+- **Bullet outline**: on a backdrop in the bullets' own hue (S4's red-violet), every hostile
+  bullet gets a light ring (`setHostileBulletOutline`). Brighter backdrops later (S5 / S6) may
+  need a dark ring instead (DESIGN.md 15-9).
+- **Terrain vs. enemies** (S4 flesh walls): terrain is large, slab-shaped, with a pale rim;
+  enemies are small sprites; bullets are glowing dots. Keep the three readable at a glance.
 - **Clouds** (S3) are drawn after enemies and the boss, before items, hazards, the ship and
   all bullets. Enemies may hide under them; nothing that can hurt the player may.
 - **Emphasized warnings** (`Hazard` with `emphasis: true`, S3 lightning) and the THUNDER RAY

@@ -7,8 +7,9 @@
 //
 // Stage-specific layers come through `layers`: S1 has a ringed
 // planet and drifting ice, S2 a metal floor with blinking warning
-// lights, S3 layered violet-gray clouds with distant lightning; veins,
-// flares and the core arrive with their stages (Phase 5). A layer is an object created by a
+// lights, S3 layered violet-gray clouds with distant lightning, S4
+// pulsing organic veins; flares and the core arrive with their
+// stages (Phase 5-2 onward). A layer is an object created by a
 // factory with update(frame) and draw(ctx). Layers that need the
 // heat shimmer can render to an offscreen canvas and draw it in
 // horizontal strips; only the background ever shimmers. Layers with
@@ -376,8 +377,69 @@ class DistantLightningLayer {
   }
 }
 
+// ------------------------------------------------------------
+// S4 ECLIPSE HIVE layer
+// ------------------------------------------------------------
+
+/**
+ * Branching veins that scroll down slowly and pulse. Kept dark (the
+ * hostile bullets also get a light outline on this stage).
+ */
+class HiveVeinLayer {
+  constructor() {
+    this.far = true;
+    this.frame = 0;
+    this.offset = 0;
+    this.height = CANVAS_HEIGHT;
+    this.veins = [];
+    for (let i = 0; i < 7; i++) {
+      // Each vein: a wavy trunk with a few short branches
+      const x0 = randFloat(0, CANVAS_WIDTH);
+      const pts = [];
+      let x = x0;
+      for (let y = -20; y <= this.height + 20; y += 24) {
+        pts.push([x, y]);
+        x += randFloat(-14, 14);
+      }
+      const branches = [];
+      for (let b = 0; b < 3; b++) {
+        const [bx, by] = pts[randInt(1, pts.length - 2)];
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        branches.push([[bx, by], [bx + dir * randFloat(18, 34), by + randFloat(10, 26)], [bx + dir * randFloat(34, 54), by + randFloat(24, 44)]]);
+      }
+      this.veins.push({ pts, branches, width: randFloat(1.5, 3.5), phase: Math.random() * Math.PI * 2 });
+    }
+  }
+
+  update() {
+    this.frame++;
+    this.offset = (this.offset + 0.35) % this.height;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.strokeStyle = COLORS.HIVE_VEIN;
+    ctx.lineCap = 'round';
+    for (const shift of [this.offset - this.height, this.offset]) {
+      for (const v of this.veins) {
+        ctx.globalAlpha = 0.35 + Math.sin(this.frame * 0.05 + v.phase) * 0.12;
+        ctx.lineWidth = v.width;
+        ctx.beginPath();
+        v.pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y + shift) : ctx.lineTo(x, y + shift)));
+        for (const br of v.branches) {
+          ctx.moveTo(br[0][0], br[0][1] + shift);
+          for (let i = 1; i < br.length; i++) ctx.lineTo(br[i][0], br[i][1] + shift);
+        }
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+}
+
 // Theme per screen / stage: gradient top->bottom, nebula tints, and
-// stage-specific layer factories (S1-S3 done; S4+ arrive with their stages).
+// stage-specific layer factories (S1-S4 done; S5+ arrive with their
+// stages). `bulletOutline` gives hostile bullets a light ring.
 const BACKGROUND_THEMES = {
   title: {
     top: COLORS.BG_NEBULA,
@@ -411,7 +473,8 @@ const BACKGROUND_THEMES = {
     top: COLORS.HIVE_BG_TOP,
     bottom: COLORS.HIVE_BG_BOTTOM,
     nebulae: ['#340c24', '#2a0a1c', '#1c0612'],
-    layers: [],
+    layers: [() => new HiveVeinLayer()],
+    bulletOutline: true, // red bullets on a red-violet backdrop
   },
   5: { // CORONA ZONE - red / orange
     top: COLORS.CORONA_BG_TOP,

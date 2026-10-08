@@ -40,7 +40,12 @@ class HUD {
 
     game.comm.draw(ctx, CANVAS_HEIGHT - 84, game.globalFrame);
     if (game.warningTimer > 0) this.drawWarning(ctx, game);
-    if (game.passage && game.passage.cautionActive) this.drawCaution(ctx, game.passage);
+    if (game.passage && game.passage.cautionActive) {
+      this.drawCaution(ctx, PASSAGE_CAUTION_FRAMES - game.passage.caution, 'NARROW PASSAGE');
+    }
+    if (game.maze && game.maze.cautionActive) {
+      this.drawCaution(ctx, FLESH_CAUTION_FRAMES - game.maze.caution, 'FLESH WALLS');
+    }
     if (game.boss && game.boss.banner) this.drawBanner(ctx, game.boss.banner, game.globalFrame);
   }
 
@@ -387,11 +392,11 @@ class HUD {
   }
 
   /**
-   * S2 "CAUTION: NARROW PASSAGE" before the walls arrive: a yellow and
-   * black band across the upper screen, blinking text that never moves.
+   * "CAUTION" before a stage gimmick arrives (S2 NARROW PASSAGE, S4
+   * FLESH WALLS): a yellow and black band across the upper screen,
+   * blinking text that never moves. `t` = frames since it began.
    */
-  drawCaution(ctx, passage) {
-    const t = PASSAGE_CAUTION_FRAMES - passage.caution;
+  drawCaution(ctx, t, subtitle) {
     const y = 118;
     ctx.save();
     ctx.fillStyle = COLORS.CAUTION_BAND;
@@ -418,7 +423,7 @@ class HUD {
     }
     ctx.font = 'bold 8px monospace';
     ctx.fillStyle = COLORS.UI_WHITE;
-    ctx.fillText('NARROW PASSAGE', CANVAS_WIDTH / 2, y + 26);
+    ctx.fillText(subtitle, CANVAS_WIDTH / 2, y + 26);
     ctx.restore();
   }
 

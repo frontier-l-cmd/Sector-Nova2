@@ -57,6 +57,26 @@ class PlayerBullet {
   }
 }
 
+// Light outline around every hostile bullet, switched on per stage
+// (background theme `bulletOutline`) where the backdrop shares the
+// bullets' hue (S4's dark red-violet) so they never sink into it.
+let hostileBulletOutline = false;
+
+function setHostileBulletOutline(on) {
+  hostileBulletOutline = !!on;
+}
+
+function drawHostileBulletOutline(ctx, x, y, r) {
+  if (!hostileBulletOutline) return;
+  ctx.strokeStyle = COLORS.BULLET_OUTLINE;
+  ctx.globalAlpha = 0.95;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, r + 1.5, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
 // Visual styles for EnemyBullet (DESIGN.md 15-3).
 const HOSTILE_BULLET_STYLES = {
   enemy: { core: COLORS.ENEMY_BULLET, glow: COLORS.ENEMY_BULLET_GLOW },      // normal red
@@ -96,6 +116,7 @@ class EnemyBullet {
     ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+    drawHostileBulletOutline(ctx, this.x, this.y, this.radius);
 
     // Core
     ctx.fillStyle = this.style.core;
@@ -145,6 +166,7 @@ class BossBullet {
     ctx.arc(this.x, this.y, (this.radius + 4) * pulse, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+    drawHostileBulletOutline(ctx, this.x, this.y, this.radius * pulse);
 
     // Core
     ctx.fillStyle = COLORS.BOSS_BULLET;

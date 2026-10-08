@@ -2,6 +2,31 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 5-1] Stage 4 の完成 — 2026-10-08
+
+### 設計書
+
+- DESIGN.md（ルートと `sector-nova-2/` の両方）の Phase 5 を 5-1（Stage 4）/ 5-2（Stage 5）/ 5-3（Stage 6・最終ボス・エンディング）に分割（それぞれの内容と完了条件）
+
+### 追加
+
+- S4「ECLIPSE HIVE」のタイムライン（SWARM / LINK GUARD が加わる、中ボス、肉の壁の迷路、WARNING、ボス）
+- S4 の背景レイヤー: 脈打つ血管（`background.js` の `HiveVeinLayer`）
+- ギミック「肉の壁の迷路」（`gimmicks.js` の `FleshMaze` / `FleshBlock`）: CAUTION の後、2ブロック分の隙間がある列が12列。触れると被弾、撃てば壊せる
+- S4 の NOVA CRYSTAL: 模様の違う壁ブロック
+- 中ボス HIVE SENTINEL（SENTINEL の S4 の色、HP 105）
+- ボス HIVE MOTHER（`bosses/hiveMother.js`）: 卵（予告つき、5秒で孵化）、予告つきの螺旋弾、HP 50% 以下で卵2個・4秒孵化・2重螺旋。HP 600、上限 8
+- 敵弾の縁取り（`bullet.js` の `setHostileBulletOutline`。背景テーマの `bulletOutline` で S4 だけ ON）
+- S4 開始時の LYRA の通信
+- S4 のアイテムの確率 15%（`STAGE4_ITEM_DROP_CHANCE`、期待値 17.70 ≥ S3 17.10）
+- README に S4 の撃破時間（卵を放置／潰す）・敵弾の量・弾の見やすさ・アイテムの期待値の表
+
+### 変更
+
+- S3 クリア後は、リザルト → S4 のステージ紹介へ進む（S4 クリア後はタイトルへ）
+- HUD の CAUTION 表示を、下の文字を受け取る形にした（S2 NARROW PASSAGE / S4 FLESH WALLS）
+- デバッグキー 9 で WARNING 直前に飛ぶ時、迷路も消す
+
 ## [Phase 4-3] Stage 3 の完成 — 2026-10-08
 
 ### 設計書
