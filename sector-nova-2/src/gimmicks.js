@@ -421,20 +421,26 @@ class StormWeather {
     this.clouds = [];
     this.cloudsOn = false;
     this.stormOn = false;
+    this.pairs = false;      // late storm: two bolts at a time
     this.cloudTimer = 0;
     this.strikeTimer = STORM_STRIKE_INTERVAL / 2;
     this.strikeCount = 0;
     this.side = 0;
   }
 
-  start(type) {
+  start(type, pairs) {
     if (type === 'clouds') {
       this.cloudsOn = true;
       this.cloudTimer = 0;
     } else if (type === 'storm') {
       this.stormOn = true;
-      this.strikeTimer = STORM_STRIKE_INTERVAL / 2;
+      this.pairs = !!pairs;
+      this.strikeTimer = this.interval / 2;
     }
+  }
+
+  get interval() {
+    return this.pairs ? STORM_PAIR_INTERVAL : STORM_STRIKE_INTERVAL;
   }
 
   stop(type) {
@@ -470,12 +476,23 @@ class StormWeather {
     this.clouds = this.clouds.filter(c => !c.offScreen);
 
     if (this.stormOn && !world.spawnsLocked && --this.strikeTimer <= 0) {
-      this.strikeTimer = STORM_STRIKE_INTERVAL;
-      // Every other bolt falls near the ship; the rest anywhere.
-      const x = this.strikeCount++ % 2 === 0
-        ? world.player.x + randInt(-20, 20)
-        : randInt(30, CANVAS_WIDTH - 30);
-      world.addLightning(x);
+      this.strikeTimer = this.interval;
+      if (this.pairs) {
+        // One bolt near the ship, the other on the wider side, at
+        // least STORM_PAIR_MIN_GAP away.
+        const near = clamp(world.player.x + randInt(-20, 20), 30, CANVAS_WIDTH - 30);
+        const far = near < CANVAS_WIDTH / 2
+          ? randInt(Math.min(near + STORM_PAIR_MIN_GAP, CANVAS_WIDTH - 30), CANVAS_WIDTH - 30)
+          : randInt(30, Math.max(near - STORM_PAIR_MIN_GAP, 30));
+        world.addLightning(near);
+        world.addLightning(far);
+      } else {
+        // Every other bolt falls near the ship; the rest anywhere.
+        const x = this.strikeCount++ % 2 === 0
+          ? world.player.x + randInt(-20, 20)
+          : randInt(30, CANVAS_WIDTH - 30);
+        world.addLightning(x);
+      }
     }
   }
 

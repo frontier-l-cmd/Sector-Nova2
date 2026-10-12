@@ -484,8 +484,9 @@ class Game {
       case 'gimmickStart':
       case 'gimmickEnd':
         // S3 storm: 'storm' (lightning) and 'clouds' switch on / off.
+        // `pairs: true` on a storm start: two bolts at a time.
         if (!this.weather) this.weather = new StormWeather();
-        if (ev.kind === 'gimmickStart') this.weather.start(ev.entry.type);
+        if (ev.kind === 'gimmickStart') this.weather.start(ev.entry.type, !!ev.entry.pairs);
         else this.weather.stop(ev.entry.type);
         return;
       case 'hazard':
@@ -938,12 +939,13 @@ class Game {
     }
 
     // Item drop: some enemies have their own (icicles -> STAR CHIP),
-    // otherwise the stage's rate and weights.
+    // otherwise the stage's weights at the enemy's rate (PHASE GHOST)
+    // or the stage's rate.
     if (enemy.dropOverride) {
       if (Math.random() < enemy.dropOverride.chance) {
         this.powerups.push(new Powerup(enemy.x, enemy.y, enemy.dropOverride.type));
       }
-    } else if (!enemy.noDrop && Math.random() < (this.stage.itemDropRate || POWERUP_DROP_CHANCE)) {
+    } else if (!enemy.noDrop && Math.random() < (enemy.itemDropChance ?? (this.stage.itemDropRate || POWERUP_DROP_CHANCE))) {
       this.powerups.push(new Powerup(enemy.x, enemy.y, null, this.stage.powerupWeights));
     }
   }

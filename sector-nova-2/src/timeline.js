@@ -172,7 +172,8 @@ const STAGE_TIMELINES = {
   // ----------------------------------------------------------
   // Stage 3 STORM VEIL (DESIGN.md 12): + MIRROR / PHASE GHOST.
   // Gimmick: lightning (the storm, plus a few scripted bolts) and
-  // cloud bands that hide enemies (never bullets). GOLD GHOST waits in
+  // cloud bands that hide enemies (never bullets). One bolt at a time,
+  // two at a time only in the late storm (80s~). GOLD GHOST waits in
   // its own cloud (NOVA CRYSTAL). STORM SENTINEL at 50s, THUNDER RAY at
   // 111s. Fire is kept within DESIGN.md 17 (S3 = about 1.6x S1).
   // ----------------------------------------------------------
@@ -196,7 +197,6 @@ const STAGE_TIMELINES = {
     { t: 29.0, spawn: 'SNIPER', x: 160 },
     { t: 31.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
     { t: 34.0, spawn: 'MIRROR', x: 160 },
-    { t: 36.0, spawn: 'PHASE_GHOST', x: 'center' },
     { t: 38.0, spawn: 'GUN_DECK', x: 80 },
     { t: 40.0, event: 'goldEnemy', type: 'GHOST', x: 240, inCloud: true },  // NOVA CRYSTAL
     { t: 43.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'v' },
@@ -221,8 +221,9 @@ const STAGE_TIMELINES = {
     { t: 72.0, spawn: 'SNIPER', x: 'center' },
     { t: 75.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
     { t: 78.0, spawn: 'GUN_DECK', x: 240 },
+    { t: 80.0, event: 'gimmickStart', type: 'storm', pairs: true },   // late: two bolts at a time
     { t: 80.0, spawn: 'SHARD', count: 8, interval: 15, pattern: 'sides' },
-    { t: 84.0, spawn: 'PHASE_GHOST', x: 'center', count: 3, pattern: 'row', spacing: 70 },
+    { t: 84.0, spawn: 'PHASE_GHOST', x: 'center', count: 2, pattern: 'row', spacing: 100 },
     { t: 88.0, spawn: 'SNIPER', x: 120 },
     { t: 90.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
     { t: 94.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },

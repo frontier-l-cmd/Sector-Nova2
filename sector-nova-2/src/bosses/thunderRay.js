@@ -2,9 +2,9 @@
 // SECTOR NOVA 2 - THUNDER RAY (S3 boss, DESIGN.md 14)
 // ------------------------------------------------------------
 // A giant ray whose wing edges crackle with electricity.
-//   A  Bolts: 2 vertical lightning bolts (3 below 50% HP), each warned
-//      by a blinking line for THUNDER_RAY_BOLT_WARN frames. Below 50%
-//      a horizontal bolt joins them (horizontal warning line).
+//   A  Bolts: 2 vertical lightning bolts, each warned by a blinking
+//      line for THUNDER_RAY_BOLT_WARN frames. Below 50% a horizontal
+//      bolt joins them (horizontal warning line).
 //   C  Tail spread: the tail tip charges, then an aimed 7-way fan.
 //   B  Cloud dive: sinks into the clouds and becomes a shadow (no
 //      damage taken), a ripple and a lane warning mark the ship's x
@@ -76,14 +76,13 @@ class ThunderRay extends BossBase {
     this.x = this.swayX;
   }
 
-  /** A: 2 bolts (3 when enraged) around the ship, plus a horizontal one when enraged. */
+  /** A: 2 bolts around the ship, plus a horizontal one when enraged. */
   bolts(world, t) {
     if (t !== 0) return;
     this.boltGlow = THUNDER_RAY_BOLT_WARN;
     const px = world.player.x;
     const side = px < CANVAS_WIDTH / 2 ? 1 : -1; // second bolt toward the open side
     const xs = [px, px + side * THUNDER_RAY_BOLT_SPACING];
-    if (this.isEnraged) xs.push(px - side * THUNDER_RAY_BOLT_SPACING);
     const thunder = () => world.audio.play('thunder');
     for (const x of xs) {
       world.addHazard(createLightning(x, { width: THUNDER_RAY_BOLT_WIDTH, warnFrames: THUNDER_RAY_BOLT_WARN, onActivate: thunder }));

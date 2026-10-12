@@ -313,6 +313,7 @@ const PHASE_GHOST_SPEED = 0.7;
 const PHASE_GHOST_VISIBLE = 90;
 const PHASE_GHOST_HIDDEN = 60;
 const PHASE_GHOST_RIPPLE = 40;            // warning shimmer before (re)appearing
+const PHASE_GHOST_ITEM_DROP_CHANCE = 0.5;   // worth hunting (replaces the stage's rate)
 
 // SWARM: fast V formation
 const SWARM_HP = 1;
@@ -465,8 +466,8 @@ const THUNDER_RAY_SWAY_SPEED = 0.008;
 const THUNDER_RAY_BOLT_WIDTH = 16;         // attack A lightning
 const THUNDER_RAY_BOLT_WARN = 60;
 const THUNDER_RAY_BOLT_ACTIVE = 20;
-const THUNDER_RAY_BOLT_SPACING = 80;       // between the 2-3 bolts
-const THUNDER_RAY_BOLT_REST = 70;
+const THUNDER_RAY_BOLT_SPACING = 80;       // between the 2 bolts
+const THUNDER_RAY_BOLT_REST = 100;         // was 70 (S3 playtest: too many bolts)
 const THUNDER_RAY_TAIL_CHARGE = 30;        // attack C telegraph
 const THUNDER_RAY_FAN_COUNT = 7;
 const THUNDER_RAY_FAN_STEP = 0.2;
@@ -528,8 +529,10 @@ const WALL_PANEL_RADIUS = 10;
 const LIGHTNING_WARN_FRAMES = 60;          // DESIGN.md 12: 60f blinking line
 const LIGHTNING_ACTIVE_FRAMES = 20;
 const LIGHTNING_WIDTH = 16;
-const LIGHTNING_MAX = 2;                   // at once
-const STORM_STRIKE_INTERVAL = 110;         // frames between strikes while the storm is on
+const LIGHTNING_MAX = 2;                   // at once (only the late storm strikes in pairs)
+const STORM_STRIKE_INTERVAL = 220;         // frames between single strikes (was 110; S3 playtest: too many)
+const STORM_PAIR_INTERVAL = 260;           // late storm: frames between pairs of strikes
+const STORM_PAIR_MIN_GAP = 90;             // px between the two bolts of a pair
 const CLOUD_ALPHA = 0.7;                   // DESIGN.md 12
 const CLOUD_SPEED = PHASE_GHOST_SPEED;     // GOLD GHOST stays inside its cloud
 const CLOUD_INTERVAL = 170;                // frames between new cloud bands
@@ -611,7 +614,7 @@ const DIFFICULTY_SETTINGS = {
 // --- Powerup ---
 const POWERUP_DROP_CHANCE = 0.12; // chance on enemy kill (stages can override)
 const STAGE2_ITEM_DROP_CHANCE = 0.17; // S2 has fewer droppers (fire guideline); keeps items about S1's level
-const STAGE3_ITEM_DROP_CHANCE = 0.15; // DESIGN.md 17: expected items >= the previous stage (S3 17.1 vs S2 16.3)
+const STAGE3_ITEM_DROP_CHANCE = 0.17; // S3 playtest: expected items about 1.3x S2 (S3 21.0 vs S2 16.3, README)
 const STAGE4_ITEM_DROP_CHANCE = 0.15; // S4 >= S3 (README)
 const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;

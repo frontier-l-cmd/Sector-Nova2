@@ -1232,6 +1232,7 @@ class Mirror extends Enemy {
 // PHASE GHOST: visible 90f, gone 60f. While gone it cannot be hit
 // and does not hurt. The air ripples for 40f before it appears.
 // GOLD GHOST: gold variant (NOVA CRYSTAL condition, Phase 4).
+// Drops an item at PHASE_GHOST_ITEM_DROP_CHANCE in every stage.
 // ------------------------------------------------------------
 class PhaseGhost extends Enemy {
   constructor(x, y, gold) {
@@ -1240,6 +1241,8 @@ class PhaseGhost extends Enemy {
     this.hp = PHASE_GHOST_HP;
     this.score = PHASE_GHOST_SCORE;
     this.radius = PHASE_GHOST_RADIUS;
+    // Hard to hit, so it drops items more often (GOLD GHOST: the stage's rate).
+    if (!this.gold) this.itemDropChance = PHASE_GHOST_ITEM_DROP_CHANCE;
     // Start in the ripple at the end of a hidden span.
     this.cycle = PHASE_GHOST_VISIBLE + PHASE_GHOST_HIDDEN - PHASE_GHOST_RIPPLE;
     this.pal = enemyPalette(this.gold, COLORS.GHOST_BODY, COLORS.GHOST_DARK, COLORS.GHOST_CORE);
