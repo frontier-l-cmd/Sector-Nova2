@@ -354,6 +354,14 @@ const BOSS_AFTERGLOW_FRAMES = 120;         // 2s calm after the big explosion
 const BOSS_PHASE_TRANSITION_FRAMES = 120;  // 2s form-change presentation
 const BOSS_DEFEAT_SCORE = 5000;
 const BOSS_HIT_SCORE = 10;                 // per player hit on a boss
+// Boss item drops (not mid-bosses): a weapon item each time the form's
+// HP falls below these ratios, and a rescue weapon item when the ship
+// is knocked back to NORMAL (DESIGN.md 10 / 14).
+const BOSS_ITEM_HP_RATIOS = [0.75, 0.5, 0.25];
+const BOSS_RESCUE_DELAY = 180;             // 3s after falling back to NORMAL
+const BOSS_RESCUE_COOLDOWN = 1200;         // 20s between rescue items
+const BOSS_ITEM_MIN_Y = 40;                // items appear at the boss, kept
+const BOSS_ITEM_MAX_Y = 200;               // in the upper part of the screen
 
 // ORB CORE: SECTOR NOVA 1's Stage 1 boss rebuilt on BossBase (Phase 1).
 const ORB_CORE_HP = 80;

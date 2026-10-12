@@ -28,6 +28,13 @@
 // Parts (this.parts, BossPart) are hit before the core and absorb
 // the shot. isVulnerable() / damageMultiplier() model weak points.
 //
+// Item drops (bosses only, not mid-bosses; DESIGN.md 10 / 14):
+//   - a weapon item each time the HP falls below 75% / 50% / 25%.
+//     A form with its own `hp` counts again from its own full HP.
+//   - a rescue weapon item BOSS_RESCUE_DELAY after the ship falls back
+//     to NORMAL, at most once per BOSS_RESCUE_COOLDOWN.
+//   The color is the ship's last weapon (random if it never had one).
+//
 // States: entering -> active <-> transition -> dying -> afterglow
 //         -> finished   (mid-boss: active -> escaping -> finished)
 //   transition: hostile bullets cleared, form name shown, invulnerable
@@ -37,7 +44,7 @@
 // `world` is the Game. Bosses read world.player and act through
 // world.addEnemyBullets(), world.addHazard(), world.clearHostiles(),
 // world.effects, world.audio, world.onBossDefeated(),
-// world.onBossPartDestroyed().
+// world.onBossPartDestroyed(), world.addPowerup().
 // ============================================================
 
 const BOSS_REGISTRY = {}; // type key -> { cls, name }, filled by src/bosses/*.js
@@ -124,6 +131,12 @@ class BossBase {
     this.attackFrame = 0;
     this.attackTimer = 0;
     this.currentAttack = null;
+
+    // Item drops (see the header)
+    this.hpItemsDropped = 0;      // BOSS_ITEM_HP_RATIOS passed in this HP pool
+    this.rescueTimer = 0;         // > 0: rescue item pending
+    this.rescueCooldown = 0;      // frames until the next rescue item may drop
+    this.playerHadWeapon = null;  // ship's weapon state last frame
   }
 
   // --- State queries -------------------------------------------
@@ -194,6 +207,7 @@ class BossBase {
   update(world) {
     this.frame++;
     if (this.banner && --this.banner.timer <= 0) this.banner = null;
+    if (!this.midboss) this.updateItemDrops(world);
 
     switch (this.state) {
       case 'entering':
@@ -253,12 +267,52 @@ class BossBase {
     if (phase.hp) {
       this.maxHp = phase.hp;
       this.hp = phase.hp;
+      this.hpItemsDropped = 0; // a fresh HP pool: count 75/50/25% again
     }
     this.attackIndex = 0;
     this.attackFrame = 0;
     this.currentAttack = null;
     this.attackTimer = phase.startDelay || 0;
     if (phase.onEnter) phase.onEnter(this, world);
+  }
+
+  // --- Item drops ------------------------------------------------
+
+  /** HP items and the rescue item (bosses only; see the header). */
+  updateItemDrops(world) {
+    const hasWeapon = world.player.hasLevel;
+    const fighting = !this.isDefeated;
+    if (this.rescueCooldown > 0) this.rescueCooldown--;
+
+    // Rescue: the ship fell back to NORMAL during the fight.
+    if (fighting && this.playerHadWeapon && !hasWeapon) this.rescueTimer = BOSS_RESCUE_DELAY;
+    this.playerHadWeapon = hasWeapon;
+    if (hasWeapon) this.rescueTimer = 0; // has a weapon again: not needed
+    if (fighting && this.rescueTimer > 0) {
+      if (this.rescueTimer > 1) {
+        this.rescueTimer--;                // the 3s delay
+      } else if (this.rescueCooldown === 0) {
+        this.rescueTimer = 0;              // (waits here while cooling down)
+        this.rescueCooldown = BOSS_RESCUE_COOLDOWN;
+        this.dropWeaponItem(world);
+      }
+    }
+
+    // HP: damage lands in the collision pass, before this update.
+    if (this.state !== 'active') return;
+    while (this.hpItemsDropped < BOSS_ITEM_HP_RATIOS.length &&
+           this.hpPercent < BOSS_ITEM_HP_RATIOS[this.hpItemsDropped]) {
+      this.hpItemsDropped++;
+      this.dropWeaponItem(world);
+    }
+  }
+
+  /** A weapon item in the ship's last weapon color, at the boss. */
+  dropWeaponItem(world) {
+    const type = world.player.lastWeaponType || WEAPON_ORDER[randInt(0, WEAPON_ORDER.length - 1)];
+    const x = clamp(this.x, 24, CANVAS_WIDTH - 24);
+    const y = clamp(this.y, BOSS_ITEM_MIN_Y, BOSS_ITEM_MAX_Y);
+    world.addPowerup(new Powerup(x, y, type));
   }
 
   updateParts() {

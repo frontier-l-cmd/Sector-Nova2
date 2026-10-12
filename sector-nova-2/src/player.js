@@ -82,6 +82,7 @@ class Player {
     // --- Weapon ---
     this.weaponType = WEAPON_NORMAL;
     this.weaponLevel = 1; // ignored while NORMAL
+    this.lastWeaponType = null; // last weapon other than NORMAL (boss item color)
     // --- Options ---
     this.options = [];
     // --- REFLECT SHIELD ---
@@ -136,6 +137,7 @@ class Player {
 
   setWeapon(type, level) {
     this.weaponType = type;
+    if (type !== WEAPON_NORMAL) this.lastWeaponType = type;
     this.weaponLevel = clamp(level || 1, 1, WEAPON_MAX_LEVEL);
     this.fireTimer = 0; // allow an immediate shot with the new weapon
   }

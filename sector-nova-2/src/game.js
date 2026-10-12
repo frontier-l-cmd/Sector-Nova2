@@ -559,6 +559,11 @@ class Game {
     return bolt;
   }
 
+  /** Items dropped by bosses (BossBase item drops). */
+  addPowerup(item) {
+    this.powerups.push(item);
+  }
+
   /** Enemies created by bosses (icicles, eggs, ...). */
   addEnemy(enemy) {
     this.enemies.push(enemy);
