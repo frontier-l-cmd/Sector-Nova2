@@ -87,6 +87,7 @@ class Game {
     this.passage = null;      // S2 narrow passage (gimmicks.js)
     this.weather = null;      // S3 storm: lightning + cloud bands (gimmicks.js)
     this.maze = null;         // S4 flesh wall maze (gimmicks.js)
+    this.flares = null;       // S5 solar flares (gimmicks.js)
     this.warningTimer = 0;
     this.warningBossName = '';
     this.spawnsLocked = false;
@@ -167,7 +168,7 @@ class Game {
     this.clearStageObjects();
     this.timeline = new TimelineRunner(STAGE_TIMELINES[this.stage.stageNumber]);
     this.background.setTheme(this.stage.stageNumber);
-    setHostileBulletOutline(this.background.theme.bulletOutline); // S4: outlined bullets
+    setHostileBulletOutline(this.background.theme.bulletOutline); // S4 light / S5 dark ring
     this.playTime = 0;
     this.stateTimer = 0;
     this.combo.reset();
@@ -295,6 +296,7 @@ class Game {
       this.maze.update(this);
       if (!this.maze.alive) this.maze = null;
     }
+    if (this.flares) this.flares.update(this);
 
     // --- Player ---
     this.player.update(this.input);
@@ -483,6 +485,13 @@ class Game {
       }
       case 'gimmickStart':
       case 'gimmickEnd':
+        if (ev.entry.type === 'flares') {
+          // S5 solar flares switch on / off.
+          if (!this.flares) this.flares = new SolarFlares();
+          if (ev.kind === 'gimmickStart') this.flares.start();
+          else this.flares.stop();
+          return;
+        }
         // S3 storm: 'storm' (lightning) and 'clouds' switch on / off.
         // `pairs: true` on a storm start: two bolts at a time.
         if (!this.weather) this.weather = new StormWeather();
@@ -522,6 +531,7 @@ class Game {
       this.weather.stop('storm');
       this.weather.stop('clouds');
     }
+    if (this.flares) this.flares.stop(); // so does the sun
     this.audio.play('alarm');
     this.comm.show('boss');
   }
@@ -557,6 +567,19 @@ class Game {
     const bolt = createLightning(x, { onActivate: () => this.audio.play('thunder') });
     this.addHazard(bolt);
     return bolt;
+  }
+
+  /**
+   * S5 solar flare (stage gimmick) at band height y, coming from the
+   * left (dir 1) or right (-1): at most FLARE_MAX at once. Returns the
+   * hazard, or null if one is already on screen.
+   */
+  addFlare(y, dir) {
+    const active = this.hazards.filter(h => h.alive && h.tag === 'flare').length;
+    if (active >= FLARE_MAX) return null;
+    const flare = new SolarFlare(y, dir, { onActivate: () => this.audio.play('flare') });
+    this.addHazard(flare);
+    return flare;
   }
 
   /** Items dropped by bosses (BossBase item drops). */
@@ -644,6 +667,8 @@ class Game {
     const boss = this.boss;
     if (boss && boss.contactRadius > 0 && circleCollision(px, py, pr, boss.x, boss.y, boss.contactRadius)) {
       this.hitPlayer();
+    } else if (boss && boss.touchesCircle && boss.touchesCircle(px, py, pr)) {
+      this.hitPlayer(); // a body that hurts on contact (CORONA SERPENT)
     }
   }
 
@@ -898,6 +923,7 @@ class Game {
     this.passage = null;
     this.weather = null;
     this.maze = null;
+    this.flares = null;
     this.enemies = [];
     this.enemyBullets = [];
     this.hazards = [];

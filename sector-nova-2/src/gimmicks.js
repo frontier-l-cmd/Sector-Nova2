@@ -22,7 +22,14 @@
 //   a 2-block gap in a new place. Touching a block hurts (it stays);
 //   every block can be shot open, so there is always a way through.
 //   One odd-patterned block hides the NOVA CRYSTAL.
-// Later stages add theirs here (S5 flares, ...).
+//   S5 solar flares ('gimmickStart' / 'gimmickEnd' with type
+//   'flares'): "CAUTION / SOLAR FLARE" first, then a flare every FLARE_INTERVAL frames (one at a
+//   time). Each flare: a horizontal band blinks red for 90 frames
+//   (dark shade, dashed outline, "!" markers and arrows showing where
+//   the flame comes from), then a 40 px tall flame crosses the screen
+//   in 40 frames. Touching the flame hurts. (The heat shimmer is a
+//   background effect: background.js.)
+// Later stages add theirs here (S6 gravity).
 // ============================================================
 
 class Asteroid extends Enemy {
@@ -649,5 +656,168 @@ class FleshMaze {
       for (const b of this.buildRow(this.row)) world.addEnemy(b);
       this.row++;
     }
+  }
+}
+
+// ------------------------------------------------------------
+// S5 solar flares
+// ------------------------------------------------------------
+
+/**
+ * One solar flare: an 'hline' Hazard whose active part is a flame
+ * body FLARE_LENGTH long that crosses the band in FLARE_ACTIVE_FRAMES.
+ * Only the body hurts; the band is safe again once it has passed.
+ * dir 1 = from the left, -1 = from the right.
+ */
+class SolarFlare extends Hazard {
+  constructor(y, dir, opts) {
+    super({
+      shape: 'hline',
+      y: clamp(y, FLARE_MIN_Y, FLARE_MAX_Y),
+      width: FLARE_HEIGHT,
+      warnFrames: FLARE_WARN_FRAMES,
+      activeFrames: FLARE_ACTIVE_FRAMES,
+      color: COLORS.FLARE_FLAME,
+      warnColor: COLORS.FLARE_WARN,
+      emphasis: true,
+      tag: 'flare',
+      onActivate: (opts && opts.onActivate) || null,
+    });
+    this.dir = dir < 0 ? -1 : 1;
+  }
+
+  /** 0 -> 1 while the flame crosses. */
+  get progress() {
+    return clamp((this.timer - this.warnFrames) / (this.activeFrames - 1), 0, 1);
+  }
+
+  /** Hurting part of the flame: [x0, x1]. */
+  get body() {
+    const travel = this.progress * (CANVAS_WIDTH + FLARE_LENGTH);
+    if (this.dir > 0) return [travel - FLARE_LENGTH, travel];
+    const head = CANVAS_WIDTH - travel;
+    return [head, head + FLARE_LENGTH];
+  }
+
+  hitsCircle(px, py, r) {
+    if (!this.isActive) return false;
+    if (Math.abs(py - this.y) >= this.width / 2 + r) return false;
+    const [x0, x1] = this.body;
+    return px + r > x0 && px - r < x1;
+  }
+
+  draw(ctx) {
+    if (!this.alive) return;
+    if (this.isWarning) {
+      // Dark shade first so the red warning stands out on the bright
+      // backdrop, then the shared blinking outline and "!" markers.
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = COLORS.FLARE_SHADE;
+      ctx.fillRect(0, this.y - this.width / 2, CANVAS_WIDTH, this.width);
+      ctx.restore();
+      super.draw(ctx);
+      this.drawArrows(ctx);
+      return;
+    }
+    this.drawFlame(ctx);
+  }
+
+  /** Chevrons running in the flame's direction along the band. */
+  drawArrows(ctx) {
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = COLORS.FLARE_FLAME_HOT;
+    ctx.lineWidth = 2.5;
+    const shift = (this.timer * 2) % 40;
+    for (let x = 40 + shift; x < CANVAS_WIDTH - 30; x += 40) {
+      const ax = this.dir > 0 ? x : CANVAS_WIDTH - x;
+      ctx.beginPath();
+      ctx.moveTo(ax - 5 * this.dir, this.y - 8);
+      ctx.lineTo(ax + 5 * this.dir, this.y);
+      ctx.lineTo(ax - 5 * this.dir, this.y + 8);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawFlame(ctx) {
+    const [x0, x1] = this.body;
+    const half = this.width / 2;
+    const head = this.dir > 0 ? x1 : x0;
+    const tail = this.dir > 0 ? x0 : x1;
+    ctx.save();
+    // Fading trail behind the body (does not hurt)
+    const trail = ctx.createLinearGradient(tail - this.dir * 70, 0, tail, 0);
+    trail.addColorStop(0, 'rgba(255, 122, 34, 0)');
+    trail.addColorStop(1, 'rgba(255, 122, 34, 0.45)');
+    ctx.fillStyle = trail;
+    ctx.fillRect(Math.min(tail, tail - this.dir * 70), this.y - half * 0.6, 70, half * 1.2);
+    // Body: a flickering flame with a rounded head
+    const flicker = Math.sin(this.timer * 1.3) * 2;
+    ctx.fillStyle = COLORS.FLARE_FLAME;
+    ctx.beginPath();
+    ctx.moveTo(tail, this.y - half);
+    ctx.lineTo(head - this.dir * half, this.y - half - flicker);
+    ctx.quadraticCurveTo(head + this.dir * half * 0.8, this.y, head - this.dir * half, this.y + half + flicker);
+    ctx.lineTo(tail, this.y + half);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = COLORS.FLARE_FLAME_HOT;
+    ctx.beginPath();
+    ctx.moveTo(tail + this.dir * 20, this.y - half * 0.3);
+    ctx.lineTo(head - this.dir * half, this.y - half * 0.55);
+    ctx.quadraticCurveTo(head + this.dir * 4, this.y, head - this.dir * half, this.y + half * 0.55);
+    ctx.lineTo(tail + this.dir * 20, this.y + half * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+/**
+ * The S5 flare gimmick: CAUTION the first time it starts, then a
+ * flare every FLARE_INTERVAL frames. Every other flare is aimed at
+ * the ship's height, the rest anywhere; they come from alternating
+ * sides.
+ */
+class SolarFlares {
+  constructor() {
+    this.caution = 0;
+    this.warned = false;
+    this.on = false;
+    this.timer = 0;
+    this.count = 0;
+  }
+
+  get cautionActive() {
+    return this.caution > 0;
+  }
+
+  start() {
+    if (!this.warned) {
+      this.warned = true;
+      this.caution = FLARE_CAUTION_FRAMES;
+    }
+    this.on = true;
+    this.timer = this.caution + FLARE_INTERVAL / 4;
+  }
+
+  stop() {
+    this.on = false;
+  }
+
+  /** Band height of the next flare. */
+  nextY(world) {
+    return this.count % 2 === 0
+      ? world.player.y + randInt(-10, 10)
+      : randInt(FLARE_MIN_Y, FLARE_MAX_Y);
+  }
+
+  update(world) {
+    if (this.caution > 0) this.caution--;
+    if (!this.on || world.spawnsLocked || --this.timer > 0) return;
+    this.timer = FLARE_INTERVAL;
+    if (world.addFlare(this.nextY(world), this.count % 2 === 0 ? 1 : -1)) this.count++;
   }
 }

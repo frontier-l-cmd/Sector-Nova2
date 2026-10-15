@@ -9,7 +9,8 @@
 //  - M toggles mute; the setting is saved.
 //
 // Effects so far: shot / explode / select (Phase 1), hit / item /
-// graze / burst (Phase 2), alarm (Phase 4-1), thunder (Phase 4-3).
+// graze / burst (Phase 2), alarm (Phase 4-1), thunder (Phase 4-3),
+// flare (Phase 5-2).
 // The full effect list and the BGM step sequencer come later.
 // ============================================================
 
@@ -75,6 +76,13 @@ const SFX_DEFS = {
     layers: [
       { noise: true, filter: 6000, filterEnd: 500, duration: 0.25, volume: 0.3 },
       { noise: true, filter: 300, filterEnd: 80, duration: 0.6, volume: 0.25, delay: 0.05 },
+    ],
+  },
+  // Solar flare (Phase 5-2): a rushing roar as the flame crosses.
+  flare: {
+    minInterval: 0.2,
+    layers: [
+      { noise: true, filter: 1800, filterEnd: 200, duration: 0.7, volume: 0.28 },
     ],
   },
   // Two-step chime for menu cursor moves and decisions.

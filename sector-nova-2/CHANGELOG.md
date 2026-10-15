@@ -2,6 +2,30 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 5-2] Stage 5 の完成 — 2026-10-15
+
+### 追加
+
+- S5「CORONA ZONE」のタイムライン（FLARE SPIRIT が加わる、太陽フレア、中ボス、WARNING、ボス）
+- S5 の背景レイヤー: 下から光る太陽の表面と粒状の模様（`CoronaSurfaceLayer`）、昇る火の粉（`EmberLayer`）
+- 熱の揺らぎ（背景テーマの `shimmer`）: 背景だけを別の画面に描き、6px の帯ごとに最大 2.5px 横へずらして写す。自機・敵・弾・予告は揺らさない
+- ギミック「太陽フレア」（`gimmicks.js` の `SolarFlare` / `SolarFlares`）: 初回 CAUTION、7秒ごとに1本。90 フレームの横帯の予告（暗い影・赤い点線枠・「!」・向きの矢印）→ 高さ 40px の炎が 40 フレームで横切る。`Game.addFlare()`、効果音 `flare`
+- 中ボス CORONA SENTINEL（SENTINEL の S5 の色、HP 120）
+- ボス CORONA SERPENT（`bosses/coronaSerpent.js`）: 頭＋体節10個（HP 15、1000点）が S 字に這う。弱点は頭だけ、体節が弾を受け止める。体節が順に光って自機狙い弾、HP 50% 以下で速くなり5方向の炎の扇弾。体節全破壊で 20000点。頭 HP 390、上限 8
+- S5 の NOVA CRYSTAL: 体節を全部壊してから頭を倒す（爆発の後に出る。取るまで最長8秒リザルトを待つ）
+- ボスの体当たり判定 `touchesCircle`（体の形が複雑なボス用）
+- 敵弾の暗い縁取り（`setHostileBulletOutline('dark')`: 暗い縁＋内側の細い明るい縁。S5 だけ）
+- S5 開始時の LYRA の通信
+- S5 のアイテム: 確率 16%（`STAGE5_ITEM_DROP_CHANCE`、期待値 22.00 ≥ S4 18.40）、重み `STAGE5_POWERUP_WEIGHTS`（REPAIR 14%・STAR CHIP 33%。REPAIR 3.08 / HULL UP 1.10）
+- README に S5 の撃破時間（頭だけ／頭を追う／体節から）・敵弾の量・フレアの回数・弾の見やすさ・アイテムの期待値の表と確認手順
+
+### 変更
+
+- S4 クリア後は、リザルト → S5 のステージ紹介へ進む（S5 クリア後はタイトルへ）
+- HUD の CAUTION に S5 の「SOLAR FLARE」
+- WARNING でフレアも止まる。デバッグキー 9 で WARNING 直前に飛ぶ時、フレアも消す
+- `setHostileBulletOutline` は `true` / `'light'`（明るい縁、S4）と `'dark'`（S5）を受け取る。S4 の見た目は変わらない
+
 ## [ボス戦のアイテム] 全ボス共通のアイテム — 2026-10-12
 
 ### 設計書

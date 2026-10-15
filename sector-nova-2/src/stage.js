@@ -4,8 +4,8 @@
 // Each stage describes its name, background theme, item drops and
 // boss. Enemy appearances come from STAGE_TIMELINES (timeline.js).
 //
-// Stages 1-4 are complete (Phase 4-1 to 5-1). Stages 5-6 are declared
-// with their final names and become playable in Phase 5-2 / 5-3.
+// Stages 1-5 are complete (Phase 4-1 to 5-2). Stage 6 is declared
+// with its final name and becomes playable in Phase 5-3.
 // ============================================================
 
 // Item weights (DESIGN.md 10). STAR CHIP drops often; NOVA CRYSTAL
@@ -20,6 +20,14 @@ const DEFAULT_POWERUP_WEIGHTS = {
   [ITEM_REFLECT]: 0.08,
   [ITEM_REPAIR]: 0.07,
   [ITEM_HULL_UP]: 0.05,
+};
+
+// S5: REPAIR about 3 per stage (HULL UP stays about 1) for the hot
+// zone before the core; STAR CHIP gives way (README).
+const STAGE5_POWERUP_WEIGHTS = {
+  ...DEFAULT_POWERUP_WEIGHTS,
+  [ITEM_STAR_CHIP]: 0.33,
+  [ITEM_REPAIR]: 0.14,
 };
 
 const STAGES = {
@@ -73,7 +81,16 @@ const STAGES = {
     story: 'stage4',
     implemented: true,
   },
-  5: { stageNumber: 5, stageName: 'CORONA ZONE', bossType: 'coronaSerpent', implemented: false },
+  5: {
+    stageNumber: 5,
+    stageName: 'CORONA ZONE',
+    itemDropRate: STAGE5_ITEM_DROP_CHANCE,
+    powerupWeights: STAGE5_POWERUP_WEIGHTS,
+    bossType: 'coronaSerpent',
+    bossExpectedTime: [60, 80],
+    story: 'stage5',
+    implemented: true,
+  },
   6: { stageNumber: 6, stageName: 'HELIOS CORE', bossType: 'eclipseCrown', implemented: false },
 };
 

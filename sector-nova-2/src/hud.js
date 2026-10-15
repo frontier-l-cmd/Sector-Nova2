@@ -46,6 +46,9 @@ class HUD {
     if (game.maze && game.maze.cautionActive) {
       this.drawCaution(ctx, FLESH_CAUTION_FRAMES - game.maze.caution, 'FLESH WALLS');
     }
+    if (game.flares && game.flares.cautionActive) {
+      this.drawCaution(ctx, FLARE_CAUTION_FRAMES - game.flares.caution, 'SOLAR FLARE');
+    }
     if (game.boss && game.boss.banner) this.drawBanner(ctx, game.boss.banner, game.globalFrame);
   }
 
@@ -393,8 +396,9 @@ class HUD {
 
   /**
    * "CAUTION" before a stage gimmick arrives (S2 NARROW PASSAGE, S4
-   * FLESH WALLS): a yellow and black band across the upper screen,
-   * blinking text that never moves. `t` = frames since it began.
+   * FLESH WALLS, S5 SOLAR FLARE): a yellow and black band across the
+   * upper screen, blinking text that never moves. `t` = frames since
+   * it began.
    */
   drawCaution(ctx, t, subtitle) {
     const y = 118;

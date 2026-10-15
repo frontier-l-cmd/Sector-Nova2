@@ -6,7 +6,7 @@
 // character at a time, holds it, then shows the next queued message.
 // ENTER shows the whole message at once / skips to the next one.
 // Play never stops for a message.
-// Lines for S5-S6 are added with their stages (Phase 5-2 onward).
+// Lines for S6 are added with its stage (Phase 5-3).
 // ============================================================
 
 const STORY = {
@@ -24,6 +24,9 @@ const STORY = {
   ],
   stage4: [
     ['THIS IS THEIR NEST.', 'BURN IT FROM THE INSIDE.'],
+  ],
+  stage5: [
+    ['CORONA ZONE. HULL TEMPERATURE RISING.', "DON'T STOP MOVING."],
   ],
   boss: [
     ['MASSIVE SIGNAL DETECTED!'],

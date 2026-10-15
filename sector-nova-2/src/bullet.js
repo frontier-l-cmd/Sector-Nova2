@@ -57,23 +57,40 @@ class PlayerBullet {
   }
 }
 
-// Light outline around every hostile bullet, switched on per stage
+// Outline around every hostile bullet, switched on per stage
 // (background theme `bulletOutline`) where the backdrop shares the
-// bullets' hue (S4's dark red-violet) so they never sink into it.
-let hostileBulletOutline = false;
+// bullets' hue so they never sink into it:
+//   true / 'light': a light ring (S4's dark red-violet)
+//   'dark': a dark ring with a thin light edge inside (S5's red-orange
+//           runs from bright to dark, so one of the two always stands out)
+let hostileBulletOutline = null;
 
-function setHostileBulletOutline(on) {
-  hostileBulletOutline = !!on;
+function setHostileBulletOutline(mode) {
+  if (mode === 'dark') hostileBulletOutline = 'dark';
+  else hostileBulletOutline = mode ? 'light' : null;
 }
 
 function drawHostileBulletOutline(ctx, x, y, r) {
   if (!hostileBulletOutline) return;
-  ctx.strokeStyle = COLORS.BULLET_OUTLINE;
   ctx.globalAlpha = 0.95;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(x, y, r + 1.5, 0, Math.PI * 2);
-  ctx.stroke();
+  if (hostileBulletOutline === 'dark') {
+    ctx.strokeStyle = COLORS.BULLET_OUTLINE_DARK;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, r + 2.5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = COLORS.BULLET_OUTLINE;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, r + 1, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = COLORS.BULLET_OUTLINE;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r + 1.5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   ctx.globalAlpha = 1;
 }
 

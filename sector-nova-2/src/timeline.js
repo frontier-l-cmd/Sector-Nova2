@@ -300,6 +300,78 @@ const STAGE_TIMELINES = {
     { t: 108.0, event: 'warning' },
     { t: 111.0, event: 'boss', type: 'hiveMother' },
   ],
+
+  // ----------------------------------------------------------
+  // Stage 5 CORONA ZONE (DESIGN.md 12): + FLARE SPIRIT (shooting one
+  // scatters slow revenge bullets). Gimmick: solar flares (CAUTION at
+  // 20s; one flare at a time, 20-47s and 54-98s), over the heat
+  // shimmer of the background. CORONA SENTINEL at 50s, CORONA SERPENT
+  // at 111s (its NOVA CRYSTAL: every segment, then the head). Fire is
+  // kept within DESIGN.md 17 (S5 = about 2.2x S1).
+  // ----------------------------------------------------------
+  5: [
+    // Opening: the flare spirits
+    { t: 2.0, spawn: 'FLARE_SPIRIT', x: 'center', count: 3, pattern: 'row', spacing: 70 },
+    { t: 5.0, spawn: 'SHARD', x: 'center', count: 5, pattern: 'row', spacing: 40 },
+    { t: 8.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 9.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 12.0, spawn: 'FLARE_SPIRIT', x: 80, count: 2, interval: 30, pattern: 'line' },
+    { t: 12.5, spawn: 'FLARE_SPIRIT', x: 240, count: 2, interval: 30, pattern: 'line' },
+    { t: 15.0, spawn: 'SNIPER', x: 160 },
+    { t: 17.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 20.0, event: 'gimmickStart', type: 'flares' },
+    { t: 21.0, spawn: 'SHARD', count: 6, interval: 20, pattern: 'sides' },
+
+    // Middle: the flares begin
+    { t: 26.0, spawn: 'MIRROR', x: 100 },
+    { t: 26.0, spawn: 'MIRROR', x: 220 },
+    { t: 29.0, spawn: 'FLARE_SPIRIT', x: 'center', count: 3, pattern: 'row', spacing: 80 },
+    { t: 31.0, spawn: 'MINE_LAYER', x: 'right', y: 120 },
+    { t: 32.0, spawn: 'GUN_DECK', x: 80 },
+    { t: 35.0, spawn: 'PHASE_GHOST', x: 110 },
+    { t: 35.0, spawn: 'PHASE_GHOST', x: 210 },
+    { t: 38.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 41.0, spawn: 'SNIPER', x: 80 },
+    { t: 41.5, spawn: 'SNIPER', x: 240 },
+    { t: 44.0, spawn: 'FLARE_SPIRIT', x: 'player', count: 3, interval: 24, pattern: 'line' },
+    { t: 47.0, event: 'gimmickEnd', type: 'flares' },
+
+    // Mid-boss (the timeline waits until it is beaten or flees)
+    { t: 50.0, event: 'midboss', type: 'sentinel' },
+    { t: 52.0, spawn: 'SHARD', x: 'center', count: 4, pattern: 'row', spacing: 34 },
+
+    // Late: flares again
+    { t: 54.0, event: 'gimmickStart', type: 'flares' },
+    { t: 55.0, spawn: 'FLARE_SPIRIT', x: 'center', count: 4, pattern: 'row', spacing: 60 },
+    { t: 58.0, spawn: 'LINK_GUARD', x: 'center' },
+    { t: 58.0, spawn: 'GUN_DECK', x: 120 },                  // shielded by the guard
+    { t: 63.0, spawn: 'SWARM', x: 'player', count: 7, pattern: 'v', spacing: 22 },
+    { t: 64.0, spawn: 'GUN_DECK', x: 220 },
+    { t: 66.0, spawn: 'MINE_LAYER', x: 'left', y: 130 },
+    { t: 69.0, spawn: 'FLARE_SPIRIT', x: 80, count: 3, interval: 24, pattern: 'line' },
+    { t: 69.5, spawn: 'FLARE_SPIRIT', x: 240, count: 3, interval: 24, pattern: 'line' },
+    { t: 72.0, spawn: 'MIRROR', x: 160 },
+    { t: 75.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 76.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 79.0, spawn: 'CARRIER', x: 'center' },
+    { t: 81.0, spawn: 'GUN_DECK', x: 80 },
+    { t: 83.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 85.0, spawn: 'PHASE_GHOST', x: 'center', count: 2, pattern: 'row', spacing: 100 },
+    { t: 87.0, spawn: 'MINE_LAYER', x: 'right', y: 140 },
+    { t: 88.0, spawn: 'SNIPER', x: 'center' },
+    { t: 90.0, spawn: 'FLARE_SPIRIT', x: 'center', count: 5, pattern: 'v', spacing: 30 },
+    { t: 93.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 96.0, spawn: 'GUN_DECK', x: 240 },
+    { t: 98.0, event: 'gimmickEnd', type: 'flares' },
+    { t: 99.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 100.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 102.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 104.0, spawn: 'SHARD', x: 'player', count: 3, interval: 12, pattern: 'line' },
+
+    // Boss
+    { t: 108.0, event: 'warning' },
+    { t: 111.0, event: 'boss', type: 'coronaSerpent' },
+  ],
 };
 
 // ------------------------------------------------------------

@@ -8,12 +8,16 @@
 // Stage-specific layers come through `layers`: S1 has a ringed
 // planet and drifting ice, S2 a metal floor with blinking warning
 // lights, S3 layered violet-gray clouds with distant lightning, S4
-// pulsing organic veins; flares and the core arrive with their
-// stages (Phase 5-2 onward). A layer is an object created by a
-// factory with update(frame) and draw(ctx). Layers that need the
-// heat shimmer can render to an offscreen canvas and draw it in
-// horizontal strips; only the background ever shimmers. Layers with
-// `far = true` are drawn behind the star field.
+// pulsing organic veins, S5 the glowing sun surface with rising
+// embers; the core arrives with its stage (Phase 5-3). A layer is an
+// object created by a factory with update(frame) and draw(ctx).
+// Layers with `far = true` are drawn behind the star field.
+//
+// Heat shimmer (theme `shimmer`, S5): the whole background is drawn
+// to an offscreen canvas, then copied in horizontal strips that are
+// shifted sideways a little. Only the background ever shimmers; the
+// ship, enemies and bullets are drawn afterwards, unshifted, so what
+// you see is always where the hit is.
 // ============================================================
 
 /**
@@ -437,9 +441,109 @@ class HiveVeinLayer {
   }
 }
 
+// ------------------------------------------------------------
+// S5 CORONA ZONE layers
+// ------------------------------------------------------------
+
+/**
+ * The sun's surface: a red-orange glow rising from the bottom of the
+ * screen with slowly drifting, pulsing granulation cells.
+ */
+class CoronaSurfaceLayer {
+  constructor() {
+    this.far = true;
+    this.frame = 0;
+    this.cells = [];
+    for (let i = 0; i < 16; i++) {
+      this.cells.push({
+        x: randFloat(0, CANVAS_WIDTH),
+        y: randFloat(0, CANVAS_HEIGHT),
+        r: randFloat(18, 40),
+        hot: Math.random() < 0.4,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+    this.glow = null;
+  }
+
+  update() {
+    this.frame++;
+    for (const c of this.cells) {
+      c.y += 0.3;
+      if (c.y > CANVAS_HEIGHT + c.r) {
+        c.y = -c.r;
+        c.x = randFloat(0, CANVAS_WIDTH);
+      }
+    }
+  }
+
+  draw(ctx) {
+    if (!this.glow) {
+      this.glow = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+      this.glow.addColorStop(0, 'rgba(168, 50, 12, 0)');
+      this.glow.addColorStop(0.45, 'rgba(168, 50, 12, 0.45)');
+      this.glow.addColorStop(1, 'rgba(216, 84, 26, 0.8)');
+    }
+    ctx.save();
+    ctx.fillStyle = this.glow;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    // Granulation: darker and hotter cells, stronger lower down
+    for (const c of this.cells) {
+      const depth = c.y / CANVAS_HEIGHT;
+      ctx.globalAlpha = (0.12 + depth * 0.22) * (0.8 + Math.sin(this.frame * 0.03 + c.phase) * 0.2);
+      ctx.fillStyle = c.hot ? COLORS.SUN_SURFACE_HOT : COLORS.SUN_CELL;
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, c.r, c.r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+/** Small embers drifting upward. Kept dim and tiny (not bullet-like). */
+class EmberLayer {
+  constructor() {
+    this.frame = 0;
+    this.embers = [];
+    for (let i = 0; i < 26; i++) this.embers.push(this.spawn(randFloat(0, CANVAS_HEIGHT)));
+  }
+
+  spawn(y) {
+    return {
+      x: randFloat(0, CANVAS_WIDTH),
+      y,
+      vy: -randFloat(0.4, 1.0),
+      size: Math.random() < 0.7 ? 1 : 2,
+      phase: Math.random() * Math.PI * 2,
+    };
+  }
+
+  update(frame) {
+    for (let i = 0; i < this.embers.length; i++) {
+      const e = this.embers[i];
+      e.y += e.vy;
+      e.x += Math.sin(frame * 0.04 + e.phase) * 0.3;
+      if (e.y < -4) this.embers[i] = this.spawn(CANVAS_HEIGHT + 4);
+    }
+    this.frame = frame;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.fillStyle = COLORS.EMBER;
+    for (const e of this.embers) {
+      ctx.globalAlpha = 0.3 + Math.sin(this.frame * 0.2 + e.phase) * 0.15;
+      ctx.fillRect(Math.floor(e.x), Math.floor(e.y), e.size, e.size);
+    }
+    ctx.restore();
+  }
+}
+
 // Theme per screen / stage: gradient top->bottom, nebula tints, and
-// stage-specific layer factories (S1-S4 done; S5+ arrive with their
-// stages). `bulletOutline` gives hostile bullets a light ring.
+// stage-specific layer factories (S1-S5 done; S6 arrives with its
+// stage). `bulletOutline` gives hostile bullets a ring: true for a
+// light one, 'dark' for a dark one. `shimmer` turns on the heat
+// shimmer.
 const BACKGROUND_THEMES = {
   title: {
     top: COLORS.BG_NEBULA,
@@ -480,7 +584,9 @@ const BACKGROUND_THEMES = {
     top: COLORS.CORONA_BG_TOP,
     bottom: COLORS.CORONA_BG_BOTTOM,
     nebulae: ['#4a160a', '#3a1006', '#240a04'],
-    layers: [],
+    layers: [() => new CoronaSurfaceLayer(), () => new EmberLayer()],
+    bulletOutline: 'dark', // red / orange bullets on a bright red-orange backdrop
+    shimmer: true,
   },
   6: { // HELIOS CORE - white / gold
     top: COLORS.HELIOS_BG_TOP,
@@ -516,17 +622,44 @@ class Background {
   }
 
   draw(ctx) {
+    // With the heat shimmer the background is drawn offscreen first.
+    const target = this.theme.shimmer ? this.shimmerContext() : ctx;
     if (!this.gradient) {
-      this.gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+      this.gradient = target.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
       this.gradient.addColorStop(0, this.theme.top);
       this.gradient.addColorStop(1, this.theme.bottom);
     }
-    ctx.fillStyle = this.gradient;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    target.fillStyle = this.gradient;
+    target.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Far layers (planets) sit behind the stars, the rest in front.
-    for (const layer of this.layers) if (layer.far) layer.draw(ctx);
-    this.starField.draw(ctx);
-    for (const layer of this.layers) if (!layer.far) layer.draw(ctx);
+    for (const layer of this.layers) if (layer.far) layer.draw(target);
+    this.starField.draw(target);
+    for (const layer of this.layers) if (!layer.far) layer.draw(target);
+
+    if (target !== ctx) this.drawShimmer(ctx, target.canvas);
+  }
+
+  /** Offscreen canvas for the heat shimmer (created once). */
+  shimmerContext() {
+    if (!this.shimmerCanvas) {
+      this.shimmerCanvas = document.createElement('canvas');
+      this.shimmerCanvas.width = CANVAS_WIDTH;
+      this.shimmerCanvas.height = CANVAS_HEIGHT;
+    }
+    return this.shimmerCanvas.getContext('2d');
+  }
+
+  /**
+   * Copy the offscreen background in horizontal strips, each shifted
+   * sideways by a slow wave. The unshifted copy underneath fills the
+   * edges a shifted strip uncovers.
+   */
+  drawShimmer(ctx, source) {
+    ctx.drawImage(source, 0, 0);
+    for (let y = 0; y < CANVAS_HEIGHT; y += SHIMMER_STRIP) {
+      const dx = Math.sin(this.frame * SHIMMER_SPEED + y * SHIMMER_WAVE) * SHIMMER_AMPLITUDE;
+      ctx.drawImage(source, 0, y, CANVAS_WIDTH, SHIMMER_STRIP, dx, y, CANVAS_WIDTH, SHIMMER_STRIP);
+    }
   }
 }

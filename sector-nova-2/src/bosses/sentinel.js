@@ -9,8 +9,7 @@
 // The stage timeline pauses while it is on screen.
 // ============================================================
 
-// Name and colors per stage. Later stages add their entries
-// (CORONA) in Phase 5-2.
+// Name and colors per stage (S1-S5).
 const SENTINEL_STAGES = {
   1: {
     name: 'FROST SENTINEL',
@@ -35,6 +34,12 @@ const SENTINEL_STAGES = {
     body: COLORS.SENTINEL_HIVE,
     dark: COLORS.SENTINEL_HIVE_DARK,
     core: COLORS.SENTINEL_HIVE_CORE,
+  },
+  5: {
+    name: 'CORONA SENTINEL',
+    body: COLORS.SENTINEL_CORONA,
+    dark: COLORS.SENTINEL_CORONA_DARK,
+    core: COLORS.SENTINEL_CORONA_CORE,
   },
 };
 

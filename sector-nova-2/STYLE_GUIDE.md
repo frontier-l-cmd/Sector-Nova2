@@ -87,7 +87,8 @@ burning orange → white and gold**. Each stage has a token group in `COLORS`. `
 | S6 | HELIOS CORE | `HELIOS_BG_TOP #3d3315`, `HELIOS_BG_BOTTOM #14100a`, `HELIOS_ACCENT #ffe688`, `HELIOS_CORE #fffbe6` | white / gold |
 
 S5 and S6 become bright in Phase 5. **Enemy bullets and the player must never sink into
-a bright background** — check readability first and add a dark outline to bullets if needed.
+a bright background** — check readability first and add a dark outline to bullets if needed
+(S5 does: see below).
 
 ### Small enemy colors (SECTOR NOVA 2)
 
@@ -144,6 +145,18 @@ turrets.
 | HIVE SENTINEL | `SENTINEL_HIVE #c45a8a`, `SENTINEL_HIVE_DARK`, `SENTINEL_HIVE_CORE` | the shared hexagon in red-violet with a pale core |
 | HIVE MOTHER | `HIVE_MOTHER_BODY / DARK / SAC / GLOW`, `HIVE_MOTHER_EYE` | queen with legs, a pulsing segmented abdomen, a sac that flashes before an egg, a core that glows before a spiral |
 | Egg | `EGG_SHELL`, `EGG_DARK`, `EGG_GLOW` | pale shell with a shape moving inside; the glow grows and the shell cracks and shakes before hatching |
+
+### Stage 5 objects and bosses (SECTOR NOVA 2, Phase 5-2)
+
+| Object | Tokens | Notes |
+|---|---|---|
+| S5 background | `CORONA_BG_TOP/BOTTOM`, `SUN_SURFACE #a8320c`, `SUN_SURFACE_HOT #d8541a`, `SUN_CELL #7a2208`, `EMBER #ffc060` | a red-orange glow rising from the bottom, drifting granulation cells, tiny dim embers (1-2 px, never bullet-like) |
+| Heat shimmer | — | theme `shimmer`: the background only, drawn offscreen and copied in 6 px strips shifted by up to 2.5 px. Nothing that can hurt the player, nor the player, ever shimmers |
+| Bullet outline (dark) | `BULLET_OUTLINE_DARK #1a0602`, `BULLET_OUTLINE` | 2 px dark ring with a 1 px light ring inside, around every hostile bullet (theme `bulletOutline: 'dark'`, S5). One of the two always stands out on a backdrop that runs from bright to dark red |
+| Solar flare warning | `FLARE_SHADE`, `FLARE_WARN #ff3322`, `LIGHTNING_MARK`, `FLARE_FLAME_HOT` | the band darkened (a shadow, not a fill), blinking red dashed outline of the 40 px band, yellow "!" at both edges, chevrons running the way the flame will come |
+| Solar flare | `FLARE_FLAME #ff7a22`, `FLARE_FLAME_HOT #ffe08a` | a flame body with a rounded head and a hot core, a faint trail behind (the trail does not hurt) |
+| CORONA SENTINEL | `SENTINEL_CORONA #ffb066`, `SENTINEL_CORONA_DARK`, `SENTINEL_CORONA_CORE` | the shared hexagon in light orange with a pale core |
+| CORONA SERPENT | `SERPENT_HEAD / DARK / SCALE / FLAME / EYE / LIT` | a horned head with jaws and a flame mane, round segments with a dark rim and a flame crest; a lit segment shows a bright core and a closing white ring; the jaws open and glow before the fan |
 
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
@@ -230,8 +243,10 @@ Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
 - **Boss shot telegraph:** before an aimed volley the core swells and a thin white ring closes
   in on it (30 frames). GLACIER MAW's jaw starts moving 20 frames before the mouth is open.
 - **Bullet outline**: on a backdrop in the bullets' own hue (S4's red-violet), every hostile
-  bullet gets a light ring (`setHostileBulletOutline`). Brighter backdrops later (S5 / S6) may
-  need a dark ring instead (DESIGN.md 15-9).
+  bullet gets a light ring (`setHostileBulletOutline`). On S5's bright red-orange it is a dark
+  ring with a thin light ring inside (`'dark'`). S6 decides its own (DESIGN.md 15-9).
+- **Heat shimmer** (S5) moves the background only. Ship, enemies, bullets, hazards and the HUD
+  are drawn after it, unshifted, so what you see is where the hit is.
 - **Terrain vs. enemies** (S4 flesh walls): terrain is large, slab-shaped, with a pale rim;
   enemies are small sprites; bullets are glowing dots. Keep the three readable at a glance.
 - **Clouds** (S3) are drawn after enemies and the boss, before items, hazards, the ship and

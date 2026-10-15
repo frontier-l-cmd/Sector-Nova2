@@ -149,6 +149,14 @@ const COLORS = {
   HIVE_MOTHER_GLOW: '#ffb0d0', HIVE_MOTHER_EYE: '#ffe14d',
   EGG_SHELL: '#e0c8b0', EGG_DARK: '#7a5a48', EGG_GLOW: '#ff8fb8',
 
+  // --- Stage 5 (Phase 5-2) ---
+  BULLET_OUTLINE_DARK: '#1a0602', // dark ring around hostile bullets on the bright S5 backdrop
+  SENTINEL_CORONA: '#ffb066', SENTINEL_CORONA_DARK: '#5a1a08', SENTINEL_CORONA_CORE: '#fff4d0',
+  SUN_SURFACE: '#a8320c', SUN_SURFACE_HOT: '#d8541a', SUN_CELL: '#7a2208', EMBER: '#ffc060',
+  FLARE_WARN: '#ff3322', FLARE_SHADE: '#1a0602', FLARE_FLAME: '#ff7a22', FLARE_FLAME_HOT: '#ffe08a',
+  SERPENT_HEAD: '#ff8a2a', SERPENT_DARK: '#4a1206', SERPENT_SCALE: '#d84a12', SERPENT_FLAME: '#ffd25a',
+  SERPENT_EYE: '#fff6c8', SERPENT_LIT: '#fff2a0',
+
   // --- SECTOR NOVA 2: stage palettes ---
   // The journey runs cold blue -> gray -> purple -> red -> orange ->
   // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
@@ -513,6 +521,35 @@ const EGG_HATCH_FRAMES = 5 * 60;           // DESIGN.md 14
 const EGG_HATCH_FRAMES_ENRAGED = 4 * 60;
 const EGG_CRACK_FRAMES = 60;               // shell cracks and shakes before hatching
 
+// CORONA SERPENT: S5 boss (DESIGN.md 14), a head and 10 trailing segments
+const CORONA_SERPENT_HP = 390;             // head (the only weak point); design 320; raised so the max loadout needs >= 30s (README)
+const CORONA_SERPENT_DAMAGE_CAP = 8;       // decided (DESIGN.md 14), shared by head and segments
+const CORONA_SERPENT_SCORE = 30000;
+const CORONA_SERPENT_RADIUS = 15;          // head hit radius (and contact)
+const CORONA_SEGMENTS = 10;
+const CORONA_SEGMENT_HP = 15;
+const CORONA_SEGMENT_SCORE = 1000;
+const CORONA_SEGMENT_RADIUS = 11;
+const CORONA_SEGMENT_SPACING = 20;         // px along the head's trail
+const CORONA_ALL_SEGMENTS_BONUS = 20000;   // every segment destroyed (NOVA CRYSTAL condition)
+const CORONA_CRYSTAL_WAIT = 8 * 60;        // the result waits at most this long for the crystal to be taken
+const CORONA_PATH_CX = 160;                // the head crawls an S path (Lissajous 1:2)
+const CORONA_PATH_CY = 150;
+const CORONA_PATH_AX = 118;
+const CORONA_PATH_AY = 72;
+const CORONA_PATH_SPEED = 0.0085;          // path radians per frame (about 12s a loop)
+const CORONA_PATH_SPEED_ENRAGED = 0.0125;
+const CORONA_ENTRY_SPEED = 2.2;            // px per frame while crawling in
+const CORONA_SEG_CHARGE = 30;              // a segment glows this long before it fires (telegraph)
+const CORONA_SEG_STEP = 12;                // frames between segments lighting up
+const CORONA_SEG_REST = 50;                // after the last segment fired
+const CORONA_SEG_BULLET_SPEED = 2.3;
+const CORONA_FAN_CHARGE = 36;              // enraged: the jaws glow before the fan
+const CORONA_FAN_REST = 90; 
+const CORONA_FAN_COUNT = 5;
+const CORONA_FAN_STEP = 0.24;
+const CORONA_FAN_SPEED = 2.4;
+
 // --- Stage gimmicks (gimmicks.js) ---
 // S1 giant asteroid: shoot it, its fragments hit enemies only
 const ASTEROID_HP = 12;
@@ -557,6 +594,23 @@ const FLESH_GAP_COLUMNS = 2;               // gap of each row (64 px)
 const FLESH_FALL_SPEED = 1.0;
 const FLESH_ROW_SPACING = 72;              // px between rows
 const FLESH_CAUTION_FRAMES = 150;          // CAUTION before the first row shows
+
+// S5 solar flares: a blinking band, then a flame crossing the screen
+const FLARE_WARN_FRAMES = 90;              // DESIGN.md 12: 90f red blinking band
+const FLARE_ACTIVE_FRAMES = 40;            // the flame crosses the screen in 40f
+const FLARE_HEIGHT = 40;                   // band height (hit area)
+const FLARE_LENGTH = 130;                  // length of the flame body
+const FLARE_INTERVAL = 420;                // frames between flares while the gimmick runs
+const FLARE_CAUTION_FRAMES = 150;          // CAUTION before the first flare
+const FLARE_MIN_Y = 140;                   // band centers stay in [MIN, MAX]
+const FLARE_MAX_Y = CANVAS_HEIGHT - 40;
+const FLARE_MAX = 1;                       // one flare at a time
+
+// S5 heat shimmer: the background only, drawn in shifted strips
+const SHIMMER_STRIP = 6;                   // px per strip
+const SHIMMER_AMPLITUDE = 2.5;             // px of sideways shift
+const SHIMMER_SPEED = 0.06;                // radians per frame
+const SHIMMER_WAVE = 0.045;                // radians per px down the screen
 
 // --- NOVA CRYSTAL conditions ---
 const GOLD_SHARD_WINDOW = 5 * 60;          // S1: destroy within 5s of appearing
@@ -624,6 +678,7 @@ const POWERUP_DROP_CHANCE = 0.12; // chance on enemy kill (stages can override)
 const STAGE2_ITEM_DROP_CHANCE = 0.17; // S2 has fewer droppers (fire guideline); keeps items about S1's level
 const STAGE3_ITEM_DROP_CHANCE = 0.17; // S3 playtest: expected items about 1.3x S2 (S3 21.0 vs S2 16.3, README)
 const STAGE4_ITEM_DROP_CHANCE = 0.15; // S4 >= S3 (README)
+const STAGE5_ITEM_DROP_CHANCE = 0.16; // S5 >= S4 (README)
 const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;
 
