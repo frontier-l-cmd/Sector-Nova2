@@ -2,6 +2,14 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [テストプレイ後] CORONA SERPENT の HP — 2026-10-26
+
+### 変更
+
+- CORONA SERPENT の頭の HP 390 → 220（倒せなかったため。最強装備 30秒以上のルールは満たさなくなった）
+- ボスの HP バーの右下に、体節の残り「SEGMENTS n / 10」を表示（`subLabel`）
+- README に BURST の調査結果と案
+
 ## [Phase 6] 仕上げ — 2026-10-26
 
 ### 追加

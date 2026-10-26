@@ -531,7 +531,7 @@ const EGG_HATCH_FRAMES_ENRAGED = 4 * 60;
 const EGG_CRACK_FRAMES = 60;               // shell cracks and shakes before hatching
 
 // CORONA SERPENT: S5 boss (DESIGN.md 14), a head and 10 trailing segments
-const CORONA_SERPENT_HP = 390;             // head (the only weak point); design 320; raised so the max loadout needs >= 30s (README)
+const CORONA_SERPENT_HP = 220;             // head (the only weak point); design 320; lowered after playtest: could not be beaten (README)
 const CORONA_SERPENT_DAMAGE_CAP = 8;       // decided (DESIGN.md 14), shared by head and segments
 const CORONA_SERPENT_SCORE = 30000;
 const CORONA_SERPENT_RADIUS = 15;          // head hit radius (and contact)

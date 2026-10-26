@@ -90,6 +90,11 @@ class CoronaSerpent extends BossBase {
     return this.segments.filter(s => s.alive);
   }
 
+  /** HUD: segments left, under the HP bar (hitting them is progress too). */
+  get subLabel() {
+    return 'SEGMENTS ' + this.aliveSegments.length + ' / ' + CORONA_SEGMENTS;
+  }
+
   get fanCharge() {
     return this.state === 'active' && this.fanState === 'charge'
       ? 1 - this.fanTimer / CORONA_FAN_CHARGE : 0;

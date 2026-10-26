@@ -155,6 +155,15 @@ class HUD {
       ctx.fillText(boss.phaseName, barX, barY + barH + 9);
     }
 
+    // Extra line some bosses show at the right under the bar (CORONA SERPENT's segments).
+    if (boss.subLabel) {
+      ctx.textAlign = 'right';
+      ctx.font = '7px monospace';
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      ctx.fillText(boss.subLabel, barX + barW, barY + barH + 9);
+      ctx.textAlign = 'left';
+    }
+
     // SUPERNOVA (ECLIPSE CROWN): the countdown to BAD END, big and
     // fixed in place; red and blinking in the last 10 seconds.
     const sec = boss.countdownSeconds;
