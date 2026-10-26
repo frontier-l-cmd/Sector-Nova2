@@ -3,7 +3,8 @@
 // ------------------------------------------------------------
 // Title menu (UP/DOWN select, LEFT/RIGHT change, ENTER decide) and
 // the full-screen screens: opening, stage intro, pause, game over and
-// the stage result with its rank, and the endings (NORMAL / BAD).
+// the stage result with its rank, the endings (NORMAL / TRUE / BAD)
+// and the BOSS RUSH result.
 // ============================================================
 
 // TEST RANGE (Stage 0) is listed only in DEBUG_MODE.
@@ -108,7 +109,10 @@ class TitleMenu {
         this.change(item, 1, game);
         break;
       case 'bossRush':
-        // Locked until NORMAL END; the mode itself arrives in Phase 6.
+        // Locked ("???") until NORMAL END.
+        if (!isBossRushUnlocked()) break;
+        game.audio.play('select');
+        game.startBossRush();
         break;
       case 'testRange':
         game.audio.play('select');
@@ -127,7 +131,7 @@ class TitleMenu {
       { item: 'continue', label: 'CONTINUE', value: 'STAGE ' + unlocked, enabled: true },
       { item: 'stageSelect', label: 'STAGE SELECT', value: arrows('stageSelect', 'STAGE ' + this.stageCursor), enabled: true },
       { item: 'difficulty', label: 'DIFFICULTY', value: arrows('difficulty', game.difficulty), enabled: true },
-      { item: 'bossRush', label: bossRush ? 'BOSS RUSH' : '???', value: '', enabled: bossRush },
+      { item: 'bossRush', label: bossRush ? 'BOSS RUSH' : '???', value: bossRush ? 'BEST ' + formatRushTime(loadBossRushBestTime()) : '', enabled: bossRush },
       { item: 'sound', label: 'SOUND', value: arrows('sound', game.audio.muted ? 'OFF' : 'ON'), enabled: true },
       { item: 'testRange', label: 'TEST RANGE', value: 'DEBUG', enabled: true },
     ].filter(row => TITLE_MENU_ITEMS.includes(row.item));
@@ -413,14 +417,15 @@ function drawEndingScreen(ctx, game) {
   const e = game.ending;
   if (!e) return;
   if (e.kind === 'bad') drawBadEnd(ctx, game, e.timer);
-  else drawNormalEnd(ctx, game, e.timer);
+  else drawNormalEnd(ctx, game, e.timer, e.kind === 'true');
 }
 
-function drawNormalEnd(ctx, game, t) {
+/** NORMAL END, and TRUE END (the same screen, brighter, its own title). */
+function drawNormalEnd(ctx, game, t, isTrue) {
   const cx = CANVAS_WIDTH / 2;
   ctx.save();
   ctx.fillStyle = COLORS.ENDING_WHITE;
-  ctx.globalAlpha = Math.min(t / 90, 1) * 0.35;
+  ctx.globalAlpha = Math.min(t / 90, 1) * (isTrue ? 0.55 : 0.35);
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
   ctx.globalAlpha = Math.min(t / 60, 1) * 0.7;
   ctx.fillStyle = 'rgb(10, 8, 4)';
@@ -428,10 +433,16 @@ function drawNormalEnd(ctx, game, t) {
   ctx.globalAlpha = Math.min(t / 60, 1);
   ctx.textAlign = 'center';
   ctx.font = 'bold 20px monospace';
-  drawShadowedText(ctx, 'HELIOS RESTORED', cx, 118, COLORS.ENDING_GOLD, COLORS.TEXT_SHADOW_GOLD);
+  drawShadowedText(ctx, isTrue ? 'HELIOS REBORN' : 'HELIOS RESTORED', cx, 118, COLORS.ENDING_GOLD, COLORS.TEXT_SHADOW_GOLD);
   ctx.font = '9px monospace';
   ctx.fillStyle = COLORS.UI_WHITE;
-  ctx.fillText('NORMAL END', cx, 136);
+  ctx.fillText(isTrue ? 'TRUE END' : 'NORMAL END', cx, 136);
+  if (isTrue) {
+    // The six crystals, in a row, shining
+    for (let i = 0; i < MAX_STAGE; i++) {
+      drawDiamond(ctx, cx + (i - 2.5) * 16, 152, 4, 6, COLORS.CRYSTAL_HUES[(i + Math.floor(t / 8)) % COLORS.CRYSTAL_HUES.length]);
+    }
+  }
   ctx.restore();
 
   if (game.comm.active) {
@@ -512,6 +523,44 @@ function drawBadEnd(ctx, game, t) {
     ctx.fillStyle = COLORS.UI_DIM;
     ctx.font = '8px monospace';
     ctx.fillText('CONTINUE FROM TITLE', cx, CANVAS_HEIGHT / 2 + 82);
+  }
+  ctx.restore();
+}
+
+// ============================================================
+// BOSS RUSH RESULT: the clear time (shorter is better) and the best.
+// ============================================================
+function drawBossRushResult(ctx, game) {
+  const r = game.rushResult;
+  if (!r) return;
+  const t = game.stateTimer;
+  const cx = CANVAS_WIDTH / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 20, ' + Math.min(t / 30, 1) * 0.75 + ')';
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 20px monospace';
+  drawShadowedText(ctx, 'BOSS RUSH CLEAR', cx, 140, COLORS.UI_GREEN, COLORS.BG_DARK);
+  ctx.font = '10px monospace';
+  ctx.fillStyle = COLORS.UI_DIM;
+  ctx.fillText('CLEAR TIME', cx, 190);
+  ctx.font = 'bold 22px monospace';
+  drawShadowedText(ctx, formatRushTime(r.seconds), cx, 216, COLORS.UI_YELLOW, COLORS.BG_DARK);
+  ctx.font = '10px monospace';
+  ctx.fillStyle = COLORS.UI_WHITE;
+  ctx.fillText('BEST  ' + formatRushTime(r.best), cx, 242);
+  if (r.newRecord) {
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    ctx.fillText('NEW RECORD!', cx, 260);
+  }
+  ctx.font = '9px monospace';
+  ctx.fillStyle = COLORS.UI_DIM;
+  ctx.fillText('SCORE  ' + String(Math.floor(r.score)).padStart(8, '0'), cx, 284);
+  if (t > RESULT_INPUT_DELAY && Math.floor(game.globalFrame / 30) % 2 === 0) {
+    ctx.font = '10px monospace';
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.fillText('PRESS ENTER TO TITLE', cx, 330);
   }
   ctx.restore();
 }

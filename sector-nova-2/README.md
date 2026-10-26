@@ -10,10 +10,19 @@ HTML5 Canvas と JavaScript だけで作られており、画像・音声ファ�
 - 変更履歴: [CHANGELOG.md](CHANGELOG.md)
 - 1作目（`../sector-nova/`）は一切変更していません。
 
-## 現在のバージョン: Phase 5-3（Stage 6・最終ボス・エンディング）
+## 現在のバージョン: Phase 6（仕上げ）
 
-Stage 6「HELIOS CORE」・最終ボス ECLIPSE CROWN・エンディングができました。NEW GAME → S1 〜 **S6** → リザルト → **NORMAL END** → タイトル、と最後まで遊べます。
-ECLIPSE CROWN の第3形態 SUPERNOVA で60秒の制限を過ぎると **BAD END** です。TRUE END・BOSS RUSH・難易度の反映は Phase 6 です。
+すべての Phase が終わりました。NEW GAME → S1〜S6 → **NORMAL END**、条件を満たせば **TRUE ECLIPSE → TRUE END**、SUPERNOVA の60秒切れで **BAD END**。NORMAL END の後は **BOSS RUSH** が遊べます。
+
+### Phase 6 で作ったもの
+
+- **BGM 一式**（タイトル、ステージ 3曲（2ステージで1曲）、ボス、最終ボス、ステージクリア、ゲームオーバー、エンディング）を `audio.js` の簡単なステップシーケンサーで生成。曲は音名の文字列で書いてあります
+- **効果音の追加**: 大きい爆発、Lv アップ、ボス撃破、形態変化、通信の文字送り、NOVA CRYSTAL 取得（DESIGN.md 15-8 の一覧がそろいました）
+- **難易度**: EASY / NORMAL / HARD の倍率をすべて反映（ライフ・NOVA ゲージ・スコア倍率を追加。敵弾の速さ・発射頻度・FLARE SPIRIT の撃ち返しは以前から）
+- **TRUE END**: NEW GAME から CONTINUE なしで NOVA CRYSTAL を6個集めて ECLIPSE CROWN を倒すと、「LIGHT RESONANCE」→ **TRUE ECLIPSE**（武器は自動で Lv3、歴代ボスの技＋独自の全画面パターン、時間制限なし）→ TRUE END
+- **BOSS RUSH**: NORMAL END で解放。ボス6体＋NEBULA HEART と連戦（武器・ライフは持ち越し、間のリザルトなし）。クリアタイムを記録
+- セーブ項目すべて（NORMAL END・TRUE END の到達、BOSS RUSH の最速タイムを追加）
+- `DEBUG_MODE = false` での確認（デバッグ機能が出ないことを自動テストで確認。ソースは確認しやすいよう `true` のままです。下の「リリース」）
 
 ### Phase 5-3 で作ったもの
 
@@ -754,12 +763,85 @@ S6 の背景は画面の上ほど白〜金に明るくなります。S5 と同�
 | NEW GAME | LYRA のオープニング → Stage 1 からスコア 0 で開始 |
 | CONTINUE | 最新の解放ステージから開始（オープニングなし） |
 | STAGE SELECT | ←→ で解放済みステージを選び、Enter で開始（`DEBUG_MODE` の時は、解放していなくても実装済みのステージをすべて選べる。セーブの解放状況は変わらない） |
-| DIFFICULTY | EASY / NORMAL / HARD（←→で変更・セーブ。敵弾の速さ・発射頻度・撃ち返しは Phase 3 から適用。ライフ・ゲージ・スコア倍率は Phase 6） |
-| BOSS RUSH | NORMAL END 到達で解放。未解放時は「???」でグレー表示 |
+| DIFFICULTY | EASY / NORMAL / HARD（←→で変更・セーブ。下の「難易度」の倍率をすべて適用） |
+| BOSS RUSH | NORMAL END 到達で解放（未解放時は「???」でグレー表示、Enter で何も起きない）。右に最速タイム（`BEST 4:51.0`、記録なしは `BEST --:--.-`） |
 | SOUND | ON / OFF（セーブ） |
 | TEST RANGE | `DEBUG_MODE` の時だけ表示。Stage 0「TEST RANGE」を開始（タイトルで 0 キーでも可。スマホは行を2回タップ） |
 
 タイトルにはロゴ「SECTOR NOVA 2」、サブタイトル「ECLIPSE」、BEST SCORE、BEST CLEAR を表示します。
+
+## 難易度（Phase 6、DESIGN.md 13）
+
+| | EASY | NORMAL | HARD | どこで |
+|---|---|---|---|---|
+| 初期ライフ（毎ステージ戻る値） | 4 | 3 | 3 | `game.js` `beginStage` |
+| 敵弾の速さ | ×0.8 | ×1.0 | ×1.15 | `patterns.js`（Phase 3） |
+| 敵の発射頻度 | ×0.75 | ×1.0 | ×1.3 | `patterns.js` `scaledFireInterval`（Phase 3） |
+| FLARE SPIRIT の撃ち返し | なし | 6発 | 9発 | `patterns.js`（Phase 3） |
+| NOVA ゲージのたまり方 | ×1.5 | ×1.0 | ×1.0 | `player.js` `addGauge` |
+| スコア倍率 | ×0.5 | ×1.0 | ×1.5 | `game.js` `addScore`（すべての得点。ランクボーナスは `calcStageRank`） |
+
+- TRUE END・BOSS RUSH はどの難易度でも到達できます。ボスの HP・アイテムは難易度で変えていません
+
+## サウンド（Phase 6、DESIGN.md 15-8）
+
+すべて Web Audio API で生成します（音声ファイルなし）。最初のキー入力・タップで鳴り始めます。M キー / SOUND 行でミュート（セーブ）。音量は全体 0.3、BGM は効果音の半分。
+
+| BGM | 使う場面 | 曲の感じ |
+|---|---|---|
+| title | タイトル・オープニング | イ短調、ゆっくり |
+| stageA | S1・S2 | ホ短調、速め |
+| stageB | S3・S4 | ニ短調、暗め |
+| stageC | S5・S6 | ハ短調、激しい |
+| boss | S1〜S5 のボス、BOSS RUSH | ロ短調、緊張感 |
+| finalBoss | ECLIPSE CROWN、TRUE ECLIPSE | 嬰ヘ短調、いちばん速い |
+| stageClear | リザルト（1回だけ） | ハ長調のファンファーレ |
+| gameOver | ゲームオーバー・BAD END（1回だけ） | 下がっていく音 |
+| ending | NORMAL END・TRUE END | ヘ長調、明るい |
+
+- WARNING の間は BGM を止め、警報音だけにします
+- 曲は `BGM_SONGS` に音名の文字列で書きます（`'A4 . C5 E5'`：1つが8分音符、`.` は休み、`-` は前の音を伸ばす）。リード（矩形波）・ベース（三角波）・ドラム（k キック / s スネア / h ハイハット）
+- 効果音: ショット / 被弾 / 撃破（小 `explode`・大 `explodeLarge`）/ アイテム / Lv アップ / かすり / NOVA BURST / WARNING / ボス撃破 / 形態変化 / 通信の文字送り / メニュー / NOVA CRYSTAL、ほかに落雷・フレア
+
+## TRUE END と TRUE ECLIPSE（Phase 6、DESIGN.md 13・14）
+
+| 項目 | 内容 |
+|---|---|
+| 条件 | NEW GAME から始め、CONTINUE を使わず（CONTINUE / STAGE SELECT で始めたプレイは数えない。HUD の結晶がグレー）、NOVA CRYSTAL を6個すべて取って ECLIPSE CROWN を倒す |
+| 登場 | ECLIPSE CROWN の爆発の後、6個の結晶が自機の周りを回り「LIGHT RESONANCE」と表示。LYRA「THE CRYSTALS ARE RESONATING... / THAT'S ITS TRUE FORM. FINISH IT!」 |
+| 自機 | この戦いの間、武器は自動で Lv3（被弾しても Lv3 のまま。NORMAL なら最後に使った武器の Lv3） |
+| TRUE ECLIPSE | HP 500（設計書は 400）、上限 8、100000点、時間制限なし。色の変わる光の冠をまとった黒い太陽 |
+| 攻撃（順番） | ① つらら（GLACIER MAW。40 フレームの影の予告）→ ② 追尾ミサイル4発（DOCK TITAN。HP 1）→ ③ 雷3本（THUNDER RAY。60 フレームの予告線）→ ④ 卵2個（HIVE MOTHER。5秒で孵化）→ ⑤ 体節弾（CORONA SERPENT。8個の玉が順に 30 フレーム光ってから自機狙い弾）→ ⑥ 独自の ECLIPSE BURST（コアが 45 フレーム光ってから、少しずつ回した18方向のリングを3重に）。どの技の前にもコアの縁が 30 フレーム光る |
+| 撃破後 | S6 のリザルト（ランクのボス時間は ECLIPSE CROWN の時間）→ TRUE END（「HELIOS REBORN / TRUE END」、6色の結晶、LYRA の最後の通信3つ）→ タイトル |
+| セーブ | TRUE END 到達と NORMAL END 到達（BOSS RUSH 解放）、BEST CLEAR、BEST SCORE |
+
+TRUE ECLIPSE の撃破時間（自動テストで実戦計測、1回ずつ、秒。武器は Lv3 に固定。想定 60〜90秒、最強装備 30秒以上）:
+
+| 装備 | 遠 | 近 |
+|---|---|---|
+| SPREAD Lv3 | 86.6 | 46.0 |
+| RAIL Lv3 | 49.4 | 49.5 |
+| CHAIN Lv3 | 92.5 | 90.0 |
+| HOMING Lv3 | 81.5 | 78.2 |
+| SPREAD Lv3＋OPT2 | 76.2 | **30.1** |
+| RAIL Lv3＋OPT2 | 36.4 | 33.0 |
+| CHAIN Lv3＋OPT2 | 94.0 | 83.5 |
+| HOMING Lv3＋OPT2 | 61.9 | 60.0 |
+
+- 設計書の HP 400 では最強装備が 24.1秒だったので **HP 500** にしました。オプションなしの Lv3 では 46〜93秒です
+- 敵弾は平均 7.3〜9.7（S1 のボスの 1.3〜1.8倍）
+
+## BOSS RUSH（Phase 6、DESIGN.md 13）
+
+| 項目 | 内容 |
+|---|---|
+| 解放 | NORMAL END（または TRUE END）到達。どの難易度でも |
+| 順番 | GLACIER MAW → DOCK TITAN → THUNDER RAY → HIVE MOTHER → CORONA SERPENT → NEBULA HEART → ECLIPSE CROWN（それぞれのステージの背景・敵弾の縁取りで） |
+| 持ち越し | 武器と Lv・オプション・ライフ・NOVA ゲージ。開始時は NORMAL・難易度のライフ |
+| ボスの間 | リザルトなし。毎回 WARNING（3秒、ライフ1回復）→ 次のボス。中ボスを倒した REPAIR とボス戦のアイテムは出る。NOVA CRYSTAL は出ない |
+| 時計 | 画面右上（ステージ番号の所）に経過時間。WARNING の時間も含む |
+| 終わり | ECLIPSE CROWN 撃破で「BOSS RUSH CLEAR」とクリアタイム・最速タイム（更新で「NEW RECORD!」）→ タイトル。ゲームオーバー・SUPERNOVA の60秒切れはゲームオーバー（記録なし） |
+| 記録 | 最速タイムだけ保存（`sectorNova2_bossRushBestTime`）。BOSS RUSH のスコアは BEST SCORE に入れない |
 
 ## 雑魚敵（Phase 3）
 
@@ -1114,7 +1196,7 @@ sector-nova-2/
    |- utils.js         # 定数・COLORS・DEBUG_MODE・セーブ補助
    |- input.js         # キー → 論理アクション
    |- touch.js         # 仮のタッチ操作（スマホ確認用）
-   |- audio.js         # 効果音（Web Audio）。BGM は Phase 6
+   |- audio.js         # 効果音と BGM（Web Audio、ステップシーケンサー）
    |- effects.js
    |- background.js    # 星空 + ステージ別テーマ（S5 は熱の揺らぎ）
    |- bullet.js
@@ -1138,7 +1220,8 @@ sector-nova-2/
    |  |- hiveMother.js # S4 ボス HIVE MOTHER（卵・孵化・螺旋弾）
    |  |- coronaSerpent.js # S5 ボス CORONA SERPENT（頭＋体節10個・体節の弾・炎の扇弾）
    |  |- nebulaHeart.js # S6 中ボス NEBULA HEART（侵食体）
-   |  `- eclipseCrown.js # S6 最終ボス ECLIPSE CROWN（3形態）
+   |  |- eclipseCrown.js # S6 最終ボス ECLIPSE CROWN（3形態）
+   |  `- trueEclipse.js # TRUE END 専用ボス TRUE ECLIPSE（歴代ボスの技）
    |- hud.js           # HUD
    |- menu.js          # タイトルメニュー・ポーズ・ゲームオーバー等の画面
    |- game.js          # 状態管理・当たり判定・進行
@@ -1155,11 +1238,11 @@ sector-nova-2/
 |---|---|---|
 | `sectorNova2_unlockedStage` | 解放済みの最大ステージ | Phase 1 |
 | `sectorNova2_bestScore` | 最高スコア | Phase 1 |
-| `sectorNova2_bestClearScore` | クリア時の最高スコア（Phase 4-1 から、エンディング到達時だけ保存。Phase 5 で使用） | Phase 1 |
+| `sectorNova2_bestClearScore` | クリア時の最高スコア（NORMAL END / TRUE END 到達時に保存） | Phase 1 |
 | `sectorNova2_difficulty` | 選んだ難易度 | Phase 1 |
 | `sectorNova2_muted` | ミュート設定 | Phase 1 |
 | `sectorNova2_bestRanks` | ステージごとの最高ランク（例 `{"1":"A"}`） | Phase 4-1 |
-| `sectorNova2_normalEndCleared` | NORMAL END 到達（BOSS RUSH 解放） | Phase 5/6 |
+| `sectorNova2_normalEndCleared` | NORMAL END 到達（BOSS RUSH 解放）。TRUE END でも保存 | Phase 6 |
 | `sectorNova2_trueEndCleared` | TRUE END 到達 | Phase 6 |
 | `sectorNova2_bossRushBestTime` | BOSS RUSH の最速タイム | Phase 6 |
 
@@ -1302,7 +1385,7 @@ sector-nova-2/
 - [ ] ボスの撃破時間が「14. ボス・中ボス」の方針に収まる — 最強装備の条件は満たす。Lv2 は「SPREAD / RAIL で測る」を試行中（下の「検収後の調整」）。CHAIN・HOMING は想定 80秒を超える
 - [x] Phase 1〜5-1・テスト用の仮タッチ操作の完了条件が壊れていない。制作中のステージ選択は DEBUG_MODE の時だけ
 
-### Phase 5-3: Stage 6・最終ボス・エンディング — 完了（検収待ち）
+### Phase 5-3: Stage 6・最終ボス・エンディング — 完了
 
 - [x] S6「HELIOS CORE」の背景・恒星の引力のギミック・タイムライン
 - [x] 中ボス NEBULA HEART（侵食体）、最終ボス ECLIPSE CROWN（3形態）
@@ -1320,15 +1403,22 @@ sector-nova-2/
 - [ ] ボスの撃破時間が「14. ボス・中ボス」の方針に収まる — 最強装備の条件は満たす。Lv2 は一部が想定を超える（要判断）
 - [x] Phase 1〜5-2・テスト用の仮タッチ操作の完了条件が壊れていない。制作中のステージ選択は DEBUG_MODE の時だけ
 
-### Phase 6: 仕上げ
+### Phase 6: 仕上げ — 完了（検収待ち）
 
-- [ ] BGM 一式、効果音の追加
-- [ ] 難易度（EASY / NORMAL / HARD）
-- [ ] TRUE END 条件、TRUE ECLIPSE、TRUE END
-- [ ] BOSS RUSH モード
-- [ ] セーブ項目すべて、全体のバランス調整
-- [ ] `README.md` / `STYLE_GUIDE.md` / `CHANGELOG.md` の最終更新
-- [ ] `DEBUG_MODE = false` の状態での最終確認
+- [x] BGM 一式、効果音の追加
+- [x] 難易度（EASY / NORMAL / HARD）
+- [x] TRUE END 条件、TRUE ECLIPSE、TRUE END
+- [x] BOSS RUSH モード
+- [x] セーブ項目すべて（全体のバランスは各 Phase の計測のまま。下の「要判断」）
+- [x] `README.md` / `STYLE_GUIDE.md` / `CHANGELOG.md` の最終更新
+- [x] `DEBUG_MODE = false` の状態での最終確認（自動テスト。ソースの切り替えは検収後）
+
+完了条件:
+
+- [x] 全エンディングに到達できる（NORMAL END / TRUE END / BAD END を自動テストで確認）
+- [x] BOSS RUSH が解放・記録される（NORMAL END で解放、7体を連戦、最速タイムを保存・表示）
+- [x] リロード後もセーブが残る（9項目すべてリロード後に確認。キーは `sectorNova2_*` だけ）
+- [x] `DEBUG_MODE = false` でデバッグ機能が出ない（TEST RANGE の行・ステージ0・数字キーのデバッグ・未解放ステージの選択・デバッグ表示が出ない）
 
 ## TODO / 要判断
 
@@ -1500,6 +1590,21 @@ sector-nova-2/
 12. **中ボス撃破時・WARNING 時の回復**は、Phase 5-2 の時点では作らず、検収後に入れました（下の「Phase 5-2 検収後の調整」）
 13. **フレアの効果音 `flare` を足しました**（ノイズの低い「ごうっ」という音）
 
+### Phase 6 で判断したこと
+
+1. **TRUE ECLIPSE の HP を 400 → 500 にしました**（最強装備 30秒以上を守るため。400 では 24.1秒）。武器は Lv3 に固定なので、Lv3（オプションなし）を基準に見ると 46〜93秒です
+2. **TRUE ECLIPSE の後も S6 のリザルトを出し、その後 TRUE END**（NORMAL END と同じ流れ）。ランクのボス時間は ECLIPSE CROWN の時間を使います（TRUE ECLIPSE には時間の想定がランクの表にないため）
+3. **LIGHT RESONANCE 中、NORMAL の時は「最後に使った武器」の Lv3 にします**（一度も武器を取っていなければ SPREAD）。設計書の「自機の武器は自動で Lv3」に、NORMAL の場合を足しました
+4. **TRUE ECLIPSE の体節弾は、ボスの周りの8個の玉が順に光って撃つ形**（CORONA SERPENT の体節そのものは出しません）。独自の全画面パターンは「少しずつ回した18方向のリングを3重に」（ECLIPSE BURST）です
+5. **TRUE END・BOSS RUSH・エンディングの LYRA の文は設計書の台詞表にないので、LYRA の短い口調で書きました**
+6. **BOSS RUSH の順番は S1〜S6 のステージ順**（NEBULA HEART は ECLIPSE CROWN の前）。各ボスの前に WARNING（3秒）を入れ、WARNING の回復（ライフ +1）もします。時計は WARNING の時間も含みます
+7. **BOSS RUSH の SUPERNOVA の60秒切れはゲームオーバー**（BAD END の演出は本編だけ）。BOSS RUSH では NOVA CRYSTAL を出しません。スコアは BEST SCORE に入れず、最速タイムだけ保存します
+8. **NORMAL END で `sectorNova2_normalEndCleared` を保存し、BOSS RUSH を解放します**（TRUE END でも保存）
+9. **スコア倍率は `Game.addScore()` で、すべての得点にかけます**（ランクボーナスは以前から `calcStageRank` でかけているので二重にはしません）。NOVA ゲージは `Player.addGauge()` で ×1.5（EASY）
+10. **BGM は3つのステージ曲を2ステージずつ共有**（設計書の「2ステージで1曲を共有してよい」）。WARNING の間は BGM を止めます。ステージクリアとゲームオーバーは1回だけ鳴るジングルです
+11. **`DEBUG_MODE` はソースでは `true` のままにしています**。`false` にした写しで「デバッグ機能が出ない」ことを自動テストで確かめました（スマホ用にはリリース版のファイルも用意）。検収で問題なければ `src/utils.js` の1行を `false` にします
+12. **要判断（前の Phase から）**: Lv2 武器の撃破時間が想定を超えるボスがある件、SUPERNOVA の60秒が遅い武器では厳しい件は、そのままです（全体のバランス調整として、指示があれば直します）
+
 ### Phase 5-3 で判断したこと
 
 1. **NEBULA HEART の HP を 200 → 270 にしました**（最強装備 15秒以上を守るため。200 では 11.3秒）
@@ -1555,7 +1660,7 @@ sector-nova-2/
 - [ ] **メニュー移動** — ↑↓ でカーソルが動き、端で反対側に回り込む。音が鳴る
 - [ ] **DIFFICULTY** — ←→ で EASY / NORMAL / HARD が切り替わり、リロード後も残る
 - [ ] **SOUND / M キー** — ON/OFF が切り替わり、リロード後も残る
-- [ ] **BOSS RUSH** — 「???」でグレー表示、Enter で何も起きない
+- [ ] **BOSS RUSH** — NORMAL END 前は「???」でグレー表示、Enter で何も起きない
 - [ ] **NEW GAME** — LYRA のオープニングの後、Stage 1 FROST RING がスコア 0 で始まり、背景が青い
 - [ ] **タイムライン** — 敵が列・横並び・V字・左右交互などの形で順番に出てくる
 - [ ] **ポーズ** — P で止まり、P で再開。止まっている間は敵も出てこない
@@ -1739,6 +1844,20 @@ STAGE SELECT で STAGE 6 を選ぶか、S5 をクリアして進みます（ス�
 - [ ] **BAD END** — SUPERNOVA で60秒たつと、画面が白く飛んで「SUPERNOVA」→「BAD END」とスコア。ENTER でタイトル。CONTINUE で S6 から始まる
 - [ ] **通し** — NEW GAME から S1〜S6 を続けて NORMAL END まで進める
 
+
+### Phase 6 の確認（仕上げ）
+
+- [ ] **BGM** — タイトルで最初にキーを押すと曲が始まる。S1・S2、S3・S4、S5・S6 で曲が変わる。WARNING で曲が止まり警報音、ボスでボス曲、S6 のボスは別の曲。リザルトで短いファンファーレ、ゲームオーバーで短い曲、エンディングで明るい曲
+- [ ] **効果音** — 大きい敵・部位の撃破で太い爆発音、同じ武器を取ると Lv アップの音、ボス撃破で長い爆発音、形態変化で上がっていく音、LYRA の文字が出る時に小さな音、NOVA CRYSTAL で鈴のような音
+- [ ] **ミュート** — M キー / SOUND 行で BGM も効果音も止まり、リロード後も残る
+- [ ] **難易度 EASY** — ライフが4つ、NOVA ゲージが早くたまる、点数が半分、FLARE SPIRIT が撃ち返さない、敵弾が遅い
+- [ ] **難易度 HARD** — ライフ3つ、点数1.5倍、FLARE SPIRIT が9発撃ち返す、敵弾が速く多い
+- [ ] **TRUE END** — NEW GAME から CONTINUE なしで6ステージの結晶を全部取り、ECLIPSE CROWN を倒すと、結晶が自機の周りを回り「LIGHT RESONANCE」。武器が Lv3 になり、被弾しても下がらない。TRUE ECLIPSE がつらら → ミサイル → 雷 → 卵 → 光る玉 → 3重のリング の順に攻撃。倒すとリザルト → 「HELIOS REBORN / TRUE END」
+- [ ] **TRUE END にならない時** — 結晶が5個以下、または CONTINUE / STAGE SELECT で始めたプレイでは、ECLIPSE CROWN の後は NORMAL END
+- [ ] **BOSS RUSH の解放** — NORMAL END の後、タイトルの「???」が「BOSS RUSH」になり、右に「BEST --:--.-」
+- [ ] **BOSS RUSH** — 7体と連戦。間にリザルトはなく、毎回 WARNING。右上に経過時間。武器とライフはそのまま。最後に「BOSS RUSH CLEAR」とタイム → タイトルの行に最速タイム
+- [ ] **セーブ** — リロードしても、解放ステージ・BEST SCORE / BEST CLEAR・ランク・難易度・ミュート・BOSS RUSH の解放と最速タイムが残る
+- [ ] **リリース版**（`sector-nova-2-phase6-release.html`）— タイトルに TEST RANGE の行がない。STAGE SELECT は解放済みのステージだけ。プレイ中に 0〜9 キーを押しても何も起きない。右下にデバッグの数字が出ない
 
 ### ボス戦のアイテムの確認（全ボス）
 

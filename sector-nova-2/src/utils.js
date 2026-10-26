@@ -619,6 +619,28 @@ const SUPERNOVA_FAN_SPEED = 2.4;
 const SUPERNOVA_RING_COUNT = 14;
 const SUPERNOVA_RING_SPEED = 1.7;
 const SUPERNOVA_SHOT_REST = 85;
+
+// TRUE ECLIPSE: TRUE END only (DESIGN.md 14). Past bosses' signature moves in turn.
+const TRUE_ECLIPSE_HP = 500;               // design 400; raised so the max loadout needs >= 30s (README)
+const TRUE_ECLIPSE_DAMAGE_CAP = 8;         // decided (DESIGN.md 14)
+const TRUE_ECLIPSE_SCORE = 100000;
+const TRUE_ECLIPSE_RADIUS = 26;
+const TRUE_ECLIPSE_TARGET_Y = 100;
+const TRUE_ECLIPSE_CHARGE = 30;            // telegraph before every move
+const TRUE_ECLIPSE_REST = 70;              // between moves
+const TRUE_ECLIPSE_ICICLES = 5;            // GLACIER MAW: icicles with their 40-frame shadows
+const TRUE_ECLIPSE_MISSILES = 4;           // DOCK TITAN: slow homing missiles (HP 1)
+const TRUE_ECLIPSE_BOLT_GAP = 90;          // THUNDER RAY: 3 bolts, 60-frame warning
+const TRUE_ECLIPSE_EGGS = 2;               // HIVE MOTHER: eggs that hatch
+const TRUE_ECLIPSE_ORBS = 8;               // CORONA SERPENT: orbs light up and fire in turn
+const TRUE_ECLIPSE_ORB_STEP = 10;
+const TRUE_ECLIPSE_ORB_SPEED = 2.3;
+const TRUE_ECLIPSE_BURST_CHARGE = 45;      // its own move: three turning rings over the whole screen
+const TRUE_ECLIPSE_BURST_RINGS = 3;
+const TRUE_ECLIPSE_BURST_COUNT = 18;
+const TRUE_ECLIPSE_BURST_SPEED = 1.6;
+const TRUE_ECLIPSE_BURST_GAP = 14;         // frames between the rings
+const RESONANCE_BANNER_FRAMES = 150;       // "LIGHT RESONANCE"
 const CORONA_FAN_COUNT = 5;
 const CORONA_FAN_STEP = 0.24;
 const CORONA_FAN_SPEED = 2.4;
@@ -741,7 +763,8 @@ const STATE = {
   PLAYING: 'playing',
   PAUSED: 'paused',
   GAME_OVER: 'gameover',
-  ENDING: 'ending',           // NORMAL END / BAD END (Phase 5-3)
+  ENDING: 'ending',           // NORMAL / TRUE / BAD END
+  BOSS_RUSH_RESULT: 'bossrushresult', // BOSS RUSH clear time (Phase 6)
 };
 
 // --- Difficulty (DESIGN.md 13) ---
@@ -914,6 +937,10 @@ const AUDIO_MASTER_VOLUME = 0.3;
 const AUDIO_SFX_VOLUME = 1.0;
 const AUDIO_BGM_VOLUME = 0.5;          // BGM sits under the effects
 const AUDIO_SHOT_MIN_INTERVAL = 0.07;  // seconds; thins rapid-fire shot sounds
+const BGM_LOOKAHEAD = 0.12;            // seconds of BGM scheduled ahead
+const BGM_LEAD_VOLUME = 0.06;
+const BGM_BASS_VOLUME = 0.12;
+const BGM_DRUM_VOLUME = 0.08;
 
 // --- Save keys (localStorage) ---
 // Fully separate from SECTOR NOVA 1's sectorNova_* keys (DESIGN.md 15-10).

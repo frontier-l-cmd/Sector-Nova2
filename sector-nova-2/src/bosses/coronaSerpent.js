@@ -249,7 +249,7 @@ class CoronaSerpent extends BossBase {
     if (this.allSegmentsDestroyed || this.aliveSegments.length > 0) return;
     this.allSegmentsDestroyed = true;
     // The stage-wide part bonus (counted on the result screen).
-    world.score += CORONA_ALL_SEGMENTS_BONUS;
+    world.addScore(CORONA_ALL_SEGMENTS_BONUS);
     world.stats.partBonus += CORONA_ALL_SEGMENTS_BONUS;
     world.effects.powerupPickup(this.x, this.y);
     world.audio.play('item');
@@ -257,7 +257,7 @@ class CoronaSerpent extends BossBase {
   }
 
   beginDefeat(world) {
-    this.crystalEarned = this.allSegmentsDestroyed && !world.crystalStages.has(world.stage.stageNumber);
+    this.crystalEarned = this.allSegmentsDestroyed && !world.bossRush && !world.crystalStages.has(world.stage.stageNumber);
     super.beginDefeat(world);
   }
 

@@ -171,8 +171,9 @@ class Player {
     this.reflectTimer = REFLECT_DURATION;
   }
 
+  /** NOVA gauge; fills faster on EASY (DESIGN.md 13 gaugeRate). */
   addGauge(amount) {
-    this.gauge = clamp(this.gauge + amount, 0, GAUGE_MAX);
+    this.gauge = clamp(this.gauge + amount * patternDifficulty().gaugeRate, 0, GAUGE_MAX);
   }
 
   // --- Update / fire ---------------------------------------------------

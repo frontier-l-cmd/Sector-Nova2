@@ -170,6 +170,21 @@ turrets.
 | SUPERNOVA | `SUPERNOVA_RED` | the backdrop pulses red; the countdown sits under the HP bar, big, fixed, red and blinking for the last 10 seconds. The rotating laser's warning shows the aim line and the wedge it will sweep |
 | Endings | `ENDING_GOLD #ffe9a8`, `ENDING_WHITE #fffdf4` | NORMAL END warms to white-gold; BAD END whites out ("SUPERNOVA") then settles on dark red. Text never moves, it only fades |
 
+### TRUE END and BOSS RUSH (SECTOR NOVA 2, Phase 6)
+
+| Object | Tokens | Notes |
+|---|---|---|
+| TRUE ECLIPSE | `CROWN_CORE`, `CROWN_RIM`, `CRYSTAL_HUES` | the black sun with a white rim and a corona that runs through the six crystal colors; its segment orbs reuse `SERPENT_*`, its icicles / missiles / eggs are the real ones from their bosses |
+| LIGHT RESONANCE | `CRYSTAL_HUES` | six small diamonds circle the ship (radius 22) for the whole TRUE ECLIPSE fight |
+| TRUE END | `ENDING_GOLD`, `ENDING_WHITE`, `CRYSTAL_HUES` | the NORMAL END screen, brighter, titled HELIOS REBORN, with the six crystals in a row |
+| BOSS RUSH | — | the clock replaces the stage number and crystals at the top right; the result screen follows the stage result's layout |
+
+### Sound (SECTOR NOVA 2, Phase 6)
+
+- SFC-like: square lead, triangle bass, filtered noise drums. Master 0.3; BGM at half the effects' level.
+- One song per two stages (140 / 132 / 150 bpm); the boss songs are the fastest (160, final 168).
+- Jingles (stage clear, game over) play once; everything else loops. The WARNING silences the music.
+
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
 | Kind | Tokens | Notes |

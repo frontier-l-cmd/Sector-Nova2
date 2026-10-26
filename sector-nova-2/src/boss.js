@@ -249,7 +249,7 @@ class BossBase {
         }
         if (--this.stateTimer <= 0) {
           world.effects.bigExplode(this.x, this.y);
-          world.audio.play('explode');
+          world.audio.play(this.midboss ? 'explodeLarge' : 'bossDefeat');
           world.clearHostiles();
           this.state = 'afterglow';
           this.stateTimer = this.afterglowFrames;
@@ -373,6 +373,7 @@ class BossBase {
     this.state = 'transition';
     this.stateTimer = BOSS_PHASE_TRANSITION_FRAMES;
     world.clearHostiles();
+    world.audio.play('formChange');
     this.banner = { text: this.phases[this.phaseIndex + 1].name, timer: BOSS_PHASE_TRANSITION_FRAMES };
   }
 

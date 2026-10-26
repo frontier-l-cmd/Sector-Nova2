@@ -2,6 +2,23 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 6] 仕上げ — 2026-10-26
+
+### 追加
+
+- BGM（`audio.js` の `BGM_SONGS` とステップシーケンサー）: title / stageA（S1・S2）/ stageB（S3・S4）/ stageC（S5・S6）/ boss / finalBoss / stageClear / gameOver / ending。WARNING の間は止める
+- 効果音: explodeLarge / levelUp / bossDefeat / formChange / type（通信の文字送り）/ crystal
+- 難易度: ライフ（EASY 4）、NOVA ゲージ ×1.5（EASY）、スコア倍率 ×0.5 / ×1 / ×1.5（`Game.addScore`）
+- TRUE END: 条件（NEW GAME・CONTINUE なし・結晶6個）、LIGHT RESONANCE（武器 Lv3 固定、結晶が自機の周りを回る）、TRUE ECLIPSE（`bosses/trueEclipse.js`。つらら・ミサイル・雷・卵・体節弾・ECLIPSE BURST、HP 500）、TRUE END の画面と LYRA の文
+- BOSS RUSH（`Game.startBossRush`、`STATE.BOSS_RUSH_RESULT`）: NORMAL END で解放、7体の連戦、時計、最速タイムの保存とタイトルでの表示
+- セーブ: NORMAL END 到達、TRUE END 到達、BOSS RUSH 最速タイム
+- README に難易度・サウンド・TRUE END・BOSS RUSH の説明と計測、確認手順
+
+### 変更
+
+- NORMAL END で BOSS RUSH を解放
+- BOSS RUSH の行は解放後に最速タイムを表示
+
 ## [Phase 5-3] Stage 6・最終ボス・エンディング — 2026-10-26
 
 ### 追加

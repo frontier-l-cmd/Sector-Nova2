@@ -105,7 +105,7 @@ class NebulaHeart extends BossBase {
   beginDefeat(world) {
     // NOVA CRYSTAL: beaten without NOVA BURST.
     const stage = world.stage.stageNumber;
-    if (!this.burstUsed && !world.crystalStages.has(stage)) {
+    if (!this.burstUsed && !world.bossRush && !world.crystalStages.has(stage)) {
       world.addPowerup(new Powerup(clamp(this.x, 24, CANVAS_WIDTH - 24), this.y, ITEM_NOVA_CRYSTAL));
     }
     super.beginDefeat(world);

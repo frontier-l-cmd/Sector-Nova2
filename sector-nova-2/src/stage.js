@@ -47,6 +47,7 @@ const STAGES = {
     itemDropRate: POWERUP_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
     bossType: 'glacierMaw',
+    bgm: 'stageA',              // audio.js BGM_SONGS (stages share in pairs)
     bossExpectedTime: [30, 45], // seconds (DESIGN.md 14), used by the rank
     story: 'stage1',            // LYRA's message at the stage start
     implemented: true,
@@ -57,6 +58,7 @@ const STAGES = {
     itemDropRate: STAGE2_ITEM_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
     bossType: 'dockTitan',
+    bgm: 'stageA',
     bossExpectedTime: [45, 60],
     story: 'stage2',
     implemented: true,
@@ -67,6 +69,7 @@ const STAGES = {
     itemDropRate: STAGE3_ITEM_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
     bossType: 'thunderRay',
+    bgm: 'stageB',
     bossExpectedTime: [50, 70],
     story: 'stage3',
     implemented: true,
@@ -77,6 +80,7 @@ const STAGES = {
     itemDropRate: STAGE4_ITEM_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
     bossType: 'hiveMother',
+    bgm: 'stageB',
     bossExpectedTime: [60, 80],
     story: 'stage4',
     implemented: true,
@@ -87,6 +91,7 @@ const STAGES = {
     itemDropRate: STAGE5_ITEM_DROP_CHANCE,
     powerupWeights: STAGE5_POWERUP_WEIGHTS,
     bossType: 'coronaSerpent',
+    bgm: 'stageC',
     bossExpectedTime: [60, 80],
     story: 'stage5',
     implemented: true,
@@ -97,6 +102,7 @@ const STAGES = {
     itemDropRate: STAGE6_ITEM_DROP_CHANCE,
     powerupWeights: DEFAULT_POWERUP_WEIGHTS,
     bossType: 'eclipseCrown',
+    bgm: 'stageC',
     bossExpectedTime: [120, 150],
     story: 'stage6',
     implemented: true,
@@ -104,6 +110,18 @@ const STAGES = {
 };
 
 const MAX_STAGE = 6;
+
+// BOSS RUSH (DESIGN.md 13): the six bosses and NEBULA HEART, in stage
+// order, each over its own stage's backdrop.
+const BOSS_RUSH_ORDER = [
+  { type: 'glacierMaw', stage: 1 },
+  { type: 'dockTitan', stage: 2 },
+  { type: 'thunderRay', stage: 3 },
+  { type: 'hiveMother', stage: 4 },
+  { type: 'coronaSerpent', stage: 5 },
+  { type: 'nebulaHeart', stage: 6 },
+  { type: 'eclipseCrown', stage: 6 },
+];
 
 function highestImplementedStage() {
   let highest = 1;
@@ -202,9 +220,31 @@ function saveDifficulty(level) {
   if (DIFFICULTY_LEVELS.includes(level)) storageSet(SAVE_KEYS.DIFFICULTY, level);
 }
 
-/** BOSS RUSH unlocks after reaching NORMAL END on any difficulty (Phase 6). */
+/** BOSS RUSH unlocks after reaching NORMAL END on any difficulty. */
 function isBossRushUnlocked() {
   return loadSavedBool(SAVE_KEYS.NORMAL_END_CLEARED);
+}
+
+function isTrueEndCleared() {
+  return loadSavedBool(SAVE_KEYS.TRUE_END_CLEARED);
+}
+
+/** BOSS RUSH best clear time in seconds, or null (shorter is better). */
+function loadBossRushBestTime() {
+  const v = Number(storageGet(SAVE_KEYS.BOSS_RUSH_BEST_TIME));
+  return Number.isFinite(v) && v > 0 ? v : null;
+}
+
+function saveBossRushBestTime(seconds) {
+  storageSet(SAVE_KEYS.BOSS_RUSH_BEST_TIME, seconds.toFixed(2));
+}
+
+/** 83.4 -> '1:23.4' */
+function formatRushTime(seconds) {
+  if (seconds === null || seconds === undefined) return '--:--.-';
+  const m = Math.floor(seconds / 60);
+  const s = seconds - m * 60;
+  return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1);
 }
 
 /**

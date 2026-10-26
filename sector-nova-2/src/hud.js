@@ -89,8 +89,15 @@ class HUD {
     ctx.fillStyle = COLORS.UI_YELLOW;
     ctx.fillText(digits, startX + labelW, 12);
 
-    // Stage (top-right) and NOVA CRYSTAL count to its left.
+    // BOSS RUSH: the running clock replaces the stage and crystals.
     ctx.textAlign = 'right';
+    if (game.bossRush) {
+      ctx.fillStyle = COLORS.UI_WHITE;
+      ctx.fillText(formatRushTime(game.bossRush.frames / FPS), HUD_RIGHT, 12);
+      return;
+    }
+
+    // Stage (top-right) and NOVA CRYSTAL count to its left.
     ctx.fillStyle = COLORS.UI_WHITE;
     const stageText = 'ST' + game.stage.stageNumber;
     ctx.fillText(stageText, HUD_RIGHT, 12);
@@ -107,7 +114,10 @@ class HUD {
     ctx.font = '8px monospace';
     ctx.fillStyle = COLORS.UI_DIM;
     ctx.textAlign = 'center';
-    ctx.fillText(game.stage.stageName, CANVAS_WIDTH / 2, 28);
+    const text = game.bossRush
+      ? 'BOSS RUSH  ' + (game.bossRush.index + 1) + ' / ' + BOSS_RUSH_ORDER.length
+      : game.stage.stageName;
+    ctx.fillText(text, CANVAS_WIDTH / 2, 28);
   }
 
   drawBossBar(ctx, boss) {

@@ -14,6 +14,10 @@
 //       ... -> S6 STAGE_RESULT -> ENDING (NORMAL END) -> TITLE.
 //       SUPERNOVA's countdown running out -> ENDING (BAD END), which
 //       counts as a game over (score saved, CONTINUE from the title).
+//       TRUE END condition met (NEW GAME, no CONTINUE, all 6 NOVA
+//       CRYSTALS): ECLIPSE CROWN -> TRUE ECLIPSE -> S6 result -> TRUE END.
+//       BOSS RUSH (after NORMAL END): the bosses back to back, weapon
+//       and lives carried over, no results -> BOSS_RUSH_RESULT (time).
 //
 // The Game is also the "world" bosses act on: addEnemyBullets(),
 // addHazard(), clearHostiles(), onBossDefeated(),
@@ -33,6 +37,7 @@ class Game {
     this.hud = new HUD();
     this.combo = new ComboCounter();
     this.comm = new CommWindow();
+    this.comm.onType = () => this.audio.play('type');
     this.difficulty = loadDifficulty();
     setPatternDifficulty(this.difficulty);
     this.touch = new TouchControls(this, canvas);
@@ -48,7 +53,10 @@ class Game {
     this.scoreSaved = false;
     this.newBestScore = false;
     this.result = null;  // last stage result (STAGE_RESULT screen)
-    this.ending = null;  // { kind: 'normal' | 'bad', timer } (ENDING screen)
+    this.ending = null;  // { kind: 'normal' | 'true' | 'bad', timer } (ENDING screen)
+    this.trueBattle = false; // fighting TRUE ECLIPSE (TRUE END route)
+    this.bossRush = null;    // { index, frames, wait } during BOSS RUSH
+    this.rushResult = null;  // { seconds, best, newRecord } (BOSS_RUSH_RESULT)
     this.newBestClear = false;
     this.stats = null;   // per-stage numbers for the rank
     this.globalFrame = 0; // drives blinking UI in every state
@@ -57,6 +65,7 @@ class Game {
     this.debugInvincible = false;   // debug key 0
 
     this.titleMenu.reset();
+    this.audio.playMusic('title'); // starts once the first input unlocks audio
     if (DEBUG_MODE) validateTimelines();
   }
 
@@ -70,6 +79,11 @@ class Game {
 
   get bestClearScore() {
     return loadBestClearScore();
+  }
+
+  /** Add points, scaled by the difficulty's score rate (DESIGN.md 13). */
+  addScore(points) {
+    this.score += Math.round(points * DIFFICULTY_SETTINGS[this.difficulty].scoreRate);
   }
 
   setDifficulty(level) {
@@ -113,6 +127,7 @@ class Game {
     this.score = 0;
     this.crystalStages = new Set();
     this.runFromNewGame = !!fromNewGame && stageNumber === 1;
+    this.bossRush = null;
     // TEST RANGE (DEBUG only) starts invincible so every enemy can be
     // watched; 0 toggles it as usual.
     this.debugInvincible = !!this.stage.test;
@@ -142,6 +157,9 @@ class Game {
    * Return to the title screen without touching stage-unlock save data.
    */
   returnToTitle() {
+    this.audio.playMusic('title');
+    this.bossRush = null;
+    this.trueBattle = false;
     this.player = new Player();
     this.clearStageObjects();
     this.score = 0;
@@ -159,7 +177,7 @@ class Game {
 
   /** Save BEST SCORE at the end of a run (game over or last stage). */
   recordGameOverScore() {
-    if (this.scoreSaved || this.stage.test) return;
+    if (this.scoreSaved || this.stage.test || this.bossRush) return; // BOSS RUSH records its time only
     this.newBestScore = saveBestScore(this.score);
     this.scoreSaved = true;
   }
@@ -171,9 +189,11 @@ class Game {
    */
   beginStage() {
     this.clearStageObjects();
+    this.trueBattle = false;
     this.timeline = new TimelineRunner(STAGE_TIMELINES[this.stage.stageNumber]);
     this.background.setTheme(this.stage.stageNumber);
     setHostileBulletOutline(this.background.theme.bulletOutline); // S4 light / S5 dark ring
+    this.audio.playMusic(this.stage.bgm || 'stageA');
     this.playTime = 0;
     this.stateTimer = 0;
     this.combo.reset();
@@ -184,7 +204,7 @@ class Game {
     const p = this.player;
     p.x = CANVAS_WIDTH / 2;
     p.y = CANVAS_HEIGHT - 60;
-    p.maxLives = PLAYER_MAX_LIVES;
+    p.maxLives = DIFFICULTY_SETTINGS[this.difficulty].lives; // EASY 4, else 3
     p.lives = p.maxLives;
     p.alive = true;
     p.reflectTimer = 0;
@@ -202,6 +222,7 @@ class Game {
   update() {
     this.input.update();
     this.globalFrame++;
+    this.audio.updateMusic();
 
     // M toggles sound everywhere (title, play, pause, ...).
     if (this.input.mute) this.audio.toggleMute();
@@ -231,6 +252,9 @@ class Game {
         break;
       case STATE.ENDING:
         this.updateEnding();
+        break;
+      case STATE.BOSS_RUSH_RESULT:
+        this.updateBossRushResult();
         break;
     }
   }
@@ -266,7 +290,7 @@ class Game {
       this.beginStage();
       this.beginIntro();
     } else if (this.stage.stageNumber === MAX_STAGE) {
-      this.beginEnding('normal'); // ECLIPSE CROWN is down
+      this.beginEnding(this.trueBattle ? 'true' : 'normal'); // ECLIPSE is down
     } else {
       // Last implemented stage: keep the score, go home.
       this.recordGameOverScore();
@@ -289,12 +313,127 @@ class Game {
     if (kind === 'bad') {
       this.boss = null;
       this.recordGameOverScore();
-      this.audio.play('explode');
+      this.audio.play('bossDefeat');
+      this.audio.playMusic('gameOver');
     } else {
+      this.audio.playMusic('ending');
       this.newBestScore = saveBestScore(this.score);
       this.newBestClear = saveBestClearScore(this.score);
       this.scoreSaved = true;
-      this.comm.show('endingNormal');
+      saveBool(SAVE_KEYS.NORMAL_END_CLEARED, true); // unlocks BOSS RUSH
+      if (kind === 'true') saveBool(SAVE_KEYS.TRUE_END_CLEARED, true);
+      this.comm.show(kind === 'true' ? 'endingTrue' : 'endingNormal');
+    }
+  }
+
+  /** TRUE END route: every crystal from a NEW GAME run, no CONTINUE. */
+  get trueEndEligible() {
+    return this.runFromNewGame && this.crystalStages.size >= MAX_STAGE;
+  }
+
+  /**
+   * After ECLIPSE CROWN on the TRUE END route: the crystals resonate
+   * ("LIGHT RESONANCE") and TRUE ECLIPSE appears. The ship's weapon
+   * stays at Lv3 for this fight (enforceResonance).
+   */
+  startTrueEclipse() {
+    this.trueBattle = true;
+    this.clearHostiles();
+    this.boss = createBoss('trueEclipse');
+    this.boss.banner = { text: 'LIGHT RESONANCE', timer: RESONANCE_BANNER_FRAMES };
+    this.comm.show('trueEclipse');
+    this.audio.play('crystal');
+    this.audio.playMusic('finalBoss');
+    this.enforceResonance();
+  }
+
+  /** LIGHT RESONANCE: the weapon is Lv3 (NORMAL becomes the last weapon at Lv3). */
+  enforceResonance() {
+    const p = this.player;
+    if (p.weaponType === WEAPON_NORMAL) p.setWeapon(p.lastWeaponType || WEAPON_SPREAD, WEAPON_MAX_LEVEL);
+    else p.weaponLevel = WEAPON_MAX_LEVEL;
+  }
+
+  // ============================================================
+  // BOSS RUSH (DESIGN.md 13): unlocked by NORMAL END
+  // ============================================================
+  startBossRush() {
+    if (!isBossRushUnlocked()) return false;
+    this.stageManager.setStage(1);
+    this.player = new Player();
+    this.score = 0;
+    this.crystalStages = new Set();
+    this.runFromNewGame = false;
+    this.scoreSaved = false;
+    this.newBestScore = false;
+    this.beginStage();
+    this.timeline = new TimelineRunner([]);
+    this.timeline.pause();
+    this.bossRush = { index: -1, frames: 0, wait: 0 };
+    this.state = STATE.PLAYING;
+    this.nextRushBoss();
+    return true;
+  }
+
+  get rushEntry() {
+    return this.bossRush ? BOSS_RUSH_ORDER[this.bossRush.index] : null;
+  }
+
+  /** Move to the next boss: its stage's backdrop, then WARNING. Lives and weapon carry over. */
+  nextRushBoss() {
+    const rush = this.bossRush;
+    rush.index++;
+    const entry = this.rushEntry;
+    this.stageManager.setStage(entry.stage);
+    this.background.setTheme(entry.stage);
+    setHostileBulletOutline(this.background.theme.bulletOutline);
+    this.enemies = [];
+    this.enemyBullets = [];
+    this.hazards = [];
+    this.powerups = [];
+    this.boss = null;
+    this.warningTimer = WARNING_FRAMES;
+    this.warningBossName = bossDisplayName(entry.type);
+    if (this.player.alive) this.player.heal(WARNING_HEAL);
+    this.audio.stopMusic();
+    this.audio.play('alarm');
+    rush.wait = WARNING_FRAMES;
+  }
+
+  /** Per frame in BOSS RUSH: the clock, and the next boss after the WARNING. */
+  updateBossRush() {
+    const rush = this.bossRush;
+    rush.frames++;
+    if (rush.wait > 0 && --rush.wait === 0) {
+      const entry = this.rushEntry;
+      this.boss = createBoss(entry.type, { stage: entry.stage });
+      this.spawnsLocked = true;
+      this.audio.playMusic(entry.type === 'eclipseCrown' ? 'finalBoss' : 'boss');
+    }
+  }
+
+  /** A BOSS RUSH boss is down: the next one, or the result. */
+  onRushBossFinished() {
+    if (this.bossRush.index < BOSS_RUSH_ORDER.length - 1) {
+      this.nextRushBoss();
+      return;
+    }
+    const seconds = this.bossRush.frames / FPS;
+    const old = loadBossRushBestTime();
+    const newRecord = old === null || seconds < old;
+    if (newRecord) saveBossRushBestTime(seconds);
+    this.rushResult = { seconds, best: loadBossRushBestTime(), newRecord, score: this.score };
+    this.state = STATE.BOSS_RUSH_RESULT;
+    this.stateTimer = 0;
+    this.audio.playMusic('stageClear');
+  }
+
+  updateBossRushResult() {
+    this.background.update();
+    this.effects.update();
+    if (++this.stateTimer > RESULT_INPUT_DELAY && this.input.enter) {
+      this.bossRush = null;
+      this.returnToTitle();
     }
   }
 
@@ -380,13 +519,21 @@ class Game {
     if (this.stage.test && this.updateTestRange()) return;
 
     // --- Boss / mid-boss ---
+    if (this.bossRush) this.updateBossRush();
+    if (this.trueBattle && this.boss && !this.boss.isDefeated) this.enforceResonance();
     if (this.boss) {
       this.boss.update(this);
       if (this.state !== STATE.PLAYING) return; // SUPERNOVA ran out: BAD END
       if (this.boss.isFinished) {
         const finished = this.boss;
         this.boss = null;
-        if (finished.midboss) {
+        if (this.bossRush) {
+          this.onRushBossFinished();
+          return;
+        }
+        if (finished.typeKey === 'eclipseCrown' && this.trueEndEligible && !this.trueBattle) {
+          this.startTrueEclipse(); // TRUE END route
+        } else if (finished.midboss) {
           this.timeline.resume(); // beaten or fled: the stage goes on
         } else {
           this.onStageCleared();
@@ -422,6 +569,7 @@ class Game {
     if (!this.player.alive) {
       this.recordGameOverScore();
       this.state = STATE.GAME_OVER;
+      this.audio.playMusic('gameOver');
     }
   }
 
@@ -467,7 +615,7 @@ class Game {
       stage.bossExpectedTime,
       DIFFICULTY_SETTINGS[this.difficulty].scoreRate
     );
-    this.score += rank.bonus;
+    this.score += rank.bonus; // already scaled by the difficulty (calcStageRank)
     this.result = {
       stageNumber: stage.stageNumber,
       stageName: stage.stageName,
@@ -483,6 +631,7 @@ class Game {
     if (this.stageManager.hasNextImplemented()) saveUnlockedStage(this.stageManager.current + 1);
     this.state = STATE.STAGE_RESULT;
     this.stateTimer = 0;
+    this.audio.playMusic('stageClear');
   }
 
   // ============================================================
@@ -591,6 +740,7 @@ class Game {
     if (this.flares) this.flares.stop(); // so does the sun
     // A breather before the boss: one life back (WARNING_HEAL).
     if (this.player.alive && this.player.heal(WARNING_HEAL)) this.effects.powerupPickup(this.player.x, this.player.y);
+    this.audio.stopMusic();
     this.audio.play('alarm');
     this.comm.show('boss');
   }
@@ -603,6 +753,7 @@ class Game {
     }
     this.spawnsLocked = true;
     this.boss = boss;
+    this.audio.playMusic(this.stage.stageNumber === MAX_STAGE ? 'finalBoss' : 'boss');
   }
 
   // ============================================================
@@ -651,8 +802,14 @@ class Game {
     this.enemies.push(enemy);
   }
 
-  /** SUPERNOVA's countdown ran out (ECLIPSE CROWN): BAD END. */
+  /** SUPERNOVA's countdown ran out (ECLIPSE CROWN): BAD END (in BOSS RUSH, a game over). */
   onSupernova() {
+    if (this.bossRush) {
+      this.boss = null;
+      this.state = STATE.GAME_OVER;
+      this.audio.playMusic('gameOver');
+      return;
+    }
     this.beginEnding('bad');
   }
 
@@ -663,8 +820,9 @@ class Game {
   }
 
   onBossDefeated(boss) {
-    this.score += boss.score;
-    if (!boss.midboss) this.stats.bossSeconds = boss.activeFrames / FPS;
+    this.addScore(boss.score);
+    // The rank's boss time is ECLIPSE CROWN's, also on the TRUE END route.
+    if (!boss.midboss && !this.trueBattle) this.stats.bossSeconds = boss.activeFrames / FPS;
     // A beaten mid-boss (not one that fled) leaves a REPAIR behind.
     if (boss.midboss) this.powerups.push(new Powerup(clamp(boss.x, 24, CANVAS_WIDTH - 24), boss.y, ITEM_REPAIR));
     // Things the boss dropped (icicles, ...) go with it.
@@ -678,11 +836,11 @@ class Game {
 
   onBossPartDestroyed(boss, part) {
     const bonus = part.score * this.combo.multiplier;
-    this.score += bonus;
+    this.addScore(bonus);
     this.stats.partBonus += bonus;
     this.player.addGauge(GAUGE_PART_BREAK);
     this.effects.explode(part.x(boss), part.y(boss), 14);
-    this.audio.play('explode');
+    this.audio.play('explodeLarge');
   }
 
   // ============================================================
@@ -787,7 +945,7 @@ class Game {
       }
       this.boss.applyHit(target, bullet.damage, bullet.kind === 'rail' ? 'rail' : 'bullet', this);
       this.effects.hitSpark(bullet.x, bullet.y);
-      this.score += BOSS_HIT_SCORE;
+      this.addScore(BOSS_HIT_SCORE);
     }
   }
 
@@ -843,30 +1001,34 @@ class Game {
     this.audio.play('item');
     switch (type) {
       case ITEM_OPTION:
-        if (!player.addOption()) this.score += OPTION_CAP_BONUS;
+        if (!player.addOption()) this.addScore(OPTION_CAP_BONUS);
         return;
       case ITEM_REFLECT:
         player.setReflect();
         return;
       case ITEM_REPAIR:
-        if (!player.heal(1)) this.score += REPAIR_FULL_BONUS;
+        if (!player.heal(1)) this.addScore(REPAIR_FULL_BONUS);
         return;
       case ITEM_HULL_UP:
-        if (!player.increaseMaxLives(1)) this.score += HULL_UP_FULL_BONUS;
+        if (!player.increaseMaxLives(1)) this.addScore(HULL_UP_FULL_BONUS);
         return;
       case ITEM_STAR_CHIP:
-        this.score += STAR_CHIP_SCORE;
+        this.addScore(STAR_CHIP_SCORE);
         player.addGauge(STAR_CHIP_GAUGE);
         return;
       case ITEM_NOVA_CRYSTAL:
         this.crystalStages.add(this.stage.stageNumber);
+        this.audio.play('crystal');
         return;
-      default:
+      default: {
         // Weapon items
-        if (player.collectWeapon(type) === 'max') {
-          this.score += WEAPON_MAX_LEVEL_BONUS;
+        const result = player.collectWeapon(type);
+        if (result === 'levelUp') this.audio.play('levelUp');
+        if (result === 'max') {
+          this.addScore(WEAPON_MAX_LEVEL_BONUS);
           player.addGauge(WEAPON_MAX_LEVEL_GAUGE);
         }
+      }
     }
   }
 
@@ -878,7 +1040,7 @@ class Game {
   graze(bullet) {
     bullet.grazed = true;
     this.player.addGauge(GAUGE_GRAZE);
-    this.score += GRAZE_SCORE * this.combo.multiplier;
+    this.addScore(GRAZE_SCORE * this.combo.multiplier);
     this.effects.grazeSpark(
       (this.player.x + bullet.x) / 2,
       (this.player.y + bullet.y) / 2
@@ -898,7 +1060,7 @@ class Game {
     player.invincibleTimer = Math.max(player.invincibleTimer, BURST_INVINCIBLE_FRAMES);
     if (this.boss) this.boss.burstUsed = true; // S6 NOVA CRYSTAL: NEBULA HEART without BURST
 
-    this.score += this.enemyBullets.length * BURST_BULLET_SCORE;
+    this.addScore(this.enemyBullets.length * BURST_BULLET_SCORE);
     for (const b of this.enemyBullets) this.effects.hitSpark(b.x, b.y);
     this.clearHostiles();
 
@@ -1007,10 +1169,10 @@ class Game {
     if (!enemy.alive) return;
     enemy.alive = false;
     const mult = this.combo.addKill();
-    this.score += enemy.score * mult;
+    this.addScore(enemy.score * mult);
     if (!byBurst) this.player.addGauge(enemy.large ? GAUGE_KILL_LARGE : GAUGE_KILL);
     this.effects.explode(enemy.x, enemy.y);
-    this.audio.play('explode');
+    this.audio.play(enemy.large ? 'explodeLarge' : 'explode');
 
     const spawned = enemy.onDeath();
     if (spawned && spawned.length) {
@@ -1031,7 +1193,7 @@ class Game {
     if (enemy.formation) {
       enemy.formation.killed = (enemy.formation.killed || 0) + 1;
       if (enemy.formation.killed === enemy.formation.count) {
-        this.score += SWARM_FORMATION_BONUS;
+        this.addScore(SWARM_FORMATION_BONUS);
         this.effects.powerupPickup(enemy.x, enemy.y);
         this.audio.play('item');
       }
@@ -1081,6 +1243,9 @@ class Game {
         this.drawGameplay(ctx);
         drawResultScreen(ctx, this);
         break;
+      case STATE.BOSS_RUSH_RESULT:
+        drawBossRushResult(ctx, this);
+        break;
       case STATE.ENDING:
         // BAD END whites out over the frozen last frame; NORMAL END
         // shows only the backdrop.
@@ -1126,6 +1291,7 @@ class Game {
     // Hazard guides / strikes sit under ships and bullets.
     for (const h of this.hazards) h.draw(ctx);
 
+    if (this.trueBattle && this.player.alive) this.drawResonance(ctx);
     this.player.drawOptions(ctx);
     if (this.player.reflectActive && this.player.alive) {
       drawReflectShield(ctx, this.player.x, this.player.y, this.playTime, this.player.reflectSecondsLeft);
@@ -1138,6 +1304,19 @@ class Game {
 
     this.effects.draw(ctx);
     this.hud.draw(ctx, this);
+  }
+
+  /** LIGHT RESONANCE: the six crystals circle the ship (TRUE ECLIPSE fight). */
+  drawResonance(ctx) {
+    const p = this.player;
+    for (let i = 0; i < MAX_STAGE; i++) {
+      const a = this.globalFrame * 0.04 + (Math.PI * 2 / MAX_STAGE) * i;
+      const color = COLORS.CRYSTAL_HUES[i % COLORS.CRYSTAL_HUES.length];
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      drawDiamond(ctx, p.x + Math.cos(a) * 22, p.y + Math.sin(a) * 22, 3, 5, color);
+      ctx.restore();
+    }
   }
 
   /** The ECLIPSE dark: opaque except ECLIPSE_LIGHT_RADIUS around the ship. */

@@ -43,6 +43,16 @@ const STORY = {
     ['THE WHOLE SYSTEM CAN SEE IT.', 'THAT LIGHT IS YOURS, NOVA-II.'],
     ['MISSION COMPLETE.', 'COME HOME.'],
   ],
+  // TRUE END route (DESIGN.md 13 / 14). Not in the design text table;
+  // kept to LYRA's short style.
+  trueEclipse: [
+    ["THE CRYSTALS ARE RESONATING...", "THAT'S ITS TRUE FORM. FINISH IT!"],
+  ],
+  endingTrue: [
+    ['THE LAST SHADOW IS GONE.', 'HELIOS... IT HAS NEVER BEEN THIS BRIGHT.'],
+    ['THE SIX CRYSTALS SANG WITH YOU,', 'NOVA-II. THE LIGHT IS WHOLE AGAIN.'],
+    ['WELCOME HOME, HERO.'],
+  ],
   boss: [
     ['MASSIVE SIGNAL DETECTED!'],
   ],
@@ -50,6 +60,7 @@ const STORY = {
 
 class CommWindow {
   constructor() {
+    this.onType = null; // called as characters appear (Game: typing sound)
     this.clear();
   }
 
@@ -96,7 +107,9 @@ class CommWindow {
   update() {
     if (!this.message) return;
     if (!this.fullyTyped) {
+      const before = Math.floor(this.chars);
       this.chars += COMM_CHARS_PER_FRAME;
+      if (this.onType && Math.floor(this.chars) > before) this.onType();
     } else if (++this.hold > COMM_HOLD_FRAMES) {
       this.next();
     }
