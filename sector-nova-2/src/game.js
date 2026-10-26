@@ -518,7 +518,7 @@ class Game {
   /**
    * Pre-boss WARNING (DESIGN.md 14): 3 seconds of red bands and the
    * alarm, LYRA's warning, no more small-fry spawns, hostile fire
-   * cleared. (The switch to boss BGM comes with the BGM in Phase 6.)
+   * cleared, one life back. (The switch to boss BGM comes with the BGM in Phase 6.)
    */
   startWarning() {
     const bossEvent = this.timeline.findNext('boss');
@@ -532,6 +532,8 @@ class Game {
       this.weather.stop('clouds');
     }
     if (this.flares) this.flares.stop(); // so does the sun
+    // A breather before the boss: one life back (WARNING_HEAL).
+    if (this.player.alive && this.player.heal(WARNING_HEAL)) this.effects.powerupPickup(this.player.x, this.player.y);
     this.audio.play('alarm');
     this.comm.show('boss');
   }
@@ -601,6 +603,8 @@ class Game {
   onBossDefeated(boss) {
     this.score += boss.score;
     if (!boss.midboss) this.stats.bossSeconds = boss.activeFrames / FPS;
+    // A beaten mid-boss (not one that fled) leaves a REPAIR behind.
+    if (boss.midboss) this.powerups.push(new Powerup(clamp(boss.x, 24, CANVAS_WIDTH - 24), boss.y, ITEM_REPAIR));
     // Things the boss dropped (icicles, ...) go with it.
     for (const e of this.enemies) {
       if (e.fromBoss) {

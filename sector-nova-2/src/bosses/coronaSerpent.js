@@ -12,6 +12,8 @@
 //     aimed shot. Fewer segments, fewer shots.
 //   - Every segment destroyed: CORONA_ALL_SEGMENTS_BONUS, and if the
 //     head is then defeated the NOVA CRYSTAL appears where it blew up.
+//   - Only CORONA_FAN_SEGMENTS_LEFT segments or fewer left: the same
+//     flame fan from the head (sooner the fewer remain).
 //   - Below 50% HP: crawls faster, and the jaws glow, then breathe a
 //     5-way flame fan.
 // The damage cap is shared by the head and the segments (BossBase).
@@ -199,9 +201,19 @@ class CoronaSerpent extends BossBase {
     }
   }
 
-  /** Enraged: the jaws glow, then a 5-way flame fan at the ship. */
+  /**
+   * The jaws glow, then a 5-way flame fan at the ship. Enraged, or
+   * once only CORONA_FAN_SEGMENTS_LEFT segments are left (so a snake
+   * stripped of its segments still fights back); before the rage the
+   * rest is longer the more segments remain.
+   */
+  get fanRest() {
+    if (this.isEnraged) return CORONA_FAN_REST;
+    return CORONA_FAN_REST + CORONA_FAN_REST_PER_SEGMENT * this.aliveSegments.length;
+  }
+
   updateFan(world) {
-    if (!this.isEnraged) return;
+    if (!this.isEnraged && this.aliveSegments.length > CORONA_FAN_SEGMENTS_LEFT) return;
     if (this.fanState === 'off') {
       this.fanState = 'rest';
       this.fanTimer = 60;
@@ -219,7 +231,7 @@ class CoronaSerpent extends BossBase {
       count: CORONA_FAN_COUNT, step: CORONA_FAN_STEP, speed: CORONA_FAN_SPEED, kind: 'boss',
     }));
     this.fanState = 'rest';
-    this.fanTimer = scaledFireInterval(CORONA_FAN_REST);
+    this.fanTimer = scaledFireInterval(this.fanRest);
   }
 
   mouthPoint() {

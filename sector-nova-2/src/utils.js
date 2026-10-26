@@ -545,7 +545,9 @@ const CORONA_SEG_STEP = 12;                // frames between segments lighting u
 const CORONA_SEG_REST = 50;                // after the last segment fired
 const CORONA_SEG_BULLET_SPEED = 2.3;
 const CORONA_FAN_CHARGE = 36;              // enraged: the jaws glow before the fan
-const CORONA_FAN_REST = 90; 
+const CORONA_FAN_REST = 90;                 // enraged (or no segment left)
+const CORONA_FAN_SEGMENTS_LEFT = 3;        // the fan starts before the rage once this few segments are left
+const CORONA_FAN_REST_PER_SEGMENT = 30;    // ... resting this much longer per remaining segment
 const CORONA_FAN_COUNT = 5;
 const CORONA_FAN_STEP = 0.24;
 const CORONA_FAN_SPEED = 2.4;
@@ -645,6 +647,7 @@ const TIMELINE_SIDES_MARGIN = 30;          // 'sides' pattern x inset
 const TIMELINE_DEFAULT_SPACING = 30;       // px between row / v / column members
 const TIMELINE_V_DEPTH = 18;               // px each V rank trails the leader
 const WARNING_FRAMES = 180;                // 3s WARNING before the boss
+const WARNING_HEAL = 1;                    // lives restored at the WARNING (no bonus when full)
 
 // --- Large text ---
 // Big titles never move; their drop shadow sits at this fixed offset
@@ -677,7 +680,7 @@ const DIFFICULTY_SETTINGS = {
 const POWERUP_DROP_CHANCE = 0.12; // chance on enemy kill (stages can override)
 const STAGE2_ITEM_DROP_CHANCE = 0.17; // S2 has fewer droppers (fire guideline); keeps items about S1's level
 const STAGE3_ITEM_DROP_CHANCE = 0.17; // S3 playtest: expected items about 1.3x S2 (S3 21.0 vs S2 16.3, README)
-const STAGE4_ITEM_DROP_CHANCE = 0.15; // S4 >= S3 (README)
+const STAGE4_ITEM_DROP_CHANCE = 0.18; // S4 >= S3 (was 15%; README)
 const STAGE5_ITEM_DROP_CHANCE = 0.16; // S5 >= S4 (README)
 const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;

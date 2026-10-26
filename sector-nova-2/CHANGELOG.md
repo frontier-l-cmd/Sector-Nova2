@@ -2,6 +2,19 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [5-2 検収後] CORONA SERPENT・回復・S4 のアイテム — 2026-10-26
+
+### 追加
+
+- 中ボスを倒すと REPAIR を1個落とす（逃げた時は無し。全ステージ）
+- WARNING の時にライフが1回復（`WARNING_HEAL`。全ステージ）
+- CORONA SERPENT: 体節が残り3個以下で、HP 50% より前から頭の5方向の扇弾（`CORONA_FAN_SEGMENTS_LEFT` / `CORONA_FAN_REST_PER_SEGMENT`。休みは残りが少ないほど短い）
+
+### 変更
+
+- S4 のアイテムの確率 15% → 18%（`STAGE4_ITEM_DROP_CHANCE`、期待値 18.40 → 21.88）
+- README: ダメージ上限をボスごとに下げても最強装備の時間が変わらない計測結果と、「想定撃破時間は SPREAD / RAIL の Lv2 で測る」の試行
+
 ## [Phase 5-2] Stage 5 の完成 — 2026-10-15
 
 ### 追加
