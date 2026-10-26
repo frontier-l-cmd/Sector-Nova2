@@ -372,6 +372,76 @@ const STAGE_TIMELINES = {
     { t: 108.0, event: 'warning' },
     { t: 111.0, event: 'boss', type: 'coronaSerpent' },
   ],
+
+  // ----------------------------------------------------------
+  // Stage 6 HELIOS CORE (DESIGN.md 12): every kind of enemy, mixed.
+  // Gimmick: stellar gravity pulling the ship toward the core (CAUTION
+  // at 3s, then on for the whole route; off for the mid-boss and the
+  // boss). NEBULA HEART (eroded) at 50s after LYRA's line; it does not
+  // flee. ECLIPSE CROWN at 111s. Fire is kept within DESIGN.md 17
+  // (S6 = about 2.5x S1).
+  // ----------------------------------------------------------
+  6: [
+    // Opening: the pull begins
+    { t: 2.0, spawn: 'SHARD', x: 'center', count: 3, interval: 20, pattern: 'line' },
+    { t: 3.0, event: 'gimmickStart', type: 'gravity' },
+    { t: 5.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 6.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 9.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 12.0, spawn: 'SNIPER', x: 80 },
+    { t: 12.5, spawn: 'SNIPER', x: 240 },
+    { t: 15.0, spawn: 'FLARE_SPIRIT', x: 'center', count: 3, pattern: 'row', spacing: 70 },
+    { t: 18.0, spawn: 'MIRROR', x: 100 },
+    { t: 18.0, spawn: 'MIRROR', x: 220 },
+    { t: 21.0, spawn: 'SHARD', count: 6, interval: 20, pattern: 'sides' },
+
+    // Middle: the whole bestiary
+    { t: 24.0, spawn: 'GUN_DECK', x: 80 },
+    { t: 24.0, spawn: 'GUN_DECK', x: 240 },
+    { t: 27.0, spawn: 'PHASE_GHOST', x: 110 },
+    { t: 27.0, spawn: 'PHASE_GHOST', x: 210 },
+    { t: 30.0, spawn: 'SWARM', x: 'player', count: 7, pattern: 'v', spacing: 22 },
+    { t: 33.0, spawn: 'MINE_LAYER', x: 'right', y: 120 },
+    { t: 36.0, spawn: 'LINK_GUARD', x: 'center' },
+    { t: 36.0, spawn: 'SHARD', x: 'center', count: 4, pattern: 'row', spacing: 40 },
+    { t: 40.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 42.0, spawn: 'CARRIER', x: 'center' },
+    { t: 45.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 48.0, event: 'comm', id: 'nebulaWarn' },
+
+    // Mid-boss NEBULA HEART (the timeline waits until it falls)
+    { t: 50.0, event: 'midboss', type: 'nebulaHeart' },
+    { t: 52.0, spawn: 'SHARD', x: 'center', count: 4, pattern: 'row', spacing: 34 },
+
+    // Late
+    { t: 55.0, spawn: 'FLARE_SPIRIT', x: 80, count: 3, interval: 24, pattern: 'line' },
+    { t: 55.5, spawn: 'FLARE_SPIRIT', x: 240, count: 3, interval: 24, pattern: 'line' },
+    { t: 58.0, spawn: 'SWARM', x: 'center', count: 7, pattern: 'v', spacing: 22 },
+    { t: 61.0, spawn: 'SNIPER', x: 'center' },
+    { t: 63.0, spawn: 'GUN_DECK', x: 160 },
+    { t: 66.0, spawn: 'MIRROR', x: 100 },
+    { t: 66.0, spawn: 'MIRROR', x: 220 },
+    { t: 69.0, spawn: 'PHASE_GHOST', x: 'center', count: 2, pattern: 'row', spacing: 100 },
+    { t: 72.0, spawn: 'MINE_LAYER', x: 'left', y: 140 },
+    { t: 75.0, spawn: 'WISP', x: 'left', count: 4, interval: 18, pattern: 'wave' },
+    { t: 76.0, spawn: 'WISP', x: 'right', count: 4, interval: 18, pattern: 'wave' },
+    { t: 79.0, spawn: 'SWARM', x: 'player', count: 7, pattern: 'v', spacing: 22 },
+    { t: 82.0, spawn: 'LINK_GUARD', x: 'center' },
+    { t: 82.0, spawn: 'GUN_DECK', x: 120 },                  // shielded by the guard
+    { t: 82.0, spawn: 'GUN_DECK', x: 200 },
+    { t: 87.0, spawn: 'FLARE_SPIRIT', x: 'center', count: 5, pattern: 'v', spacing: 30 },
+    { t: 90.0, spawn: 'SNIPER', x: 80 },
+    { t: 90.5, spawn: 'SNIPER', x: 240 },
+    { t: 93.0, spawn: 'SHARD', count: 8, interval: 15, pattern: 'sides' },
+    { t: 97.0, spawn: 'CARRIER', x: 'center' },
+    { t: 100.0, spawn: 'WISP', x: 'center', count: 5, interval: 16, pattern: 'wave' },
+    { t: 102.0, spawn: 'SHARD', x: 'center', count: 6, pattern: 'row', spacing: 40 },
+    { t: 104.0, spawn: 'SHARD', x: 'player', count: 3, interval: 12, pattern: 'line' },
+
+    // Final boss
+    { t: 108.0, event: 'warning' },
+    { t: 111.0, event: 'boss', type: 'eclipseCrown' },
+  ],
 };
 
 // ------------------------------------------------------------

@@ -29,7 +29,11 @@
 //   the flame comes from), then a 40 px tall flame crosses the screen
 //   in 40 frames. Touching the flame hurts. (The heat shimmer is a
 //   background effect: background.js.)
-// Later stages add theirs here (S6 gravity).
+//   S6 stellar gravity ('gimmickStart' / 'gimmickEnd' with type
+//   'gravity'): "CAUTION / STELLAR GRAVITY" first, then the ship is
+//   pulled GRAVITY_PULL px per frame toward the top center. Light
+//   motes stream toward the core to show the pull. Off during the
+//   mid-boss and the boss fight.
 // ============================================================
 
 class Asteroid extends Enemy {
@@ -819,5 +823,83 @@ class SolarFlares {
     if (!this.on || world.spawnsLocked || --this.timer > 0) return;
     this.timer = FLARE_INTERVAL;
     if (world.addFlare(this.nextY(world), this.count % 2 === 0 ? 1 : -1)) this.count++;
+  }
+}
+
+// ------------------------------------------------------------
+// S6 stellar gravity
+// ------------------------------------------------------------
+
+/** The S6 gimmick: a steady pull toward the core, shown by motes. */
+class StellarGravity {
+  constructor() {
+    this.caution = 0;
+    this.warned = false;
+    this.on = false;
+    this.motes = [];
+    for (let i = 0; i < GRAVITY_MOTES; i++) this.motes.push(this.spawnMote(true));
+  }
+
+  get cautionActive() {
+    return this.caution > 0;
+  }
+
+  start() {
+    if (!this.warned) {
+      this.warned = true;
+      this.caution = GRAVITY_CAUTION_FRAMES;
+    }
+    this.on = true;
+  }
+
+  stop() {
+    this.on = false;
+  }
+
+  /** Pulling right now (never during a boss or mid-boss fight). */
+  isPulling(world) {
+    return this.on && this.caution === 0 && !world.boss && !world.spawnsLocked;
+  }
+
+  /** A mote somewhere on the lower edges (or anywhere, at start). */
+  spawnMote(anywhere) {
+    if (anywhere) return { x: randFloat(0, CANVAS_WIDTH), y: randFloat(40, CANVAS_HEIGHT), speed: randFloat(1.2, 2.4) };
+    const side = randInt(0, 2);
+    if (side === 0) return { x: randFloat(0, CANVAS_WIDTH), y: CANVAS_HEIGHT + 4, speed: randFloat(1.2, 2.4) };
+    return { x: side === 1 ? -4 : CANVAS_WIDTH + 4, y: randFloat(120, CANVAS_HEIGHT), speed: randFloat(1.2, 2.4) };
+  }
+
+  update(world) {
+    if (this.caution > 0) this.caution--;
+    for (let i = 0; i < this.motes.length; i++) {
+      const m = this.motes[i];
+      const a = angleTo(m.x, m.y, GRAVITY_CENTER_X, GRAVITY_CENTER_Y);
+      m.x += Math.cos(a) * m.speed;
+      m.y += Math.sin(a) * m.speed;
+      if (m.y < 30) this.motes[i] = this.spawnMote(false);
+    }
+    if (!this.isPulling(world)) return;
+    const p = world.player;
+    if (!p.alive) return;
+    const a = angleTo(p.x, p.y, GRAVITY_CENTER_X, GRAVITY_CENTER_Y);
+    p.x = clamp(p.x + Math.cos(a) * GRAVITY_PULL, 12, CANVAS_WIDTH - 12);
+    p.y = clamp(p.y + Math.sin(a) * GRAVITY_PULL, 12, CANVAS_HEIGHT - 12);
+  }
+
+  /** Short streaks pointing at the core (only while the pull is on). */
+  draw(ctx, world) {
+    if (!this.isPulling(world)) return;
+    ctx.save();
+    ctx.strokeStyle = COLORS.GRAVITY_MOTE;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    for (const m of this.motes) {
+      const a = angleTo(m.x, m.y, GRAVITY_CENTER_X, GRAVITY_CENTER_Y);
+      ctx.moveTo(m.x, m.y);
+      ctx.lineTo(m.x - Math.cos(a) * 7, m.y - Math.sin(a) * 7);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 }

@@ -49,6 +49,9 @@ class HUD {
     if (game.flares && game.flares.cautionActive) {
       this.drawCaution(ctx, FLARE_CAUTION_FRAMES - game.flares.caution, 'SOLAR FLARE');
     }
+    if (game.gravity && game.gravity.cautionActive) {
+      this.drawCaution(ctx, GRAVITY_CAUTION_FRAMES - game.gravity.caution, 'STELLAR GRAVITY');
+    }
     if (game.boss && game.boss.banner) this.drawBanner(ctx, game.boss.banner, game.globalFrame);
   }
 
@@ -127,7 +130,7 @@ class HUD {
     ctx.strokeRect(barX, barY, barW, barH);
 
     // Mid-bosses flee when time runs out: show the seconds left.
-    if (boss.midboss && boss.state === 'active') {
+    if (boss.midboss && boss.escapeAfter > 0 && boss.state === 'active') {
       ctx.textAlign = 'right';
       ctx.font = '7px monospace';
       ctx.fillStyle = boss.escapeSecondsLeft <= 5 ? COLORS.UI_RED : COLORS.UI_DIM;
@@ -140,6 +143,22 @@ class HUD {
       ctx.font = '7px monospace';
       ctx.fillStyle = COLORS.UI_YELLOW;
       ctx.fillText(boss.phaseName, barX, barY + barH + 9);
+    }
+
+    // SUPERNOVA (ECLIPSE CROWN): the countdown to BAD END, big and
+    // fixed in place; red and blinking in the last 10 seconds.
+    const sec = boss.countdownSeconds;
+    if (sec !== null && sec !== undefined) {
+      const last = sec <= 10;
+      if (!last || Math.floor(boss.frame / 15) % 2 === 0) {
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 16px monospace';
+        ctx.fillStyle = COLORS.BG_DARK;
+        ctx.fillText(String(sec), CANVAS_WIDTH / 2 + TEXT_SHADOW_OFFSET, barY + barH + 24 + TEXT_SHADOW_OFFSET);
+        ctx.fillStyle = last ? COLORS.UI_RED : COLORS.UI_YELLOW;
+        ctx.fillText(String(sec), CANVAS_WIDTH / 2, barY + barH + 24);
+        ctx.textAlign = 'left';
+      }
     }
   }
 
@@ -396,7 +415,7 @@ class HUD {
 
   /**
    * "CAUTION" before a stage gimmick arrives (S2 NARROW PASSAGE, S4
-   * FLESH WALLS, S5 SOLAR FLARE): a yellow and black band across the
+   * FLESH WALLS, S5 SOLAR FLARE, S6 STELLAR GRAVITY): a yellow and black band across the
    * upper screen, blinking text that never moves. `t` = frames since
    * it began.
    */

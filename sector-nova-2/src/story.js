@@ -6,7 +6,6 @@
 // character at a time, holds it, then shows the next queued message.
 // ENTER shows the whole message at once / skips to the next one.
 // Play never stops for a message.
-// Lines for S6 are added with its stage (Phase 5-3).
 // ============================================================
 
 const STORY = {
@@ -27,6 +26,22 @@ const STORY = {
   ],
   stage5: [
     ['CORONA ZONE. HULL TEMPERATURE RISING.', "DON'T STOP MOVING."],
+  ],
+  stage6: [
+    ['HELIOS CORE.', 'END THIS, NOVA-II.'],
+  ],
+  nebulaWarn: [
+    ["THAT SIGNAL... IT'S NEBULA HEART?!"],
+  ],
+  nebulaDown: [
+    ['IT WAS ONLY A SHELL...', 'SOMETHING BIGGER IS WAITING.'],
+  ],
+  // NORMAL END (DESIGN.md 13: HELIOS shines again). Not in the design
+  // text table; kept to LYRA's short style.
+  endingNormal: [
+    ['ECLIPSE SIGNAL... GONE.', 'HELIOS IS BURNING BRIGHT AGAIN.'],
+    ['THE WHOLE SYSTEM CAN SEE IT.', 'THAT LIGHT IS YOURS, NOVA-II.'],
+    ['MISSION COMPLETE.', 'COME HOME.'],
   ],
   boss: [
     ['MASSIVE SIGNAL DETECTED!'],

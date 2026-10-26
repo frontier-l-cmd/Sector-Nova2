@@ -3,7 +3,7 @@
 // ------------------------------------------------------------
 // Title menu (UP/DOWN select, LEFT/RIGHT change, ENTER decide) and
 // the full-screen screens: opening, stage intro, pause, game over and
-// the stage result with its rank. Endings join in Phase 5.
+// the stage result with its rank, and the endings (NORMAL / BAD).
 // ============================================================
 
 // TEST RANGE (Stage 0) is listed only in DEBUG_MODE.
@@ -393,8 +393,125 @@ function drawResultScreen(ctx, game) {
     ctx.textAlign = 'center';
     ctx.font = '10px monospace';
     ctx.fillStyle = COLORS.UI_WHITE;
-    const next = game.stageManager.hasNextImplemented() ? 'PRESS ENTER - NEXT STAGE' : 'PRESS ENTER TO TITLE';
+    let next = 'PRESS ENTER TO TITLE';
+    if (game.stageManager.hasNextImplemented()) next = 'PRESS ENTER - NEXT STAGE';
+    else if (r.stageNumber === MAX_STAGE) next = 'PRESS ENTER';     // -> NORMAL END
     ctx.fillText(next, cx, 390);
+  }
+  ctx.restore();
+}
+
+// ============================================================
+// ENDINGS (DESIGN.md 13)
+//   NORMAL END: the screen warms to white-gold; LYRA's last lines,
+//     then the total score and BEST CLEAR. ENTER -> title.
+//   BAD END: SUPERNOVA whites the screen out, then BAD END over a
+//     dark red; a game over (score saved, CONTINUE from the title).
+// Text never moves; it only fades.
+// ============================================================
+function drawEndingScreen(ctx, game) {
+  const e = game.ending;
+  if (!e) return;
+  if (e.kind === 'bad') drawBadEnd(ctx, game, e.timer);
+  else drawNormalEnd(ctx, game, e.timer);
+}
+
+function drawNormalEnd(ctx, game, t) {
+  const cx = CANVAS_WIDTH / 2;
+  ctx.save();
+  ctx.fillStyle = COLORS.ENDING_WHITE;
+  ctx.globalAlpha = Math.min(t / 90, 1) * 0.35;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  ctx.globalAlpha = Math.min(t / 60, 1) * 0.7;
+  ctx.fillStyle = 'rgb(10, 8, 4)';
+  ctx.fillRect(0, 70, CANVAS_WIDTH, CANVAS_HEIGHT - 140);
+  ctx.globalAlpha = Math.min(t / 60, 1);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 20px monospace';
+  drawShadowedText(ctx, 'HELIOS RESTORED', cx, 118, COLORS.ENDING_GOLD, COLORS.TEXT_SHADOW_GOLD);
+  ctx.font = '9px monospace';
+  ctx.fillStyle = COLORS.UI_WHITE;
+  ctx.fillText('NORMAL END', cx, 136);
+  ctx.restore();
+
+  if (game.comm.active) {
+    game.comm.draw(ctx, CANVAS_HEIGHT / 2 - 40, game.globalFrame);
+    return;
+  }
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = '10px monospace';
+  ctx.fillStyle = COLORS.UI_DIM;
+  ctx.fillText('TOTAL SCORE', cx, 200);
+  ctx.font = 'bold 20px monospace';
+  drawShadowedText(ctx, String(Math.floor(game.score)).padStart(8, '0'), cx, 224, COLORS.UI_YELLOW, COLORS.BG_DARK);
+  ctx.font = '10px monospace';
+  ctx.fillStyle = COLORS.UI_WHITE;
+  ctx.fillText('BEST CLEAR: ' + String(game.bestClearScore).padStart(8, '0'), cx, 250);
+  if (game.newBestClear) {
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    ctx.fillText('NEW BEST CLEAR!', cx, 268);
+  }
+  ctx.font = '9px monospace';
+  ctx.fillStyle = COLORS.UI_DIM;
+  ctx.fillText('NOVA CRYSTAL  ' + game.crystalStages.size + ' / ' + MAX_STAGE, cx, 292);
+  if (t > ENDING_INPUT_DELAY && Math.floor(game.globalFrame / 30) % 2 === 0) {
+    ctx.font = '10px monospace';
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.fillText('PRESS ENTER TO TITLE', cx, 340);
+  }
+  ctx.restore();
+}
+
+function drawBadEnd(ctx, game, t) {
+  const cx = CANVAS_WIDTH / 2;
+  ctx.save();
+  ctx.textAlign = 'center';
+  if (t < BAD_END_FLASH_FRAMES) {
+    // The star blows: everything whites out, SUPERNOVA fades in
+    const k = t / BAD_END_FLASH_FRAMES;
+    ctx.fillStyle = COLORS.ENDING_WHITE;
+    ctx.globalAlpha = Math.min(1, k * 1.6);
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.globalAlpha = Math.min(1, Math.max(0, k * 2 - 0.4));
+    ctx.font = 'bold 26px monospace';
+    ctx.fillStyle = COLORS.SUPERNOVA_RED;
+    ctx.fillText('SUPERNOVA', cx, CANVAS_HEIGHT / 2);
+    ctx.restore();
+    return;
+  }
+  const k = Math.min(1, (t - BAD_END_FLASH_FRAMES) / 60);
+  ctx.fillStyle = COLORS.ENDING_WHITE;
+  ctx.globalAlpha = 1 - k;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  ctx.fillStyle = 'rgb(30, 4, 2)';
+  ctx.globalAlpha = k;
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  ctx.globalAlpha = 1;
+  ctx.font = 'bold 28px monospace';
+  drawShadowedText(ctx, 'BAD END', cx, CANVAS_HEIGHT / 2 - 50, COLORS.UI_RED, COLORS.BG_DARK);
+  ctx.font = '9px monospace';
+  ctx.fillStyle = COLORS.UI_WHITE;
+  ctx.fillText('HELIOS WENT SUPERNOVA.', cx, CANVAS_HEIGHT / 2 - 26);
+  ctx.font = '12px monospace';
+  ctx.fillStyle = COLORS.UI_YELLOW;
+  ctx.fillText('SCORE: ' + String(Math.floor(game.score)).padStart(8, '0'), cx, CANVAS_HEIGHT / 2 + 4);
+  ctx.font = '10px monospace';
+  ctx.fillStyle = COLORS.UI_WHITE;
+  ctx.fillText('BEST : ' + String(game.bestScore).padStart(8, '0'), cx, CANVAS_HEIGHT / 2 + 22);
+  if (game.newBestScore) {
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    ctx.fillText('NEW BEST!', cx, CANVAS_HEIGHT / 2 + 40);
+  }
+  if (t > BAD_END_FLASH_FRAMES + ENDING_INPUT_DELAY / 2 && Math.floor(game.globalFrame / 30) % 2 === 0) {
+    ctx.font = '10px monospace';
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.fillText('PRESS ENTER TO TITLE', cx, CANVAS_HEIGHT / 2 + 66);
+    ctx.fillStyle = COLORS.UI_DIM;
+    ctx.font = '8px monospace';
+    ctx.fillText('CONTINUE FROM TITLE', cx, CANVAS_HEIGHT / 2 + 82);
   }
   ctx.restore();
 }

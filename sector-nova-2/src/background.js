@@ -9,8 +9,8 @@
 // planet and drifting ice, S2 a metal floor with blinking warning
 // lights, S3 layered violet-gray clouds with distant lightning, S4
 // pulsing organic veins, S5 the glowing sun surface with rising
-// embers; the core arrives with its stage (Phase 5-3). A layer is an
-// object created by a factory with update(frame) and draw(ctx).
+// embers, S6 the white-gold core of HELIOS with pulsing rings. A layer
+// is an object created by a factory with update(frame) and draw(ctx).
 // Layers with `far = true` are drawn behind the star field.
 //
 // Heat shimmer (theme `shimmer`, S5): the whole background is drawn
@@ -539,9 +539,56 @@ class EmberLayer {
   }
 }
 
+// ------------------------------------------------------------
+// S6 HELIOS CORE layer
+// ------------------------------------------------------------
+
+/**
+ * The star's core: a white-gold glow above the top center (where the
+ * gravity pulls), with concentric rings pulsing outward from it.
+ * Brightest at the top, fading toward the ship's area.
+ */
+class HeliosCoreLayer {
+  constructor() {
+    this.far = true;
+    this.frame = 0;
+    this.glow = null;
+  }
+
+  update(frame) {
+    this.frame = frame;
+  }
+
+  draw(ctx) {
+    const cx = CANVAS_WIDTH / 2;
+    const cy = -40;
+    if (!this.glow) {
+      this.glow = ctx.createRadialGradient(cx, cy, 10, cx, cy, CANVAS_HEIGHT * 0.9);
+      this.glow.addColorStop(0, 'rgba(255, 253, 230, 0.95)');
+      this.glow.addColorStop(0.25, 'rgba(255, 220, 120, 0.6)');
+      this.glow.addColorStop(0.6, 'rgba(200, 140, 40, 0.22)');
+      this.glow.addColorStop(1, 'rgba(120, 80, 20, 0)');
+    }
+    ctx.save();
+    ctx.fillStyle = this.glow;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    // Rings born at the core, growing and fading
+    ctx.strokeStyle = COLORS.HELIOS_RING;
+    ctx.lineWidth = 2;
+    const period = 150;
+    for (let k = 0; k < 4; k++) {
+      const t = ((this.frame + k * period / 4) % period) / period;
+      ctx.globalAlpha = 0.28 * (1 - t);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 60 + t * CANVAS_HEIGHT * 0.9, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
 // Theme per screen / stage: gradient top->bottom, nebula tints, and
-// stage-specific layer factories (S1-S5 done; S6 arrives with its
-// stage). `bulletOutline` gives hostile bullets a ring: true for a
+// stage-specific layer factories (S1-S6). `bulletOutline` gives hostile bullets a ring: true for a
 // light one, 'dark' for a dark one. `shimmer` turns on the heat
 // shimmer.
 const BACKGROUND_THEMES = {
@@ -592,7 +639,8 @@ const BACKGROUND_THEMES = {
     top: COLORS.HELIOS_BG_TOP,
     bottom: COLORS.HELIOS_BG_BOTTOM,
     nebulae: ['#4a3e18', '#3a3012', '#241e0c'],
-    layers: [],
+    layers: [() => new HeliosCoreLayer()],
+    bulletOutline: 'dark', // red / orange bullets on a white-gold backdrop
   },
 };
 

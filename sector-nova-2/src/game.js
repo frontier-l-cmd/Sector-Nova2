@@ -11,7 +11,9 @@
 //
 // Flow: TITLE -> OPENING (NEW GAME only) -> STAGE_INTRO -> PLAYING
 //       (mid-boss, WARNING, boss) -> STAGE_RESULT -> next STAGE_INTRO
-//       or, after the last implemented stage, back to the TITLE.
+//       ... -> S6 STAGE_RESULT -> ENDING (NORMAL END) -> TITLE.
+//       SUPERNOVA's countdown running out -> ENDING (BAD END), which
+//       counts as a game over (score saved, CONTINUE from the title).
 //
 // The Game is also the "world" bosses act on: addEnemyBullets(),
 // addHazard(), clearHostiles(), onBossDefeated(),
@@ -46,6 +48,8 @@ class Game {
     this.scoreSaved = false;
     this.newBestScore = false;
     this.result = null;  // last stage result (STAGE_RESULT screen)
+    this.ending = null;  // { kind: 'normal' | 'bad', timer } (ENDING screen)
+    this.newBestClear = false;
     this.stats = null;   // per-stage numbers for the rank
     this.globalFrame = 0; // drives blinking UI in every state
     this.crystalStages = new Set(); // stages whose NOVA CRYSTAL was taken
@@ -88,6 +92,7 @@ class Game {
     this.weather = null;      // S3 storm: lightning + cloud bands (gimmicks.js)
     this.maze = null;         // S4 flesh wall maze (gimmicks.js)
     this.flares = null;       // S5 solar flares (gimmicks.js)
+    this.gravity = null;      // S6 stellar gravity (gimmicks.js)
     this.warningTimer = 0;
     this.warningBossName = '';
     this.spawnsLocked = false;
@@ -224,6 +229,9 @@ class Game {
       case STATE.GAME_OVER:
         this.updateGameOver();
         break;
+      case STATE.ENDING:
+        this.updateEnding();
+        break;
     }
   }
 
@@ -257,9 +265,49 @@ class Game {
     if (this.stageManager.advance()) {
       this.beginStage();
       this.beginIntro();
+    } else if (this.stage.stageNumber === MAX_STAGE) {
+      this.beginEnding('normal'); // ECLIPSE CROWN is down
     } else {
-      // Last implemented stage (S1 in Phase 4-1): keep the score, go home.
+      // Last implemented stage: keep the score, go home.
       this.recordGameOverScore();
+      this.returnToTitle();
+    }
+  }
+
+  /**
+   * ENDING (DESIGN.md 13). 'normal': LYRA's last lines, the total
+   * score and BEST CLEAR are saved, ENTER -> title. 'bad': SUPERNOVA
+   * whites the screen out, BAD END; a game over (score saved, CONTINUE
+   * from the title).
+   */
+  beginEnding(kind) {
+    this.ending = { kind, timer: 0 };
+    this.state = STATE.ENDING;
+    this.enemyBullets = [];
+    this.hazards = [];
+    this.comm.clear();
+    if (kind === 'bad') {
+      this.boss = null;
+      this.recordGameOverScore();
+      this.audio.play('explode');
+    } else {
+      this.newBestScore = saveBestScore(this.score);
+      this.newBestClear = saveBestClearScore(this.score);
+      this.scoreSaved = true;
+      this.comm.show('endingNormal');
+    }
+  }
+
+  updateEnding() {
+    this.background.update();
+    this.effects.update();
+    this.comm.update();
+    this.ending.timer++;
+    if (!this.input.enter) return;
+    const delay = this.ending.kind === 'bad' ? BAD_END_FLASH_FRAMES + ENDING_INPUT_DELAY / 2 : ENDING_INPUT_DELAY;
+    if (this.comm.active) {
+      this.comm.skip();
+    } else if (this.ending.timer > delay) {
       this.returnToTitle();
     }
   }
@@ -297,6 +345,7 @@ class Game {
       if (!this.maze.alive) this.maze = null;
     }
     if (this.flares) this.flares.update(this);
+    if (this.gravity) this.gravity.update(this);
 
     // --- Player ---
     this.player.update(this.input);
@@ -333,6 +382,7 @@ class Game {
     // --- Boss / mid-boss ---
     if (this.boss) {
       this.boss.update(this);
+      if (this.state !== STATE.PLAYING) return; // SUPERNOVA ran out: BAD END
       if (this.boss.isFinished) {
         const finished = this.boss;
         this.boss = null;
@@ -485,6 +535,13 @@ class Game {
       }
       case 'gimmickStart':
       case 'gimmickEnd':
+        if (ev.entry.type === 'gravity') {
+          // S6 stellar gravity switches on / off.
+          if (!this.gravity) this.gravity = new StellarGravity();
+          if (ev.kind === 'gimmickStart') this.gravity.start();
+          else this.gravity.stop();
+          return;
+        }
         if (ev.entry.type === 'flares') {
           // S5 solar flares switch on / off.
           if (!this.flares) this.flares = new SolarFlares();
@@ -592,6 +649,11 @@ class Game {
   /** Enemies created by bosses (icicles, eggs, ...). */
   addEnemy(enemy) {
     this.enemies.push(enemy);
+  }
+
+  /** SUPERNOVA's countdown ran out (ECLIPSE CROWN): BAD END. */
+  onSupernova() {
+    this.beginEnding('bad');
   }
 
   /** Remove every hostile bullet and hazard (form change, boss defeat). */
@@ -834,6 +896,7 @@ class Game {
     if (!player.alive || !player.burstReady) return false;
     player.gauge = 0;
     player.invincibleTimer = Math.max(player.invincibleTimer, BURST_INVINCIBLE_FRAMES);
+    if (this.boss) this.boss.burstUsed = true; // S6 NOVA CRYSTAL: NEBULA HEART without BURST
 
     this.score += this.enemyBullets.length * BURST_BULLET_SCORE;
     for (const b of this.enemyBullets) this.effects.hitSpark(b.x, b.y);
@@ -928,6 +991,7 @@ class Game {
     this.weather = null;
     this.maze = null;
     this.flares = null;
+    this.gravity = null;
     this.enemies = [];
     this.enemyBullets = [];
     this.hazards = [];
@@ -1017,10 +1081,26 @@ class Game {
         this.drawGameplay(ctx);
         drawResultScreen(ctx, this);
         break;
+      case STATE.ENDING:
+        // BAD END whites out over the frozen last frame; NORMAL END
+        // shows only the backdrop.
+        if (this.ending.kind === 'bad') this.drawGameplay(ctx);
+        drawEndingScreen(ctx, this);
+        break;
     }
   }
 
   drawGameplay(ctx) {
+    const boss = this.boss;
+    // SUPERNOVA: the backdrop pulses red.
+    if (boss && boss.supernova) {
+      ctx.save();
+      ctx.globalAlpha = 0.14 + Math.sin(this.globalFrame * 0.12) * 0.08;
+      ctx.fillStyle = COLORS.SUPERNOVA_RED;
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.restore();
+    }
+    if (this.gravity) this.gravity.draw(ctx, this); // motes streaming to the core
     if (this.passage) this.passage.draw(ctx); // walls sit on the floor, under everything
     // Items stay visible above the S3 clouds; elsewhere under the enemies.
     if (!this.weather) for (const p of this.powerups) p.draw(ctx);
@@ -1031,6 +1111,17 @@ class Game {
       this.weather.draw(ctx); // enemies may hide under clouds; bullets never do
       for (const p of this.powerups) p.draw(ctx);
     }
+
+    // ECLIPSE: everything so far sinks into the dark except around the
+    // ship; the core's rim light, items, hazards, the ship and all
+    // bullets are drawn above it (bullets with a light ring).
+    const dark = !!(boss && boss.darkness);
+    if (dark) {
+      this.drawDarkness(ctx);
+      boss.drawGlow(ctx);
+      for (const p of this.powerups) p.draw(ctx);
+    }
+    setHostileBulletOutline(dark ? 'light' : this.background.theme.bulletOutline);
 
     // Hazard guides / strikes sit under ships and bullets.
     for (const h of this.hazards) h.draw(ctx);
@@ -1047,5 +1138,17 @@ class Game {
 
     this.effects.draw(ctx);
     this.hud.draw(ctx, this);
+  }
+
+  /** The ECLIPSE dark: opaque except ECLIPSE_LIGHT_RADIUS around the ship. */
+  drawDarkness(ctx) {
+    const p = this.player;
+    const g = ctx.createRadialGradient(p.x, p.y, ECLIPSE_LIGHT_RADIUS * 0.7, p.x, p.y, ECLIPSE_LIGHT_RADIUS);
+    g.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    g.addColorStop(1, 'rgba(0, 0, 0, ' + ECLIPSE_DARKNESS + ')');
+    ctx.save();
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.restore();
   }
 }

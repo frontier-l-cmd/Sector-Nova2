@@ -2,6 +2,28 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [Phase 5-3] Stage 6・最終ボス・エンディング — 2026-10-26
+
+### 追加
+
+- S6「HELIOS CORE」のタイムライン（全種の敵の混成、引力、NEBULA HEART、WARNING、ECLIPSE CROWN）
+- S6 の背景レイヤー: 白〜金に輝く恒星核と広がる同心円（`HeliosCoreLayer`）。敵弾は暗い縁取り
+- ギミック「恒星の引力」（`gimmicks.js` の `StellarGravity`）: 初回 CAUTION、画面上部中央へ毎フレーム 0.3px、核へ流れる光の粒。中ボス戦・WARNING 以降・ボス戦は止まる
+- 中ボス NEBULA HEART（侵食体、`bosses/nebulaHeart.js`）: 1作目の描画に黒い亀裂と紫のオーラ。予告つきの3方向弾と12方向リング弾、HP 50% 以下で侵食部からの自機狙い弾。逃げない。HP 270、上限 8
+- 最終ボス ECLIPSE CROWN（`bosses/eclipseCrown.js`）: CROWN（再生する破片6枚、リング弾、破片からの自機狙い弾）→ ECLIPSE（暗転、2重螺旋、予告つき直線レーザー）→ SUPERNOVA（赤い脈動、60秒のカウントダウン、扇形の予告つき回転レーザー、扇弾・リング弾）。HP 350 / 350 / 220、上限 8
+- ECLIPSE の暗闇（`Game.drawDarkness`）: 自機の周り 90px 以外を暗く。敵弾（明るい縁取り）・レーザー・アイテム・コアの縁の光・自機は暗闇の上
+- HUD: SUPERNOVA のカウントダウン、S6 の CAUTION「STELLAR GRAVITY」。逃げない中ボスには ESCAPE を出さない
+- NORMAL END / BAD END（`STATE.ENDING`、`menu.js` の `drawEndingScreen`）。NORMAL END は BEST CLEAR / BEST SCORE を保存。BAD END はゲームオーバー扱い
+- S6 の NOVA CRYSTAL: NEBULA HEART を NOVA BURST を使わずに倒す（`burstUsed`）
+- LYRA の通信: S6 開始、NEBULA HEART の前と撃破時、エンディング
+- S6 のアイテムの確率 17%（`STAGE6_ITEM_DROP_CHANCE`、期待値 23.76）
+- README に S6 の撃破時間・敵弾の量・弾の見やすさ・アイテムの期待値と確認手順
+
+### 変更
+
+- S5 クリア後は S6 へ。S6 のリザルトの後は NORMAL END
+- 最後のステージのリザルトは「PRESS ENTER」
+
 ## [5-2 検収後] CORONA SERPENT・回復・S4 のアイテム — 2026-10-26
 
 ### 追加

@@ -4,8 +4,8 @@
 // Each stage describes its name, background theme, item drops and
 // boss. Enemy appearances come from STAGE_TIMELINES (timeline.js).
 //
-// Stages 1-5 are complete (Phase 4-1 to 5-2). Stage 6 is declared
-// with its final name and becomes playable in Phase 5-3.
+// Stages 1-6 are complete (Phase 4-1 to 5-3). After Stage 6 comes
+// the ending (game.js beginEnding).
 // ============================================================
 
 // Item weights (DESIGN.md 10). STAR CHIP drops often; NOVA CRYSTAL
@@ -91,7 +91,16 @@ const STAGES = {
     story: 'stage5',
     implemented: true,
   },
-  6: { stageNumber: 6, stageName: 'HELIOS CORE', bossType: 'eclipseCrown', implemented: false },
+  6: {
+    stageNumber: 6,
+    stageName: 'HELIOS CORE',
+    itemDropRate: STAGE6_ITEM_DROP_CHANCE,
+    powerupWeights: DEFAULT_POWERUP_WEIGHTS,
+    bossType: 'eclipseCrown',
+    bossExpectedTime: [120, 150],
+    story: 'stage6',
+    implemented: true,
+  },
 };
 
 const MAX_STAGE = 6;

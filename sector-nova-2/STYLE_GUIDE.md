@@ -158,6 +158,18 @@ turrets.
 | CORONA SENTINEL | `SENTINEL_CORONA #ffb066`, `SENTINEL_CORONA_DARK`, `SENTINEL_CORONA_CORE` | the shared hexagon in light orange with a pale core |
 | CORONA SERPENT | `SERPENT_HEAD / DARK / SCALE / FLAME / EYE / LIT` | a horned head with jaws and a flame mane, round segments with a dark rim and a flame crest; a lit segment shows a bright core and a closing white ring; the jaws open and glow before the fan |
 
+### Stage 6 objects and bosses (SECTOR NOVA 2, Phase 5-3)
+
+| Object | Tokens | Notes |
+|---|---|---|
+| S6 background | `HELIOS_BG_TOP/BOTTOM`, `HELIOS_RING #ffd770` | a white-gold glow from above the top center (the core the gravity pulls toward), rings born at the core that grow and fade. Brightest at the top; hostile bullets use the dark two-tone ring |
+| Gravity motes | `GRAVITY_MOTE #fff4c8` | short 1 px streaks streaming to the core — lines, never dots, so they never look like bullets. Shown only while the pull is on |
+| NEBULA HEART (eroded) | `NEBULA_CORE / ARMOR / ARMOR_DARK / GLOW` (SECTOR NOVA 1's palette), `NEBULA_CRACK`, `NEBULA_AURA #9a3cff`, `NEBULA_EROSION` | SECTOR NOVA 1's last boss redrawn: black cracks and a purple aura; three glowing erosion points that flare white before they fire |
+| ECLIPSE CROWN | `CROWN_CORE #06040a`, `CROWN_RIM #fffaf0`, `CROWN_GOLD / GOLD_DARK`, `CROWN_LASER`, `SUPERNOVA_RED #ff3020` | a black sphere with a white eclipse rim; six gold crown shards (lit white before they fire, a faint outline while regrowing); red cracks and a red rim in SUPERNOVA |
+| ECLIPSE darkness | — | black at 0.94 outside a 90 px soft-edged circle around the ship. Above it: the core's rim, items, hazards, the ship and every hostile bullet (switched to the light ring) |
+| SUPERNOVA | `SUPERNOVA_RED` | the backdrop pulses red; the countdown sits under the HP bar, big, fixed, red and blinking for the last 10 seconds. The rotating laser's warning shows the aim line and the wedge it will sweep |
+| Endings | `ENDING_GOLD #ffe9a8`, `ENDING_WHITE #fffdf4` | NORMAL END warms to white-gold; BAD END whites out ("SUPERNOVA") then settles on dark red. Text never moves, it only fades |
+
 ### Bullet and hazard colors (SECTOR NOVA 2)
 
 | Kind | Tokens | Notes |
@@ -244,7 +256,8 @@ Drawn with simple polygons + circles, centered via `ctx.translate(x, y)`.
   in on it (30 frames). GLACIER MAW's jaw starts moving 20 frames before the mouth is open.
 - **Bullet outline**: on a backdrop in the bullets' own hue (S4's red-violet), every hostile
   bullet gets a light ring (`setHostileBulletOutline`). On S5's bright red-orange it is a dark
-  ring with a thin light ring inside (`'dark'`). S6 decides its own (DESIGN.md 15-9).
+  ring with a thin light ring inside (`'dark'`); S6 uses the same. In ECLIPSE's darkness the
+  bullets switch to the light ring and are drawn above the dark.
 - **Heat shimmer** (S5) moves the background only. Ship, enemies, bullets, hazards and the HUD
   are drawn after it, unshifted, so what you see is where the hit is.
 - **Terrain vs. enemies** (S4 flesh walls): terrain is large, slab-shaped, with a pale rim;

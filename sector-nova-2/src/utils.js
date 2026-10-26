@@ -157,6 +157,15 @@ const COLORS = {
   SERPENT_HEAD: '#ff8a2a', SERPENT_DARK: '#4a1206', SERPENT_SCALE: '#d84a12', SERPENT_FLAME: '#ffd25a',
   SERPENT_EYE: '#fff6c8', SERPENT_LIT: '#fff2a0',
 
+  // --- Stage 6 (Phase 5-3) ---
+  HELIOS_GLOW: '#fff1b8', HELIOS_RING: '#ffd770', HELIOS_FLARE_DOT: '#ffe9a0',
+  GRAVITY_MOTE: '#fff4c8',          // light motes streaming toward the core
+  NEBULA_CORE: '#cc66ff', NEBULA_ARMOR: '#7755aa', NEBULA_ARMOR_DARK: '#3d2866', NEBULA_GLOW: '#ffdd88',
+  NEBULA_CRACK: '#0a0410', NEBULA_AURA: '#9a3cff', NEBULA_EROSION: '#e070ff',
+  CROWN_CORE: '#06040a', CROWN_RIM: '#fffaf0', CROWN_GOLD: '#ffc93c', CROWN_GOLD_DARK: '#8a5a10',
+  CROWN_LASER: '#fff2c0', SUPERNOVA_RED: '#ff3020',
+  ENDING_GOLD: '#ffe9a8', ENDING_WHITE: '#fffdf4',
+
   // --- SECTOR NOVA 2: stage palettes ---
   // The journey runs cold blue -> gray -> purple -> red -> orange ->
   // white/gold as NOVA-II approaches HELIOS. BG_* tint the dark space
@@ -548,6 +557,68 @@ const CORONA_FAN_CHARGE = 36;              // enraged: the jaws glow before the 
 const CORONA_FAN_REST = 90;                 // enraged (or no segment left)
 const CORONA_FAN_SEGMENTS_LEFT = 3;        // the fan starts before the rage once this few segments are left
 const CORONA_FAN_REST_PER_SEGMENT = 30;    // ... resting this much longer per remaining segment
+
+// NEBULA HEART (eroded): S6 mid-boss (DESIGN.md 14). Does not flee.
+const NEBULA_HEART_HP = 270;               // design 200; raised so the max loadout needs >= 15s (README)
+const NEBULA_HEART_DAMAGE_CAP = 8;         // decided (DESIGN.md 14)
+const NEBULA_HEART_SCORE = 10000;
+const NEBULA_HEART_RADIUS = 26;
+const NEBULA_HEART_TARGET_Y = 96;
+const NEBULA_HEART_CHARGE = 30;            // the core glows before every shot (telegraph)
+const NEBULA_HEART_REST = 60;              // after each shot (SECTOR NOVA 1: 90 frames shot to shot)
+const NEBULA_HEART_REST_ENRAGED = 30;
+const NEBULA_HEART_SPREAD = 0.3;           // 3-way, as in SECTOR NOVA 1
+const NEBULA_HEART_SPREAD_ENRAGED = 0.4;
+const NEBULA_HEART_SPEED = 2.7;            // 3 x 0.9 (SECTOR NOVA 1 NEBULA HEART)
+const NEBULA_HEART_RING_COUNT = 12;
+const NEBULA_HEART_RING_SPEED = 1.8;
+const NEBULA_EROSION_INTERVAL = 100;       // enraged: an aimed shot from an erosion crack
+const NEBULA_EROSION_CHARGE = 30;          // the crack flares before it fires
+const NEBULA_EROSION_SPEED = 2.4;
+
+// ECLIPSE CROWN: S6 final boss (DESIGN.md 14), three forms
+const ECLIPSE_CROWN_HP = [350, 350, 220];  // CROWN / ECLIPSE / SUPERNOVA (design 220 x 3; raised so the max loadout needs >= 60s, README)
+const ECLIPSE_CROWN_DAMAGE_CAP = 8;        // decided (DESIGN.md 14)
+const ECLIPSE_CROWN_SCORE = 50000;
+const ECLIPSE_CROWN_RADIUS = 24;
+const ECLIPSE_CROWN_TARGET_Y = 110;
+const ECLIPSE_CROWN_SWAY = 60;
+const ECLIPSE_CROWN_SWAY_SPEED = 0.006;
+const CROWN_SHARDS = 6;
+const CROWN_SHARD_HP = 15;                 // DESIGN.md 14
+const CROWN_SHARD_SCORE = 500;
+const CROWN_SHARD_RADIUS = 10;
+const CROWN_SHARD_ORBIT = 46;
+const CROWN_SHARD_SPIN = 0.012;            // radians per frame
+const CROWN_SHARD_REGEN = 8 * 60;          // DESIGN.md 14: back after 8 seconds
+const CROWN_CHARGE = 30;                   // telegraph before every attack
+const CROWN_RING_COUNT = 16;
+const CROWN_RING_SPEED = 1.7;
+const CROWN_RING_REST = 130;
+const CROWN_SHARD_SHOT_SPEED = 2.4;
+const CROWN_SHARD_SHOT_INTERVAL = 70;      // a shard glows, then fires an aimed shot
+const ECLIPSE_LIGHT_RADIUS = 90;           // DESIGN.md 14: only this much around the ship is lit
+const ECLIPSE_DARKNESS = 0.94;             // opacity of the dark
+const ECLIPSE_SPIRAL_EVERY = 14;
+const ECLIPSE_SPIRAL_FRAMES = 160;
+const ECLIPSE_SPIRAL_REST = 90;
+const ECLIPSE_SPIRAL_TURN = 0.13;
+const ECLIPSE_SPIRAL_SPEED = 1.5;
+const ECLIPSE_LASER_WARN = 60;             // telegraphed straight laser
+const ECLIPSE_LASER_ACTIVE = 30;
+const ECLIPSE_LASER_WIDTH = 14;
+const SUPERNOVA_FRAMES = 60 * 60;          // DESIGN.md 14: 60-second countdown, then BAD END
+const SUPERNOVA_LASER_WARN = 60;
+const SUPERNOVA_LASER_ACTIVE = 150;        // rotating laser
+const SUPERNOVA_LASER_SPIN = 0.011;        // radians per frame while active
+const SUPERNOVA_LASER_WIDTH = 12;
+const SUPERNOVA_LASER_REST = 110;
+const SUPERNOVA_FAN_COUNT = 5;
+const SUPERNOVA_FAN_STEP = 0.24;
+const SUPERNOVA_FAN_SPEED = 2.4;
+const SUPERNOVA_RING_COUNT = 14;
+const SUPERNOVA_RING_SPEED = 1.7;
+const SUPERNOVA_SHOT_REST = 85;
 const CORONA_FAN_COUNT = 5;
 const CORONA_FAN_STEP = 0.24;
 const CORONA_FAN_SPEED = 2.4;
@@ -614,6 +685,13 @@ const SHIMMER_AMPLITUDE = 2.5;             // px of sideways shift
 const SHIMMER_SPEED = 0.06;                // radians per frame
 const SHIMMER_WAVE = 0.045;                // radians per px down the screen
 
+// S6 stellar gravity: the ship is pulled toward the top center
+const GRAVITY_PULL = 0.3;                  // DESIGN.md 12: px per frame
+const GRAVITY_CENTER_X = CANVAS_WIDTH / 2;
+const GRAVITY_CENTER_Y = 0;
+const GRAVITY_CAUTION_FRAMES = 150;        // CAUTION before the pull starts
+const GRAVITY_MOTES = 34;                  // light motes showing the pull
+
 // --- NOVA CRYSTAL conditions ---
 const GOLD_SHARD_WINDOW = 5 * 60;          // S1: destroy within 5s of appearing
 
@@ -663,6 +741,7 @@ const STATE = {
   PLAYING: 'playing',
   PAUSED: 'paused',
   GAME_OVER: 'gameover',
+  ENDING: 'ending',           // NORMAL END / BAD END (Phase 5-3)
 };
 
 // --- Difficulty (DESIGN.md 13) ---
@@ -682,6 +761,7 @@ const STAGE2_ITEM_DROP_CHANCE = 0.17; // S2 has fewer droppers (fire guideline);
 const STAGE3_ITEM_DROP_CHANCE = 0.17; // S3 playtest: expected items about 1.3x S2 (S3 21.0 vs S2 16.3, README)
 const STAGE4_ITEM_DROP_CHANCE = 0.18; // S4 >= S3 (was 15%; README)
 const STAGE5_ITEM_DROP_CHANCE = 0.16; // S5 >= S4 (README)
+const STAGE6_ITEM_DROP_CHANCE = 0.17; // S6 >= S5 (README)
 const POWERUP_SPEED = 1.2;
 const POWERUP_RADIUS = 8;
 
@@ -935,3 +1015,7 @@ function loadSavedBool(key) {
 function saveBool(key, value) {
   return storageSet(key, value ? '1' : '0');
 }
+
+// --- Endings (Phase 5-3) ---
+const ENDING_INPUT_DELAY = 120;            // frames before ENTER is accepted
+const BAD_END_FLASH_FRAMES = 150;          // the screen whites out (SUPERNOVA)
