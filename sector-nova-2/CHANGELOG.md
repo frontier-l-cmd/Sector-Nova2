@@ -2,6 +2,12 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [テストプレイ後] BURST がボスの部位にも当たる — 2026-11-06
+
+### 変更
+
+- NOVA BURST が画面内のボスの部位（CORONA SERPENT の体節、ECLIPSE CROWN の破片、DOCK TITAN の腕）にも 30 ダメージ（コアへの上限 8% は同じ）
+
 ## [テストプレイ後] CORONA SERPENT の HP — 2026-10-26
 
 ### 変更

@@ -1050,8 +1050,8 @@ class Game {
 
   /**
    * NOVA BURST (X, gauge full): clears hostile bullets (10 pts each),
-   * 30 damage to small enemies on screen, capped damage to the boss,
-   * 120 frames of invincibility.
+   * 30 damage to small enemies and boss parts on screen, capped damage
+   * to the boss core, 120 frames of invincibility.
    */
   useBurst() {
     const player = this.player;
@@ -1067,9 +1067,16 @@ class Game {
     for (const e of this.enemies) {
       if (e.alive && e.isHittable && isOnScreen(e.x, e.y)) this.damageEnemy(e, BURST_ENEMY_DAMAGE, 'burst');
     }
-    if (this.boss && this.boss.isTargetable && this.boss.isVulnerable()) {
-      const dmg = Math.min(BURST_ENEMY_DAMAGE, this.boss.maxHp * BURST_BOSS_DAMAGE_RATIO);
-      this.boss.applyHit(this.boss, dmg, 'burst', this);
+    if (this.boss && this.boss.isTargetable) {
+      // Boss parts on screen (segments, shards, arms) take the small-enemy damage.
+      for (const part of this.boss.parts.slice()) {
+        if (part.alive && isOnScreen(part.x(this.boss), part.y(this.boss))) this.boss.applyHit(part, BURST_ENEMY_DAMAGE, 'burst', this);
+      }
+      // The core: at most BURST_BOSS_DAMAGE_RATIO of its max HP.
+      if (this.boss.isVulnerable()) {
+        const dmg = Math.min(BURST_ENEMY_DAMAGE, this.boss.maxHp * BURST_BOSS_DAMAGE_RATIO);
+        this.boss.applyHit(this.boss, dmg, 'burst', this);
+      }
     }
 
     this.effects.burst(player.x, player.y);
