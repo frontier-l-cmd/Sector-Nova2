@@ -850,6 +850,9 @@ S6 の背景は画面の上ほど白〜金に明るくなります。S5 と同�
 | FLARE SPIRIT の撃ち返し | なし | 6発 | 9発 | `patterns.js`（Phase 3） |
 | NOVA ゲージのたまり方 | ×1.5 | ×1.0 | ×1.0 | `player.js` `addGauge` |
 | スコア倍率 | ×0.5 | ×1.0 | ×1.5 | `game.js` `addScore`（すべての得点。ランクボーナスは `calcStageRank`） |
+| 雑魚のアイテムの出やすさ | **×1.5** | ×1.0 | ×1.0 | `game.js` `itemDropChance`（例: S1 12% → 18%、PHASE GHOST 50% → 75%。ボス戦のアイテムは同じ） |
+
+- **初めて遊ぶ時の難易度は EASY** です（DIFFICULTY を選んでセーブされていればその難易度）
 
 - TRUE END・BOSS RUSH はどの難易度でも到達できます。ボスの HP・アイテムは難易度で変えていません
 

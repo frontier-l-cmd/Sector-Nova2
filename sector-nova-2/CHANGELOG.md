@@ -2,6 +2,13 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [EASY の調整] — 2026-11-06
+
+### 変更
+
+- EASY では雑魚がアイテムを落とす確率が 1.5倍（`DIFFICULTY_SETTINGS.itemRate`、`Game.itemDropChance`）。NORMAL / HARD・ボス戦のアイテムは同じ
+- 難易度の初期値を NORMAL → EASY（`DEFAULT_DIFFICULTY`。セーブ済みの選択はそのまま）
+
 ## [要判断の対応] 武器の下限・最強装備 — 2026-11-06
 
 ### 変更

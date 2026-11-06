@@ -144,6 +144,12 @@ class Game {
     this.beginIntro();
   }
 
+  /** Chance that a destroyed enemy drops an item: its own or the stage's, x the difficulty's itemRate (EASY 1.5). */
+  itemDropChance(enemy) {
+    const base = enemy.itemDropChance ?? (this.stage.itemDropRate || POWERUP_DROP_CHANCE);
+    return Math.min(1, base * DIFFICULTY_SETTINGS[this.difficulty].itemRate);
+  }
+
   /** Add points, scaled by the difficulty's score rate (DESIGN.md 13). */
   addScore(points) {
     this.score += Math.round(points * DIFFICULTY_SETTINGS[this.difficulty].scoreRate);
@@ -1293,7 +1299,7 @@ class Game {
       if (Math.random() < enemy.dropOverride.chance) {
         this.powerups.push(new Powerup(enemy.x, enemy.y, enemy.dropOverride.type));
       }
-    } else if (!enemy.noDrop && Math.random() < (enemy.itemDropChance ?? (this.stage.itemDropRate || POWERUP_DROP_CHANCE))) {
+    } else if (!enemy.noDrop && Math.random() < this.itemDropChance(enemy)) {
       this.powerups.push(new Powerup(enemy.x, enemy.y, null, this.stage.powerupWeights));
     }
   }

@@ -771,14 +771,15 @@ const STATE = {
 };
 
 // --- Difficulty (DESIGN.md 13) ---
-// Selected on the title screen and saved. Applied in later phases:
-// bullet speed / fire rate in patterns.js (Phase 3), the rest in Phase 6.
+// Selected on the title screen and saved (EASY until the player picks
+// one). bullet speed / fire rate / revenge in patterns.js, lives and
+// score in game.js, gauge in player.js, item drops in Game.destroyEnemy.
 const DIFFICULTY_LEVELS = ['EASY', 'NORMAL', 'HARD'];
-const DEFAULT_DIFFICULTY = 'NORMAL';
+const DEFAULT_DIFFICULTY = 'EASY';
 const DIFFICULTY_SETTINGS = {
-  EASY:   { lives: 4, bulletSpeed: 0.8,  fireRate: 0.75, revenge: 0,   gaugeRate: 1.5, scoreRate: 0.5 },
-  NORMAL: { lives: 3, bulletSpeed: 1.0,  fireRate: 1.0,  revenge: 1,   gaugeRate: 1.0, scoreRate: 1.0 },
-  HARD:   { lives: 3, bulletSpeed: 1.15, fireRate: 1.3,  revenge: 1.5, gaugeRate: 1.0, scoreRate: 1.5 },
+  EASY:   { lives: 4, bulletSpeed: 0.8,  fireRate: 0.75, revenge: 0,   gaugeRate: 1.5, scoreRate: 0.5, itemRate: 1.5 },
+  NORMAL: { lives: 3, bulletSpeed: 1.0,  fireRate: 1.0,  revenge: 1,   gaugeRate: 1.0, scoreRate: 1.0, itemRate: 1.0 },
+  HARD:   { lives: 3, bulletSpeed: 1.15, fireRate: 1.3,  revenge: 1.5, gaugeRate: 1.0, scoreRate: 1.5, itemRate: 1.0 },
 };
 
 // --- Powerup ---
