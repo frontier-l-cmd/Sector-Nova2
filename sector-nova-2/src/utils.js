@@ -14,7 +14,10 @@ const DEBUG_MODE = true;
 // --- Canvas ---
 const CANVAS_WIDTH = 320;
 const CANVAS_HEIGHT = 480;
-const FPS = 60; // the game is frame-based and assumes 60 fps
+const FPS = 60; // the game is frame-based: it always steps 60 times a second (main.js)
+const SIM_STEP_MS = 1000 / FPS;        // one game step
+const SIM_MAX_STEPS = 5;               // most steps run for one screen frame (no spiral after a stall)
+const SIM_MAX_GAP_MS = 250;            // a longer gap (tab hidden, stall) is not caught up
 
 // --- Colors ---
 const COLORS = {

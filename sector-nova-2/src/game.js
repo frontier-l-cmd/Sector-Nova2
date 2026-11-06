@@ -81,6 +81,11 @@ class Game {
     return loadBestClearScore();
   }
 
+  /** The window lost focus or the page was hidden: pause if playing (main.js). */
+  autoPause() {
+    if (this.state === STATE.PLAYING) this.state = STATE.PAUSED;
+  }
+
   /** Add points, scaled by the difficulty's score rate (DESIGN.md 13). */
   addScore(points) {
     this.score += Math.round(points * DIFFICULTY_SETTINGS[this.difficulty].scoreRate);
@@ -160,6 +165,7 @@ class Game {
     this.audio.playMusic('title');
     this.bossRush = null;
     this.trueBattle = false;
+    this.debugInvincible = false; // test states (debug key 0, TEST RANGE) end at the title
     this.player = new Player();
     this.clearStageObjects();
     this.score = 0;
@@ -360,6 +366,7 @@ class Game {
   startBossRush() {
     if (!isBossRushUnlocked()) return false;
     this.stageManager.setStage(1);
+    this.debugInvincible = false;
     this.player = new Player();
     this.score = 0;
     this.crystalStages = new Set();
