@@ -258,9 +258,12 @@ const WEAPONS = {
     lv1Interval: SPREAD_LV1_FIRE_INTERVAL,
     fire(x, y, level, power) {
       const count = level + 2; // 3 / 4 / 5 ways
+      // Lv3: the outer pair keeps the full width, the inner three close in
+      // so that a far boss still takes three of them (DESIGN.md 6).
+      const offsets = level >= 3 ? SPREAD_LV3_OFFSETS : null;
       const bullets = [];
       for (let i = 0; i < count; i++) {
-        const a = -Math.PI / 2 + (i - (count - 1) / 2) * SPREAD_STEP;
+        const a = -Math.PI / 2 + (offsets ? offsets[i] : (i - (count - 1) / 2) * SPREAD_STEP);
         bullets.push(new PlayerBullet(
           x, y - 10,
           Math.cos(a) * SPREAD_BULLET_SPEED, Math.sin(a) * SPREAD_BULLET_SPEED,

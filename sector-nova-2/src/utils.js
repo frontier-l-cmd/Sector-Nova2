@@ -447,7 +447,7 @@ const ICICLE_SPEED = 4.5;
 const ICICLE_STAR_CHIP_CHANCE = 0.3;
 
 // DOCK TITAN: S2 boss (DESIGN.md 14). Core + two arm turrets.
-const DOCK_TITAN_HP = 200;                 // core (see README for the kill-time measurement)
+const DOCK_TITAN_HP = 210;                 // core (README); 200 -> 210 so the max loadout keeps >= 22.5 s after the SPREAD Lv3 change
 const DOCK_TITAN_ARM_HP = 60;
 const DOCK_TITAN_ARM_BONUS = 10000;        // part-break bonus per arm
 const DOCK_TITAN_DAMAGE_CAP = 8;           // decided (DESIGN.md 14)
@@ -580,7 +580,7 @@ const NEBULA_EROSION_CHARGE = 30;          // the crack flares before it fires
 const NEBULA_EROSION_SPEED = 2.4;
 
 // ECLIPSE CROWN: S6 final boss (DESIGN.md 14), three forms
-const ECLIPSE_CROWN_HP = [350, 350, 200];  // CROWN / ECLIPSE / SUPERNOVA (design 220 x 3; README). Form 3: every Lv1 with 25% rest within 50 s
+const ECLIPSE_CROWN_HP = [360, 350, 200];  // CROWN / ECLIPSE / SUPERNOVA (design 220 x 3; README). Form 3: every Lv1 with 25% rest within 50 s
 const ECLIPSE_CROWN_DAMAGE_CAP = 8;        // decided (DESIGN.md 14)
 const ECLIPSE_CROWN_SCORE = 50000;
 const ECLIPSE_CROWN_RADIUS = 24;
@@ -811,6 +811,7 @@ const SPREAD_LV1_FIRE_INTERVAL = 8;       // Lv1 floor: only the center shot rea
 const SPREAD_BULLET_SPEED = 8;
 const SPREAD_STEP = 0.16;                // radians between shots
 const SPREAD_DAMAGE = 1;
+const SPREAD_LV3_OFFSETS = [-0.32, -0.08, 0, 0.08, 0.32]; // radians; same width as before (±0.32)
 
 // RAIL LANCER: piercing beam, each enemy hit once
 const RAIL_FIRE_INTERVAL = 12;
@@ -822,7 +823,7 @@ const RAIL_TWIN_OFFSET = 7;              // Lv3: two beams this far apart from c
 const RAIL_MOVE_SCALE = 0.75;            // ship speed while equipped
 
 // CHAIN BOLT: lightning jumps to the nearest other enemy
-const CHAIN_FIRE_INTERVAL = 10;
+const CHAIN_FIRE_INTERVAL = 8;           // Lv2 / Lv3 (was 10; a lone boss: 7.5/s = NORMAL)
 const CHAIN_LV1_FIRE_INTERVAL = 7;        // Lv1 floor: a lone boss has nothing to chain to (8.6/s >= NORMAL 7.5)
 const CHAIN_BULLET_SPEED = 9;
 const CHAIN_DAMAGE = 1;                  // direct hit
