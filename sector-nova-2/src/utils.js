@@ -580,7 +580,7 @@ const NEBULA_EROSION_CHARGE = 30;          // the crack flares before it fires
 const NEBULA_EROSION_SPEED = 2.4;
 
 // ECLIPSE CROWN: S6 final boss (DESIGN.md 14), three forms
-const ECLIPSE_CROWN_HP = [350, 350, 220];  // CROWN / ECLIPSE / SUPERNOVA (design 220 x 3; raised so the max loadout needs >= 60s, README)
+const ECLIPSE_CROWN_HP = [350, 350, 200];  // CROWN / ECLIPSE / SUPERNOVA (design 220 x 3; README). Form 3: every Lv1 with 25% rest within 50 s
 const ECLIPSE_CROWN_DAMAGE_CAP = 8;        // decided (DESIGN.md 14)
 const ECLIPSE_CROWN_SCORE = 50000;
 const ECLIPSE_CROWN_RADIUS = 24;
@@ -807,6 +807,7 @@ const NORMAL_DAMAGE = 1;
 
 // SPREAD FAN: 3 / 4 / 5 ways
 const SPREAD_FIRE_INTERVAL = 10;
+const SPREAD_LV1_FIRE_INTERVAL = 8;       // Lv1 floor: only the center shot reaches a far boss (7.5/s = NORMAL)
 const SPREAD_BULLET_SPEED = 8;
 const SPREAD_STEP = 0.16;                // radians between shots
 const SPREAD_DAMAGE = 1;
@@ -822,6 +823,7 @@ const RAIL_MOVE_SCALE = 0.75;            // ship speed while equipped
 
 // CHAIN BOLT: lightning jumps to the nearest other enemy
 const CHAIN_FIRE_INTERVAL = 10;
+const CHAIN_LV1_FIRE_INTERVAL = 7;        // Lv1 floor: a lone boss has nothing to chain to (8.6/s >= NORMAL 7.5)
 const CHAIN_BULLET_SPEED = 9;
 const CHAIN_DAMAGE = 1;                  // direct hit
 const CHAIN_JUMP_DAMAGE = 1;             // each jump
@@ -830,6 +832,7 @@ const CHAIN_ARC_FRAMES = 10;             // how long a lightning arc stays visib
 
 // HOMING NEEDLE: 1 / 2 / 3 needles that steer to the nearest enemy
 const HOMING_FIRE_INTERVAL = 14;
+const HOMING_LV1_FIRE_INTERVAL = 7;       // Lv1 floor: one needle (8.6/s >= NORMAL 7.5)
 const HOMING_BULLET_SPEED = 6;
 const HOMING_TURN_RATE = 0.12;           // radians per frame
 const HOMING_DAMAGE = 1;
@@ -1049,3 +1052,10 @@ function saveBool(key, value) {
 // --- Endings (Phase 5-3) ---
 const ENDING_INPUT_DELAY = 120;            // frames before ENTER is accepted
 const BAD_END_FLASH_FRAMES = 150;          // the screen whites out (SUPERNOVA)
+
+// --- Polish (claude/polish-1) ---
+const FLOAT_TEXT_FRAMES = 60;              // "LV DOWN" / "OPTION LOST" near the ship
+const HITBOX_DOT_RADIUS = 1.5;             // the ship's hit point, always shown
+const PAUSE_MENU_ITEMS = ['resume', 'retry', 'title'];
+const PAUSE_MENU_Y = CANVAS_HEIGHT / 2 + 10;  // baseline of the first pause row
+const PAUSE_MENU_ROW_H = 20;

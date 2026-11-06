@@ -12,7 +12,8 @@
 //   Play        : drag anywhere to move (relative), auto-fire while
 //                 touching; BURST button bottom-right (usable only
 //                 with a full gauge); two-finger tap = pause
-//   Pause       : tap to resume
+//   Pause       : tap a row (RESUME / RETRY STAGE / TITLE) to select
+//                 it, tap it again to decide
 //   Other screens: tap = ENTER
 // The BURST button is drawn by the HUD on touch devices.
 // ============================================================
@@ -78,7 +79,7 @@ class TouchControls {
         }
       }
     } else if (state === STATE.PAUSED) {
-      input.tapAction('pause');
+      this.tapPause(this.toCanvas(e.changedTouches[0]));
     } else {
       input.tapAction('enter');
     }
@@ -125,6 +126,18 @@ class TouchControls {
       this.game.input.tapAction('enter');
     } else {
       menu.index = i;
+      this.game.audio.play('select');
+    }
+  }
+
+  /** Pause screen: first tap selects a row, a tap on the selected row decides. */
+  tapPause(p) {
+    const i = Math.floor((p.y - (PAUSE_MENU_Y - 13)) / PAUSE_MENU_ROW_H);
+    if (i < 0 || i >= PAUSE_MENU_ITEMS.length || Math.abs(p.x - CANVAS_WIDTH / 2) > 90) return;
+    if (i === this.game.pauseIndex) {
+      this.game.decidePause(PAUSE_MENU_ITEMS[i]);
+    } else {
+      this.game.pauseIndex = i;
       this.game.audio.play('select');
     }
   }

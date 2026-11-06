@@ -2,6 +2,21 @@
 
 SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フェーズ」に沿って Phase 単位で進めます。
 
+## [遊びやすさ] polish-1 — 2026-11-06
+
+### 変更
+
+- 武器の Lv1 の下限: Lv1 の連射間隔 SPREAD 10 → 8、CHAIN 10 → 7、HOMING 14 → 7（`*_LV1_FIRE_INTERVAL`、`weaponFireInterval`）。どの武器も Lv1 で単体のボスに NORMAL（7.5/秒）以上
+- ECLIPSE CROWN 第3形態の HP 220 → 200（どの武器の Lv1 でも 25% 休みで 50秒以内）
+- DESIGN.md（両方）の「6. 武器システム」「17. バランスの原則」に上の2つを追記
+
+### 追加
+
+- 自機の当たり判定を光る点で常に表示
+- ポーズメニュー RESUME / RETRY STAGE / TITLE（キーとタップ）
+- 被弾時の「LV DOWN」「OPTION LOST」表示（`FloatingText`）
+- リザルトに「CRYSTAL n/6」
+
 ## [クロスレビュー後の修正] fix-review — 2026-11-06
 
 ### 修正

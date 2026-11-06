@@ -231,7 +231,10 @@ class TitleMenu {
 // ============================================================
 // PAUSE OVERLAY
 // ============================================================
-function drawPauseScreen(ctx) {
+const PAUSE_MENU_LABELS = { resume: 'RESUME', retry: 'RETRY STAGE', title: 'TITLE' };
+
+/** PAUSED with RESUME / RETRY STAGE / TITLE (keys: UP/DOWN + ENTER, P resumes; taps: touch.js). */
+function drawPauseScreen(ctx, game) {
   ctx.save();
 
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
@@ -240,11 +243,23 @@ function drawPauseScreen(ctx) {
   ctx.textAlign = 'center';
   ctx.fillStyle = COLORS.UI_WHITE;
   ctx.font = 'bold 24px monospace';
-  ctx.fillText('PAUSED', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 10);
+  ctx.fillText('PAUSED', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30);
 
-  ctx.fillStyle = COLORS.UI_BLUE;
-  ctx.font = '10px monospace';
-  ctx.fillText('PRESS P TO RESUME', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
+  ctx.font = 'bold 11px monospace';
+  PAUSE_MENU_ITEMS.forEach((item, i) => {
+    const y = PAUSE_MENU_Y + i * PAUSE_MENU_ROW_H;
+    const selected = i === game.pauseIndex;
+    if (selected) {
+      ctx.fillStyle = 'rgba(80, 140, 220, 0.25)';
+      ctx.fillRect(CANVAS_WIDTH / 2 - 70, y - 12, 140, 17);
+    }
+    ctx.fillStyle = selected ? COLORS.UI_YELLOW : COLORS.UI_BLUE;
+    ctx.fillText((selected ? '> ' : '') + PAUSE_MENU_LABELS[item] + (selected ? ' <' : ''), CANVAS_WIDTH / 2, y);
+  });
+
+  ctx.fillStyle = COLORS.UI_DIM;
+  ctx.font = '8px monospace';
+  ctx.fillText('UP/DOWN + ENTER   P: RESUME   TAP: SELECT / OK', CANVAS_WIDTH / 2, PAUSE_MENU_Y + PAUSE_MENU_ITEMS.length * PAUSE_MENU_ROW_H + 10);
 
   ctx.restore();
 }
@@ -357,6 +372,7 @@ function drawResultScreen(ctx, game) {
     ['DAMAGE TAKEN', String(r.hits), '+' + r.hitPoints],
     ['MAX COMBO', String(r.maxCombo), '+' + r.comboPoints],
     ['PART BONUS', String(r.partBonus), ''],
+    ['CRYSTAL', r.crystals + '/' + MAX_STAGE, ''],
   ];
   ctx.font = '9px monospace';
   rows.forEach(([label, value, pts], i) => {

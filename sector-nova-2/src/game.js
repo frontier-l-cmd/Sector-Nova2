@@ -63,6 +63,8 @@ class Game {
     this.crystalStages = new Set(); // stages whose NOVA CRYSTAL was taken
     this.runFromNewGame = false;    // TRUE END counts only NEW GAME runs
     this.debugInvincible = false;   // debug key 0
+    this.pauseIndex = 0;            // pause menu row (PAUSE_MENU_ITEMS)
+    this.stageStart = null;         // what the ship carried into the stage (RETRY STAGE)
 
     this.titleMenu.reset();
     this.audio.playMusic('title'); // starts once the first input unlocks audio
@@ -83,7 +85,63 @@ class Game {
 
   /** The window lost focus or the page was hidden: pause if playing (main.js). */
   autoPause() {
-    if (this.state === STATE.PLAYING) this.state = STATE.PAUSED;
+    if (this.state === STATE.PLAYING) this.pause();
+  }
+
+  /** Enter the pause screen with RESUME selected. */
+  pause() {
+    this.state = STATE.PAUSED;
+    this.pauseIndex = 0;
+  }
+
+  /** PAUSED: UP/DOWN select, ENTER decide, P resumes (taps: touch.js). */
+  updatePaused() {
+    const input = this.input;
+    if (input.pause) {
+      this.state = STATE.PLAYING;
+      return;
+    }
+    const n = PAUSE_MENU_ITEMS.length;
+    if (input.menuUp) { this.pauseIndex = (this.pauseIndex + n - 1) % n; this.audio.play('select'); }
+    if (input.menuDown) { this.pauseIndex = (this.pauseIndex + 1) % n; this.audio.play('select'); }
+    if (input.enter) this.decidePause(PAUSE_MENU_ITEMS[this.pauseIndex]);
+  }
+
+  decidePause(item) {
+    this.audio.play('select');
+    if (item === 'resume') this.state = STATE.PLAYING;
+    else if (item === 'retry') this.retryStage();
+    else if (item === 'title') this.returnToTitle();
+  }
+
+  /**
+   * RETRY STAGE: the current stage from its start, with what the ship
+   * carried in (score, weapon, options, gauge, crystals). Counts as a
+   * CONTINUE for the TRUE END. BOSS RUSH starts over; TEST RANGE restarts.
+   */
+  retryStage() {
+    if (this.bossRush) {
+      this.startBossRush();
+      return;
+    }
+    if (this.stage.test) {
+      this.startFromStage(0);
+      return;
+    }
+    const snap = this.stageStart;
+    const p = this.player = new Player();
+    if (snap) {
+      this.score = snap.score;
+      if (snap.weaponType !== WEAPON_NORMAL) p.setWeapon(snap.weaponType, snap.weaponLevel);
+      p.lastWeaponType = snap.lastWeaponType;
+      for (let i = 0; i < snap.options; i++) p.addOption();
+      p.gauge = snap.gauge;
+      this.crystalStages = new Set(snap.crystals);
+    }
+    this.runFromNewGame = false;
+    this.scoreSaved = false;
+    this.beginStage();
+    this.beginIntro();
   }
 
   /** Add points, scaled by the difficulty's score rate (DESIGN.md 13). */
@@ -194,6 +252,12 @@ class Game {
    * cap, REFLECT SHIELD, position and a short invincibility reset.
    */
   beginStage() {
+    // What the ship carries in, for RETRY STAGE.
+    const pl = this.player;
+    this.stageStart = {
+      score: this.score, weaponType: pl.weaponType, weaponLevel: pl.weaponLevel, lastWeaponType: pl.lastWeaponType,
+      options: pl.options.length, gauge: pl.gauge, crystals: [...this.crystalStages],
+    };
     this.clearStageObjects();
     this.trueBattle = false;
     this.timeline = new TimelineRunner(STAGE_TIMELINES[this.stage.stageNumber]);
@@ -251,7 +315,7 @@ class Game {
         this.updatePlaying();
         break;
       case STATE.PAUSED:
-        if (this.input.pause) this.state = STATE.PLAYING;
+        this.updatePaused();
         break;
       case STATE.GAME_OVER:
         this.updateGameOver();
@@ -468,7 +532,7 @@ class Game {
 
   updatePlaying() {
     if (this.input.pause) {
-      this.state = STATE.PAUSED;
+      this.pause();
       return;
     }
 
@@ -630,6 +694,7 @@ class Game {
       hits: this.stats.hits,
       maxCombo: this.combo.best,
       partBonus: this.stats.partBonus,
+      crystals: this.crystalStages.size, // NOVA CRYSTALS taken in this run so far
       bossSeconds: this.stats.bossSeconds,
       newBestRank: saveBestRank(stage.stageNumber, rank.rank),
       ...rank,
@@ -1114,11 +1179,19 @@ class Game {
     this.combo.break();
     if (this.stats) this.stats.hits++;
     this.audio.play('hit');
+    const before = { level: player.hasLevel ? player.weaponLevel : 0, options: player.options.length };
     if (player.takeDamage()) {
       this.effects.explode(x, y, 20, 5);
-    } else {
-      this.effects.hitSpark(x, y);
+      return;
     }
+    this.effects.hitSpark(x, y);
+    // Say what the hit cost, briefly, near the ship.
+    let ty = y - 20;
+    if ((player.hasLevel ? player.weaponLevel : 0) < before.level) {
+      this.effects.text(x, ty, 'LV DOWN', COLORS.UI_YELLOW);
+      ty -= 11;
+    }
+    if (player.options.length < before.options) this.effects.text(x, ty, 'OPTION LOST', COLORS.UI_RED);
   }
 
   /** REFLECT SHIELD: hostile bullets within REFLECT_RADIUS fly back at enemies. */
@@ -1240,7 +1313,7 @@ class Game {
       case STATE.PLAYING:
       case STATE.PAUSED:
         this.drawGameplay(ctx);
-        if (this.state === STATE.PAUSED) drawPauseScreen(ctx);
+        if (this.state === STATE.PAUSED) drawPauseScreen(ctx, this);
         break;
       case STATE.GAME_OVER:
         this.drawGameplay(ctx);
@@ -1311,6 +1384,7 @@ class Game {
       drawReflectShield(ctx, this.player.x, this.player.y, this.playTime, this.player.reflectSecondsLeft);
     }
     this.player.draw(ctx);
+    if (this.player.alive) this.drawHitboxDot(ctx);
 
     // Bullets above everything in the playfield, hostile fire on top.
     for (const b of this.playerBullets) b.draw(ctx);
@@ -1318,6 +1392,23 @@ class Game {
 
     this.effects.draw(ctx);
     this.hud.draw(ctx, this);
+  }
+
+  /** The ship's hit point: a small glowing dot, always shown (also while blinking). */
+  drawHitboxDot(ctx) {
+    const p = this.player;
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = COLORS.UI_RED;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, HITBOX_DOT_RADIUS + 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, HITBOX_DOT_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   /** LIGHT RESONANCE: the six crystals circle the ship (TRUE ECLIPSE fight). */

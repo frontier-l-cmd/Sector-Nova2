@@ -147,6 +147,35 @@ class BurstRing {
   }
 }
 
+/** A short word that rises and fades near the ship ("LV DOWN"). Fixed font. */
+class FloatingText {
+  constructor(x, y, text, color) {
+    this.x = x;
+    this.y = y;
+    this.text = text;
+    this.color = color;
+    this.life = FLOAT_TEXT_FRAMES;
+    this.alive = true;
+  }
+
+  update() {
+    this.y -= 0.4;
+    if (--this.life <= 0) this.alive = false;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, this.life / 20);
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = COLORS.BG_DARK;
+    ctx.fillText(this.text, this.x + 1, this.y + 1);
+    ctx.fillStyle = this.color;
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.restore();
+  }
+}
+
 class EffectsManager {
   constructor() {
     this.particles = [];
@@ -240,6 +269,11 @@ class EffectsManager {
   }
 
   /** NOVA BURST: expanding ring + white-gold flash. */
+  /** Short text near the ship (losses on a hit). */
+  text(x, y, text, color) {
+    this.shapes.push(new FloatingText(clamp(x, 30, CANVAS_WIDTH - 30), y, text, color));
+  }
+
   burst(x, y) {
     this.shapes.push(new BurstRing(x, y));
     this.flashes.push(new ScreenFlash(COLORS.BURST_RING, 24));

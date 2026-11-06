@@ -211,7 +211,7 @@ class Player {
   shoot() {
     if (!this.alive || this.fireTimer > 0) return [];
     const def = this.weaponDef;
-    this.fireTimer = def.fireInterval;
+    this.fireTimer = weaponFireInterval(def, this.weaponLevel);
     const shots = def.fire(this.x, this.y, this.hasLevel ? this.weaponLevel : 1, 1);
     for (const o of this.options) shots.push(...def.fire(o.x, o.y + 6, 1, OPTION_POWER));
     return shots;

@@ -9,6 +9,8 @@
 //   - name / short  : HUD labels
 //   - color         : HUD and item accent
 //   - fireInterval  : frames between shots
+//   - lv1Interval   : optional faster Lv1 rate, so that every Lv1 hits a
+//                     single boss at least as hard as NORMAL (DESIGN.md 6)
 //   - fire(x, y, level, power) : array of player projectiles
 // Options call fire() with level 1 and power OPTION_POWER.
 //
@@ -229,6 +231,11 @@ class ReflectedBullet extends PlayerBullet {
   }
 }
 
+/** Frames between shots for a weapon at a level (Lv1 may be faster). */
+function weaponFireInterval(def, level) {
+  return level <= 1 && def.lv1Interval ? def.lv1Interval : def.fireInterval;
+}
+
 // ============================================================
 // Weapon registry
 // ============================================================
@@ -248,6 +255,7 @@ const WEAPONS = {
     name: 'SPREAD FAN',
     color: COLORS.ITEM_SPREAD,
     fireInterval: SPREAD_FIRE_INTERVAL,
+    lv1Interval: SPREAD_LV1_FIRE_INTERVAL,
     fire(x, y, level, power) {
       const count = level + 2; // 3 / 4 / 5 ways
       const bullets = [];
@@ -283,6 +291,7 @@ const WEAPONS = {
     name: 'CHAIN BOLT',
     color: COLORS.ITEM_CHAIN,
     fireInterval: CHAIN_FIRE_INTERVAL,
+    lv1Interval: CHAIN_LV1_FIRE_INTERVAL,
     fire(x, y, level, power) {
       return [new ChainBolt(x, y - 12, level, CHAIN_DAMAGE * power, CHAIN_JUMP_DAMAGE * power)];
     },
@@ -292,6 +301,7 @@ const WEAPONS = {
     name: 'HOMING NEEDLE',
     color: COLORS.ITEM_HOMING,
     fireInterval: HOMING_FIRE_INTERVAL,
+    lv1Interval: HOMING_LV1_FIRE_INTERVAL,
     fire(x, y, level, power) {
       // 1 / 2 / 3 needles fanned upward; they curve onto targets.
       const bullets = [];
