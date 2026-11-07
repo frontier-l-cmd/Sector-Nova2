@@ -8,10 +8,73 @@
 // ============================================================
 
 // TEST RANGE (Stage 0) is listed only in DEBUG_MODE.
-const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'bossRush', 'sound']
+const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'bossRush', 'items', 'sound']
   .concat(DEBUG_MODE ? ['testRange'] : []);
 const TITLE_MENU_Y = 226;    // baseline of the first row
 const TITLE_MENU_ROW_H = 17;
+
+// ITEMS (title menu): the item manual, two pages. Numbers come from
+// the game's own constants so the text never drifts from the rules.
+const ITEM_MANUAL_PAGES = [
+  {
+    title: 'WEAPONS',
+    entryStep: 44,
+    entries: [
+      { type: WEAPON_SPREAD, name: 'SPREAD FAN', lines: [
+        'FANS OUT. LV1 3-WAY / LV2 4-WAY / LV3 5-WAY.',
+        'BEST CLOSE UP AND AGAINST CROWDS.'] },
+      { type: WEAPON_RAIL, name: 'RAIL LANCER', lines: [
+        'PIERCING BEAM, POWER 2. LV3: TWIN BEAMS.',
+        'STRONG IN A LINE. SHIP MOVES AT ' + RAIL_MOVE_SCALE + 'x.'] },
+      { type: WEAPON_CHAIN, name: 'CHAIN BOLT', lines: [
+        'SPARKS JUMP TO THE NEAREST ENEMY (' + CHAIN_RANGE + 'PX).',
+        'LV1/2/3: 1/2/3 JUMPS. STRONG IN GROUPS.'] },
+      { type: WEAPON_HOMING, name: 'HOMING NEEDLE', lines: [
+        'NEEDLES CHASE THE NEAREST ENEMY.',
+        'LV1/2/3: 1/2/3 NEEDLES. HITS FROM THE SIDE.'] },
+    ],
+    notesTitle: 'WEAPON RULES',
+    notes: [
+      '- NEW COLOR: SWITCH WEAPON, KEEP THE LV',
+      '- SAME COLOR: LV UP (MAX LV' + WEAPON_MAX_LEVEL + ')',
+      '- SAME COLOR AT LV' + WEAPON_MAX_LEVEL + ': ' + WEAPON_MAX_LEVEL_BONUS + ' PTS + ' + WEAPON_MAX_LEVEL_GAUGE + '% GAUGE',
+      '- HIT: LV DOWN / HIT AT LV1: BACK TO NORMAL',
+      '- NO TIME LIMIT. NORMAL SHOT IS ALWAYS THERE',
+      '- BOSSES DROP WEAPONS AT 75/50/25% HP',
+    ],
+  },
+  {
+    title: 'SUPPORT',
+    entryStep: 56,
+    entries: [
+      { type: ITEM_OPTION, name: 'OPTION', lines: [
+        '+1 OPTION CRAFT THAT SHOOTS WITH YOU.',
+        'MAX ' + OPTION_MAX + '. LOSE ONE WHEN HIT.',
+        'AT MAX: ' + OPTION_CAP_BONUS + ' PTS.'] },
+      { type: ITEM_REFLECT, name: 'REFLECT SHIELD', lines: [
+        'BLOCKS ONE HIT AND TURNS ENEMY SHOTS',
+        'WITHIN ' + REFLECT_RADIUS + 'PX BACK AT ENEMIES. NO LV DOWN.',
+        'LASTS ' + Math.round(REFLECT_DURATION / 60) + ' SEC.'] },
+      { type: ITEM_REPAIR, name: 'REPAIR', lines: [
+        'LIFE +1.',
+        'AT FULL LIFE: ' + REPAIR_FULL_BONUS + ' PTS.'] },
+      { type: ITEM_HULL_UP, name: 'HULL UP', lines: [
+        'MAX LIFE +1 FOR THIS STAGE (UP TO ' + PLAYER_STAGE_MAX_LIVES + '),',
+        'THEN FULL REPAIR.',
+        'AT MAX AND FULL: ' + HULL_UP_FULL_BONUS + ' PTS.'] },
+      { type: ITEM_STAR_CHIP, name: 'STAR CHIP', lines: [
+        STAR_CHIP_SCORE + ' PTS + ' + STAR_CHIP_GAUGE + '% NOVA GAUGE.',
+        'DROPS OFTEN.'] },
+      { type: ITEM_NOVA_CRYSTAL, name: 'NOVA CRYSTAL', lines: [
+        'HIDDEN. ONE PER STAGE, EACH WITH ITS OWN',
+        'SECRET CONDITION. ALL ' + MAX_STAGE + ' IN ONE RUN FROM',
+        'NEW GAME LEAD TO THE TRUE END.'] },
+    ],
+  },
+];
+const ITEM_MANUAL_TOP = 74;      // top of the first entry
+const ITEM_MANUAL_NAV_Y = 452;   // baseline of the "< PREV  BACK  NEXT >" bar
+const ITEM_MANUAL_NAV_TOP = 432; // touch: taps below this hit the bar
 
 /**
  * Large text with a drop shadow: same font, fixed offset, no motion.
@@ -28,11 +91,44 @@ class TitleMenu {
   constructor() {
     this.index = 0;
     this.stageCursor = 1;
+    this.manualPage = -1;   // ITEMS screen page (-1 = closed)
   }
 
   reset() {
     this.index = 0;
     this.stageCursor = getUnlockedStage();
+    this.manualPage = -1;   // ITEMS screen page (-1 = closed)
+  }
+
+  get manualOpen() {
+    return this.manualPage >= 0;
+  }
+
+  openManual(game) {
+    this.manualPage = 0;
+    game.audio.play('select');
+  }
+
+  closeManual(game) {
+    this.manualPage = -1;
+    game.audio.play('select');
+  }
+
+  turnManualPage(dir, game) {
+    const n = ITEM_MANUAL_PAGES.length;
+    this.manualPage = (this.manualPage + dir + n) % n;
+    game.audio.play('select');
+  }
+
+  /** ITEMS screen: arrows turn the page, ENTER / P / ESC go back. */
+  updateManual(game) {
+    const input = game.input;
+    if (input.enter || input.pause || input.isJustPressed('Escape')) {
+      this.closeManual(game);
+      return;
+    }
+    if (input.menuLeft || input.menuUp) this.turnManualPage(-1, game);
+    if (input.menuRight || input.menuDown) this.turnManualPage(1, game);
   }
 
   get selected() {
@@ -40,6 +136,10 @@ class TitleMenu {
   }
 
   update(game) {
+    if (this.manualOpen) {
+      this.updateManual(game);
+      return;
+    }
     const input = game.input;
     this.stageCursor = clamp(this.stageCursor, 1, highestSelectableStage());
 
@@ -114,6 +214,9 @@ class TitleMenu {
         game.audio.play('select');
         game.startBossRush();
         break;
+      case 'items':
+        this.openManual(game);
+        break;
       case 'testRange':
         game.audio.play('select');
         game.startFromStage(0);
@@ -132,12 +235,17 @@ class TitleMenu {
       { item: 'stageSelect', label: 'STAGE SELECT', value: arrows('stageSelect', 'STAGE ' + this.stageCursor), enabled: true },
       { item: 'difficulty', label: 'DIFFICULTY', value: arrows('difficulty', game.difficulty), enabled: true },
       { item: 'bossRush', label: bossRush ? 'BOSS RUSH' : '???', value: bossRush ? 'BEST ' + formatRushTime(loadBossRushBestTime()) : '', enabled: bossRush },
+      { item: 'items', label: 'ITEMS', value: '', enabled: true },
       { item: 'sound', label: 'SOUND', value: arrows('sound', game.audio.muted ? 'OFF' : 'ON'), enabled: true },
       { item: 'testRange', label: 'TEST RANGE', value: 'DEBUG', enabled: true },
     ].filter(row => TITLE_MENU_ITEMS.includes(row.item));
   }
 
   draw(ctx, game) {
+    if (this.manualOpen) {
+      this.drawManual(ctx, game);
+      return;
+    }
     ctx.save();
 
     // Darkened overlay
@@ -200,8 +308,8 @@ class TitleMenu {
     ctx.textAlign = 'center';
     ctx.fillStyle = COLORS.UI_DIM;
     ctx.font = '8px monospace';
-    ctx.fillText('BEST SCORE: ' + String(game.bestScore).padStart(8, '0'), cx, 346);
-    ctx.fillText('BEST CLEAR: ' + String(game.bestClearScore).padStart(8, '0'), cx, 358);
+    ctx.fillText('BEST SCORE: ' + String(game.bestScore).padStart(8, '0'), cx, 362);
+    ctx.fillText('BEST CLEAR: ' + String(game.bestClearScore).padStart(8, '0'), cx, 372);
 
     // Controls help
     ctx.fillStyle = COLORS.UI_BLUE;
@@ -223,6 +331,88 @@ class TitleMenu {
     ctx.fillStyle = COLORS.UI_DIM;
     ctx.font = '7px monospace';
     ctx.fillText('AI GAME DEV EXPERIMENT', cx, 466);
+
+    ctx.restore();
+  }
+
+  /** ITEMS screen: each item drawn as it looks in play, with its effect. */
+  drawManual(ctx, game) {
+    const page = ITEM_MANUAL_PAGES[this.manualPage];
+    const cx = CANVAS_WIDTH / 2;
+    if (!this.manualIcons) {
+      this.manualIcons = new Map();
+      for (const p of ITEM_MANUAL_PAGES) {
+        for (const e of p.entries) this.manualIcons.set(e.type, new Powerup(0, 0, e.type));
+      }
+    }
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Header
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 18px monospace';
+    drawShadowedText(ctx, 'ITEMS', cx, 36, COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
+    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = COLORS.TITLE_SUBTITLE;
+    ctx.fillText(page.title + '   ' + (this.manualPage + 1) + '/' + ITEM_MANUAL_PAGES.length, cx, 52);
+    ctx.strokeStyle = COLORS.TITLE_SUBTITLE;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(24, 59);
+    ctx.lineTo(CANVAS_WIDTH - 24, 59);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Entries: icon, name, effect lines
+    let top = ITEM_MANUAL_TOP;
+    for (const e of page.entries) {
+      const icon = this.manualIcons.get(e.type);
+      icon.x = 32;
+      icon.y = top + 10;
+      icon.frame = game.globalFrame;
+      icon.draw(ctx);
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillStyle = e.type === ITEM_NOVA_CRYSTAL
+        ? COLORS.CRYSTAL_HUES[Math.floor(game.globalFrame / 6) % COLORS.CRYSTAL_HUES.length]
+        : icon.def.color;
+      ctx.fillText(e.name, 56, top + 6);
+      ctx.font = '8px monospace';
+      ctx.fillStyle = COLORS.UI_WHITE;
+      e.lines.forEach((line, i) => ctx.fillText(line, 56, top + 18 + i * 11));
+      top += page.entryStep;
+    }
+
+    // Rules box (weapons page)
+    if (page.notes) {
+      top += 6;
+      ctx.fillStyle = 'rgba(136, 187, 255, 0.08)';
+      ctx.fillRect(20, top - 12, CANVAS_WIDTH - 40, 22 + page.notes.length * 11);
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 9px monospace';
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      ctx.fillText(page.notesTitle, 28, top + 2);
+      ctx.font = '8px monospace';
+      ctx.fillStyle = COLORS.UI_WHITE;
+      page.notes.forEach((line, i) => ctx.fillText(line, 28, top + 15 + i * 11));
+    }
+
+    // Navigation bar (also the touch targets)
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = 'rgba(136, 187, 255, 0.12)';
+    ctx.fillRect(20, ITEM_MANUAL_NAV_Y - 13, CANVAS_WIDTH - 40, 19);
+    ctx.fillStyle = COLORS.UI_BLUE;
+    ctx.fillText('< PREV', CANVAS_WIDTH / 6, ITEM_MANUAL_NAV_Y);
+    ctx.fillText('NEXT >', CANVAS_WIDTH * 5 / 6, ITEM_MANUAL_NAV_Y);
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    ctx.fillText('BACK', cx, ITEM_MANUAL_NAV_Y);
+    ctx.fillStyle = COLORS.UI_DIM;
+    ctx.font = '7px monospace';
+    ctx.fillText('LEFT/RIGHT: PAGE   ENTER/P/ESC: BACK', cx, 472);
 
     ctx.restore();
   }

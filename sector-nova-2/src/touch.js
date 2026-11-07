@@ -124,6 +124,10 @@ class TouchControls {
 
   tapTitle(p) {
     const menu = this.game.titleMenu;
+    if (menu.manualOpen) {
+      this.tapManual(p);
+      return;
+    }
     const i = Math.floor((p.y - (TITLE_MENU_Y - 11)) / TITLE_MENU_ROW_H);
     if (i < 0 || i >= TITLE_MENU_ITEMS.length) return;
     // STAGE SELECT: on the selected row, the "< STAGE n >" value works
@@ -138,6 +142,15 @@ class TouchControls {
       menu.index = i;
       this.game.audio.play('select');
     }
+  }
+
+  /** ITEMS screen: the bottom bar is < PREV / BACK / NEXT >. */
+  tapManual(p) {
+    if (p.y < ITEM_MANUAL_NAV_TOP) return;
+    const menu = this.game.titleMenu;
+    if (p.x < CANVAS_WIDTH / 3) menu.turnManualPage(-1, this.game);
+    else if (p.x > CANVAS_WIDTH * 2 / 3) menu.turnManualPage(1, this.game);
+    else menu.closeManual(this.game);
   }
 
   /** Pause screen: first tap selects a row, a tap on the selected row decides. */
