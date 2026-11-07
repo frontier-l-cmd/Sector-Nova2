@@ -35,6 +35,7 @@ class HUD {
     this.drawWeaponPanel(ctx, game);
     this.drawGauge(ctx, game);
     if (game.touch.available) this.drawBurstButton(ctx, game);
+    if (game.touch.available && game.state === STATE.PLAYING) this.drawPauseButton(ctx);
     if (DEBUG_MODE) this.drawDebugInfo(ctx, game);
     ctx.restore();
 
@@ -310,6 +311,21 @@ class HUD {
    * when the gauge is full; otherwise a dim ring that fills with the
    * gauge, so it reads as "not usable yet".
    */
+  /** Touch: a small, dim "II" in the top bar (tap = pause). */
+  drawPauseButton(ctx) {
+    const x = TOUCH_PAUSE_X;
+    const y = TOUCH_PAUSE_Y;
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = COLORS.UI_DIM;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - 8.5, y - 5.5, 17, 11);
+    ctx.fillStyle = COLORS.UI_WHITE;
+    ctx.fillRect(x - 3, y - 3, 2, 6);
+    ctx.fillRect(x + 1, y - 3, 2, 6);
+    ctx.restore();
+  }
+
   drawBurstButton(ctx, game) {
     const player = game.player;
     const x = TOUCH_BURST_X;

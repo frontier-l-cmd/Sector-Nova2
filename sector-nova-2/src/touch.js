@@ -11,7 +11,8 @@
 //                 of arrows and the label starts the stage)
 //   Play        : drag anywhere to move (relative), auto-fire while
 //                 touching; BURST button bottom-right (usable only
-//                 with a full gauge); two-finger tap = pause
+//                 with a full gauge); small "II" button in the top bar
+//                 or a two-finger tap = pause
 //   Pause       : tap a row (RESUME / RETRY STAGE / TITLE) to select
 //                 it, tap it again to decide
 //   Other screens: tap = ENTER
@@ -45,6 +46,10 @@ class TouchControls {
     };
   }
 
+  isOnPauseButton(p) {
+    return Math.abs(p.x - TOUCH_PAUSE_X) <= TOUCH_PAUSE_HIT_W && p.y <= TOUCH_PAUSE_HIT_H;
+  }
+
   isOnBurstButton(p) {
     return dist(p.x, p.y, TOUCH_BURST_X, TOUCH_BURST_Y) <= TOUCH_BURST_RADIUS + TOUCH_BURST_HIT_MARGIN;
   }
@@ -61,6 +66,11 @@ class TouchControls {
     } else if (state === STATE.PLAYING) {
       for (const t of e.changedTouches) {
         const p = this.toCanvas(t);
+        if (this.isOnPauseButton(p)) {
+          input.tapAction('pause');
+          this.release();
+          return;
+        }
         if (this.isOnBurstButton(p)) {
           // Press only does something with a full gauge.
           if (this.game.player.burstReady) {
