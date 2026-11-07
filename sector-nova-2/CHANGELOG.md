@@ -6,10 +6,10 @@ SECTOR NOVA 2 の変更履歴です。開発は `DESIGN.md` の「16. 開発フ�
 
 ### 追加
 
-- タイトルメニューに **ITEMS**（BOSS RUSH と SOUND の間）。アイテムの説明画面を開く
-  - 1ページ目 WEAPONS: 4つの武器と武器のルール。2ページ目 SUPPORT: OPTION / REFLECT SHIELD / REPAIR / HULL UP / STAR CHIP / NOVA CRYSTAL
+- タイトルメニューに **ITEMS**（BOSS RUSH と SOUND の間）。アイテムの説明画面（**日本語**）を開く
+  - 1ページ目「武器」: 4つの武器と武器のルール。2ページ目「サポート」: OPTION / REFLECT SHIELD / REPAIR / HULL UP / STAR CHIP / NOVA CRYSTAL
   - アイコンはプレイ中と同じ描き方（`Powerup.draw`）。点数・秒数などの数値はゲームの定数から表示
-  - キー: ←→（↑↓）でページ、ENTER / P / Esc で戻る。タッチ: 下の帯の「< PREV / BACK / NEXT >」
+  - キー: ←→（↑↓）でページ、ENTER / P / Esc で戻る。タッチ: 下の帯の「< まえ / もどる / つぎ >」
   - タイトル画面の中の表示なので、ゲームの状態（STATE）は増やしていない
 
 ### 変更

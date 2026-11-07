@@ -144,7 +144,7 @@ class TouchControls {
     }
   }
 
-  /** ITEMS screen: the bottom bar is < PREV / BACK / NEXT >. */
+  /** ITEMS screen: the bottom bar is < まえ / もどる / つぎ >. */
   tapManual(p) {
     if (p.y < ITEM_MANUAL_NAV_TOP) return;
     const menu = this.game.titleMenu;

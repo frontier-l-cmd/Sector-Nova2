@@ -13,62 +13,64 @@ const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'b
 const TITLE_MENU_Y = 226;    // baseline of the first row
 const TITLE_MENU_ROW_H = 17;
 
-// ITEMS (title menu): the item manual, two pages. Numbers come from
-// the game's own constants so the text never drifts from the rules.
+// ITEMS (title menu): the item manual, in Japanese, two pages.
+// Numbers come from the game's own constants so the text never
+// drifts from the rules.
+const ITEM_MANUAL_FONT = '"Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
 const ITEM_MANUAL_PAGES = [
   {
-    title: 'WEAPONS',
-    entryStep: 44,
+    title: '武器',
+    entryStep: 46,
     entries: [
-      { type: WEAPON_SPREAD, name: 'SPREAD FAN', lines: [
-        'FANS OUT. LV1 3-WAY / LV2 4-WAY / LV3 5-WAY.',
-        'BEST CLOSE UP AND AGAINST CROWDS.'] },
-      { type: WEAPON_RAIL, name: 'RAIL LANCER', lines: [
-        'PIERCING BEAM, POWER 2. LV3: TWIN BEAMS.',
-        'STRONG IN A LINE. SHIP MOVES AT ' + RAIL_MOVE_SCALE + 'x.'] },
-      { type: WEAPON_CHAIN, name: 'CHAIN BOLT', lines: [
-        'SPARKS JUMP TO THE NEAREST ENEMY (' + CHAIN_RANGE + 'PX).',
-        'LV1/2/3: 1/2/3 JUMPS. STRONG IN GROUPS.'] },
-      { type: WEAPON_HOMING, name: 'HOMING NEEDLE', lines: [
-        'NEEDLES CHASE THE NEAREST ENEMY.',
-        'LV1/2/3: 1/2/3 NEEDLES. HITS FROM THE SIDE.'] },
+      { type: WEAPON_SPREAD, name: 'SPREAD FAN', sub: '拡散弾', lines: [
+        '扇のように広がる弾。Lv1 3方向/Lv2 4方向/Lv3 5方向。',
+        '近くの敵や、敵の群れに強い。'] },
+      { type: WEAPON_RAIL, name: 'RAIL LANCER', sub: '貫通ビーム', lines: [
+        '敵を貫くビーム。威力2。Lv3はビーム2本。',
+        '縦に並んだ敵に強い。装備中は移動が' + RAIL_MOVE_SCALE + '倍。'] },
+      { type: WEAPON_CHAIN, name: 'CHAIN BOLT', sub: '連鎖電撃', lines: [
+        '当てた敵から近くの敵(' + CHAIN_RANGE + 'px以内)へ電撃が飛ぶ。',
+        'Lv1/2/3で1/2/3回つながる。群れに強い。'] },
+      { type: WEAPON_HOMING, name: 'HOMING NEEDLE', sub: '追尾針', lines: [
+        'いちばん近い敵を追いかける針。',
+        'Lv1/2/3で1/2/3発。横からも当てられる。'] },
     ],
-    notesTitle: 'WEAPON RULES',
+    notesTitle: '武器のルール',
     notes: [
-      '- NEW COLOR: SWITCH WEAPON, KEEP THE LV',
-      '- SAME COLOR: LV UP (MAX LV' + WEAPON_MAX_LEVEL + ')',
-      '- SAME COLOR AT LV' + WEAPON_MAX_LEVEL + ': ' + WEAPON_MAX_LEVEL_BONUS + ' PTS + ' + WEAPON_MAX_LEVEL_GAUGE + '% GAUGE',
-      '- HIT: LV DOWN / HIT AT LV1: BACK TO NORMAL',
-      '- NO TIME LIMIT. NORMAL SHOT IS ALWAYS THERE',
-      '- BOSSES DROP WEAPONS AT 75/50/25% HP',
+      '・別の色を取る: 武器が変わる(Lvはそのまま)',
+      '・同じ色を取る: Lvアップ(最大Lv' + WEAPON_MAX_LEVEL + ')',
+      '・Lv' + WEAPON_MAX_LEVEL + 'で同じ色: ' + WEAPON_MAX_LEVEL_BONUS + '点 + NOVAゲージ' + WEAPON_MAX_LEVEL_GAUGE + '%',
+      '・被弾でLvダウン。Lv1で被弾するとNORMALに戻る',
+      '・時間切れはなし。NORMAL弾はいつでも撃てる',
+      '・ボスはHPが75/50/25%を切ると武器を落とす',
     ],
   },
   {
-    title: 'SUPPORT',
+    title: 'サポート',
     entryStep: 56,
     entries: [
-      { type: ITEM_OPTION, name: 'OPTION', lines: [
-        '+1 OPTION CRAFT THAT SHOOTS WITH YOU.',
-        'MAX ' + OPTION_MAX + '. LOSE ONE WHEN HIT.',
-        'AT MAX: ' + OPTION_CAP_BONUS + ' PTS.'] },
-      { type: ITEM_REFLECT, name: 'REFLECT SHIELD', lines: [
-        'BLOCKS ONE HIT AND TURNS ENEMY SHOTS',
-        'WITHIN ' + REFLECT_RADIUS + 'PX BACK AT ENEMIES. NO LV DOWN.',
-        'LASTS ' + Math.round(REFLECT_DURATION / 60) + ' SEC.'] },
-      { type: ITEM_REPAIR, name: 'REPAIR', lines: [
-        'LIFE +1.',
-        'AT FULL LIFE: ' + REPAIR_FULL_BONUS + ' PTS.'] },
-      { type: ITEM_HULL_UP, name: 'HULL UP', lines: [
-        'MAX LIFE +1 FOR THIS STAGE (UP TO ' + PLAYER_STAGE_MAX_LIVES + '),',
-        'THEN FULL REPAIR.',
-        'AT MAX AND FULL: ' + HULL_UP_FULL_BONUS + ' PTS.'] },
-      { type: ITEM_STAR_CHIP, name: 'STAR CHIP', lines: [
-        STAR_CHIP_SCORE + ' PTS + ' + STAR_CHIP_GAUGE + '% NOVA GAUGE.',
-        'DROPS OFTEN.'] },
-      { type: ITEM_NOVA_CRYSTAL, name: 'NOVA CRYSTAL', lines: [
-        'HIDDEN. ONE PER STAGE, EACH WITH ITS OWN',
-        'SECRET CONDITION. ALL ' + MAX_STAGE + ' IN ONE RUN FROM',
-        'NEW GAME LEAD TO THE TRUE END.'] },
+      { type: ITEM_OPTION, name: 'OPTION', sub: 'オプション機', lines: [
+        'いっしょに弾を撃つオプション機が1機増える。',
+        '最大' + OPTION_MAX + '機。被弾すると1機減る。',
+        '最大の時に取ると' + OPTION_CAP_BONUS + '点。'] },
+      { type: ITEM_REFLECT, name: 'REFLECT SHIELD', sub: '反射シールド', lines: [
+        '被弾を1回だけ防ぐ。防いだ時、まわり' + REFLECT_RADIUS + 'pxの',
+        '敵弾をはね返し、敵に当たる弾にする。',
+        'Lvは下がらない。' + Math.round(REFLECT_DURATION / 60) + '秒で消える。'] },
+      { type: ITEM_REPAIR, name: 'REPAIR', sub: '修理', lines: [
+        'ライフ+1。',
+        'ライフ満タンの時は' + REPAIR_FULL_BONUS + '点。'] },
+      { type: ITEM_HULL_UP, name: 'HULL UP', sub: '装甲強化', lines: [
+        'このステージの間だけ最大ライフ+1(最大' + PLAYER_STAGE_MAX_LIVES + ')',
+        'して、ライフ全回復。',
+        '最大かつ満タンの時は' + HULL_UP_FULL_BONUS + '点。'] },
+      { type: ITEM_STAR_CHIP, name: 'STAR CHIP', sub: 'スターチップ', lines: [
+        STAR_CHIP_SCORE + '点 + NOVAゲージ' + STAR_CHIP_GAUGE + '%。',
+        'よく落ちる。'] },
+      { type: ITEM_NOVA_CRYSTAL, name: 'NOVA CRYSTAL', sub: '隠しアイテム', lines: [
+        '各ステージに1つ、それぞれ決まった条件で出る。',
+        'NEW GAMEからCONTINUEなしで' + MAX_STAGE + '個',
+        '集めると TRUE END へ。'] },
     ],
   },
 ];
@@ -352,9 +354,9 @@ class TitleMenu {
 
     // Header
     ctx.textAlign = 'center';
-    ctx.font = 'bold 18px monospace';
-    drawShadowedText(ctx, 'ITEMS', cx, 36, COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
-    ctx.font = 'bold 9px monospace';
+    ctx.font = 'bold 18px ' + ITEM_MANUAL_FONT;
+    drawShadowedText(ctx, 'アイテム説明', cx, 36, COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
+    ctx.font = 'bold 10px ' + ITEM_MANUAL_FONT;
     ctx.fillStyle = COLORS.TITLE_SUBTITLE;
     ctx.fillText(page.title + '   ' + (this.manualPage + 1) + '/' + ITEM_MANUAL_PAGES.length, cx, 52);
     ctx.strokeStyle = COLORS.TITLE_SUBTITLE;
@@ -380,9 +382,13 @@ class TitleMenu {
         ? COLORS.CRYSTAL_HUES[Math.floor(game.globalFrame / 6) % COLORS.CRYSTAL_HUES.length]
         : icon.def.color;
       ctx.fillText(e.name, 56, top + 6);
-      ctx.font = '8px monospace';
+      const nameW = ctx.measureText(e.name).width;
+      ctx.font = 'bold 9px ' + ITEM_MANUAL_FONT;
+      ctx.fillStyle = COLORS.UI_DIM;
+      ctx.fillText(e.sub, 62 + nameW, top + 6);
+      ctx.font = '9px ' + ITEM_MANUAL_FONT;
       ctx.fillStyle = COLORS.UI_WHITE;
-      e.lines.forEach((line, i) => ctx.fillText(line, 56, top + 18 + i * 11));
+      e.lines.forEach((line, i) => ctx.fillText(line, 56, top + 19 + i * 12));
       top += page.entryStep;
     }
 
@@ -390,29 +396,29 @@ class TitleMenu {
     if (page.notes) {
       top += 6;
       ctx.fillStyle = 'rgba(136, 187, 255, 0.08)';
-      ctx.fillRect(20, top - 12, CANVAS_WIDTH - 40, 22 + page.notes.length * 11);
+      ctx.fillRect(20, top - 12, CANVAS_WIDTH - 40, 22 + page.notes.length * 12);
       ctx.textAlign = 'left';
-      ctx.font = 'bold 9px monospace';
+      ctx.font = 'bold 10px ' + ITEM_MANUAL_FONT;
       ctx.fillStyle = COLORS.UI_YELLOW;
       ctx.fillText(page.notesTitle, 28, top + 2);
-      ctx.font = '8px monospace';
+      ctx.font = '9px ' + ITEM_MANUAL_FONT;
       ctx.fillStyle = COLORS.UI_WHITE;
-      page.notes.forEach((line, i) => ctx.fillText(line, 28, top + 15 + i * 11));
+      page.notes.forEach((line, i) => ctx.fillText(line, 28, top + 16 + i * 12));
     }
 
     // Navigation bar (also the touch targets)
     ctx.textAlign = 'center';
-    ctx.font = 'bold 10px monospace';
+    ctx.font = 'bold 10px ' + ITEM_MANUAL_FONT;
     ctx.fillStyle = 'rgba(136, 187, 255, 0.12)';
     ctx.fillRect(20, ITEM_MANUAL_NAV_Y - 13, CANVAS_WIDTH - 40, 19);
     ctx.fillStyle = COLORS.UI_BLUE;
-    ctx.fillText('< PREV', CANVAS_WIDTH / 6, ITEM_MANUAL_NAV_Y);
-    ctx.fillText('NEXT >', CANVAS_WIDTH * 5 / 6, ITEM_MANUAL_NAV_Y);
+    ctx.fillText('< まえ', CANVAS_WIDTH / 6, ITEM_MANUAL_NAV_Y);
+    ctx.fillText('つぎ >', CANVAS_WIDTH * 5 / 6, ITEM_MANUAL_NAV_Y);
     ctx.fillStyle = COLORS.UI_YELLOW;
-    ctx.fillText('BACK', cx, ITEM_MANUAL_NAV_Y);
+    ctx.fillText('もどる', cx, ITEM_MANUAL_NAV_Y);
     ctx.fillStyle = COLORS.UI_DIM;
-    ctx.font = '7px monospace';
-    ctx.fillText('LEFT/RIGHT: PAGE   ENTER/P/ESC: BACK', cx, 472);
+    ctx.font = '8px ' + ITEM_MANUAL_FONT;
+    ctx.fillText('←→: ページ   ENTER / P / Esc: もどる', cx, 472);
 
     ctx.restore();
   }
