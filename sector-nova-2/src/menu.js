@@ -96,7 +96,8 @@ const MANUAL_PAGES = [
       { name: 'コンボ', sample: { part: 'combo', sx: 250, sy: 17, sw: 70, sh: 16 }, lines: [
         '敵を続けて倒すと増える。下の線は残り時間で、',
         '切れる前に次を倒すと続く。被弾すると途切れる。',
-        COMBO_TIERS.filter(t => t[1] > 1).reverse().map(t => t[0] + 'で×' + t[1]).join('、') + '(得点の倍率)。'] },
+        COMBO_TIERS.filter(t => t[1] > 1).reverse().map(t => t[0] + 'で×' + t[1]).join('、') + '(得点の倍率)。',
+        'ステージの最大コンボは、結果のランク(S〜C)にも入る。'] },
       { name: 'ポーズボタン(スマホ)', sample: { part: 'pause', sx: 66, sy: 1, sw: 24, sh: 14 }, lines: [
         'タップでポーズ。2本指タップでもポーズできる。'] },
     ],
