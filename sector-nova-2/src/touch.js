@@ -144,9 +144,9 @@ class TouchControls {
     }
   }
 
-  /** ITEMS screen: the bottom bar is < まえ / もどる / つぎ >. */
+  /** MANUAL screen: the bottom bar is < まえ / もどる / つぎ >. */
   tapManual(p) {
-    if (p.y < ITEM_MANUAL_NAV_TOP) return;
+    if (p.y < MANUAL_NAV_TOP) return;
     const menu = this.game.titleMenu;
     if (p.x < CANVAS_WIDTH / 3) menu.turnManualPage(-1, this.game);
     else if (p.x > CANVAS_WIDTH * 2 / 3) menu.turnManualPage(1, this.game);

@@ -8,17 +8,19 @@
 // ============================================================
 
 // TEST RANGE (Stage 0) is listed only in DEBUG_MODE.
-const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'bossRush', 'items', 'sound']
+const TITLE_MENU_ITEMS = ['newGame', 'continue', 'stageSelect', 'difficulty', 'bossRush', 'manual', 'sound']
   .concat(DEBUG_MODE ? ['testRange'] : []);
 const TITLE_MENU_Y = 226;    // baseline of the first row
 const TITLE_MENU_ROW_H = 17;
 
-// ITEMS (title menu): the item manual, in Japanese, two pages.
-// Numbers come from the game's own constants so the text never
-// drifts from the rules.
-const ITEM_MANUAL_FONT = '"Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
-const ITEM_MANUAL_PAGES = [
+// MANUAL (title menu): the manual, in Japanese. Pages 1-2 explain
+// the items, pages 3-5 the play screen. Numbers come from the game's
+// own constants, and the screen pages draw each HUD part with the real
+// HUD code (on sample values), so the manual never drifts from the game.
+const MANUAL_FONT = '"Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
+const MANUAL_PAGES = [
   {
+    heading: 'アイテム説明',
     title: '武器',
     entryStep: 46,
     entries: [
@@ -46,6 +48,7 @@ const ITEM_MANUAL_PAGES = [
     ],
   },
   {
+    heading: 'アイテム説明',
     title: 'サポート',
     entryStep: 56,
     entries: [
@@ -73,10 +76,76 @@ const ITEM_MANUAL_PAGES = [
         '集めると TRUE END へ。'] },
     ],
   },
+  // --- The play screen. sample = the part of the real HUD to show:
+  // `part` is drawn with sample values, clipped to (sx, sy, sw, sh)
+  // in screen coordinates.
+  {
+    heading: '画面の見方',
+    title: '上の帯',
+    screen: true,
+    entries: [
+      { name: 'ライフ', sample: { part: 'topBar', sx: 2, sy: 1, sw: 44, sh: 14 }, lines: [
+        '黄色の四角が残りのライフ。暗い四角は減った分。',
+        '0になるとゲームオーバー。HULL UPで枠が増える。'] },
+      { name: 'スコア', sample: { part: 'topBar', sx: 112, sy: 1, sw: 96, sh: 14 }, lines: [
+        'いまの得点。コンボ中は倍率がかかる。'] },
+      { name: '結晶とステージ', sample: { part: 'topBar', sx: 270, sy: 1, sw: 50, sh: 14 }, lines: [
+        '◆の数字: 集めたNOVA CRYSTALの数。灰色の時は',
+        'TRUE ENDに数えない(CONTINUE・ステージセレクト)。',
+        'STの数字: いまのステージ。BOSS RUSHではタイム。'] },
+      { name: 'コンボ', sample: { part: 'combo', sx: 250, sy: 17, sw: 70, sh: 16 }, lines: [
+        '敵を続けて倒すと増える。下の線は残り時間で、',
+        '切れる前に次を倒すと続く。被弾すると途切れる。',
+        COMBO_TIERS.filter(t => t[1] > 1).reverse().map(t => t[0] + 'で×' + t[1]).join('、') + '(得点の倍率)。'] },
+      { name: 'ポーズボタン(スマホ)', sample: { part: 'pause', sx: 66, sy: 1, sw: 24, sh: 14 }, lines: [
+        'タップでポーズ。2本指タップでもポーズできる。'] },
+    ],
+  },
+  {
+    heading: '画面の見方',
+    title: 'ボス・武器・ゲージ',
+    screen: true,
+    entries: [
+      { name: 'ボスのHP', sample: { part: 'bossBar', sx: 4, sy: 18, sw: 240, sh: 30 }, lines: [
+        'ボスの名前と残りHP。緑から赤に変わると怒り状態で、',
+        '攻撃が激しくなる。下の黄色い文字は今の形態。',
+        '中ボスの「ESCAPE」は逃げるまでの秒数。'] },
+      { name: '武器とLv', sample: { part: 'weapon', sx: 2, sy: CANVAS_HEIGHT - 38, sw: 90, sh: 13 }, lines: [
+        '今の武器の名前。右の点の数がLv(最大' + WEAPON_MAX_LEVEL + ')。',
+        'NORMALにはLvがない。'] },
+      { name: 'オプション・シールド', sample: { part: 'weapon', sx: 2, sy: CANVAS_HEIGHT - 25, sw: 120, sh: 12 }, lines: [
+        'OPTの丸: オプション機の数(最大' + OPTION_MAX + ')。',
+        'REFLECT: 反射シールドの残り秒数。'] },
+      { name: 'NOVAゲージ', sample: { part: 'gauge', sx: 214, sy: CANVAS_HEIGHT - 24, sw: 106, sh: 22 }, lines: [
+        '敵を倒す・敵弾にかする(すれすれで避ける)と',
+        '溜まる。100%で「BURST READY」が点滅し、',
+        'Xキー(スマホはBURSTボタン)でNOVA BURST。'] },
+    ],
+  },
+  {
+    heading: '画面の見方',
+    title: 'その他',
+    screen: true,
+    entries: [
+      { name: 'NOVA BURST', sample: { part: 'burst', sx: TOUCH_BURST_X - 24, sy: TOUCH_BURST_Y - 24, sw: 48, sh: 48 }, lines: [
+        '画面の敵弾をすべて消し、敵にダメージ。',
+        '少しの間無敵。スマホは右下のボタンで使う。',
+        '暗い時はゲージ不足(縁の光が溜まり具合)。'] },
+      { name: '当たり判定', sample: { part: 'ship', sx: 0, sy: 0, sw: 32, sh: 32, zoom: 2 }, lines: [
+        '自機の中心の白い点だけに当たり判定がある。',
+        'まわり' + GRAZE_RADIUS + 'pxを敵弾が通ると「かすり」になり、',
+        '得点とNOVAゲージが入る。'] },
+      { name: 'WARNING / CAUTION', lines: [
+        'WARNING: ボスが来る合図。',
+        'CAUTION: 狭い通路や重力など、地形の危険の合図。'] },
+      { name: 'LV DOWN / OPTION LOST', lines: [
+        '被弾した時に自機のそばに出る。失ったものの表示。'] },
+    ],
+  },
 ];
-const ITEM_MANUAL_TOP = 74;      // top of the first entry
-const ITEM_MANUAL_NAV_Y = 452;   // baseline of the "< PREV  BACK  NEXT >" bar
-const ITEM_MANUAL_NAV_TOP = 432; // touch: taps below this hit the bar
+const MANUAL_TOP = 74;      // top of the first entry
+const MANUAL_NAV_Y = 452;   // baseline of the "< PREV  BACK  NEXT >" bar
+const MANUAL_NAV_TOP = 432; // touch: taps below this hit the bar
 
 /**
  * Large text with a drop shadow: same font, fixed offset, no motion.
@@ -93,13 +162,13 @@ class TitleMenu {
   constructor() {
     this.index = 0;
     this.stageCursor = 1;
-    this.manualPage = -1;   // ITEMS screen page (-1 = closed)
+    this.manualPage = -1;   // MANUAL screen page (-1 = closed)
   }
 
   reset() {
     this.index = 0;
     this.stageCursor = getUnlockedStage();
-    this.manualPage = -1;   // ITEMS screen page (-1 = closed)
+    this.manualPage = -1;   // MANUAL screen page (-1 = closed)
   }
 
   get manualOpen() {
@@ -117,12 +186,12 @@ class TitleMenu {
   }
 
   turnManualPage(dir, game) {
-    const n = ITEM_MANUAL_PAGES.length;
+    const n = MANUAL_PAGES.length;
     this.manualPage = (this.manualPage + dir + n) % n;
     game.audio.play('select');
   }
 
-  /** ITEMS screen: arrows turn the page, ENTER / P / ESC go back. */
+  /** MANUAL screen: arrows turn the page, ENTER / P / ESC go back. */
   updateManual(game) {
     const input = game.input;
     if (input.enter || input.pause || input.isJustPressed('Escape')) {
@@ -216,7 +285,7 @@ class TitleMenu {
         game.audio.play('select');
         game.startBossRush();
         break;
-      case 'items':
+      case 'manual':
         this.openManual(game);
         break;
       case 'testRange':
@@ -237,7 +306,7 @@ class TitleMenu {
       { item: 'stageSelect', label: 'STAGE SELECT', value: arrows('stageSelect', 'STAGE ' + this.stageCursor), enabled: true },
       { item: 'difficulty', label: 'DIFFICULTY', value: arrows('difficulty', game.difficulty), enabled: true },
       { item: 'bossRush', label: bossRush ? 'BOSS RUSH' : '???', value: bossRush ? 'BEST ' + formatRushTime(loadBossRushBestTime()) : '', enabled: bossRush },
-      { item: 'items', label: 'ITEMS', value: '', enabled: true },
+      { item: 'manual', label: 'MANUAL', value: '', enabled: true },
       { item: 'sound', label: 'SOUND', value: arrows('sound', game.audio.muted ? 'OFF' : 'ON'), enabled: true },
       { item: 'testRange', label: 'TEST RANGE', value: 'DEBUG', enabled: true },
     ].filter(row => TITLE_MENU_ITEMS.includes(row.item));
@@ -337,13 +406,13 @@ class TitleMenu {
     ctx.restore();
   }
 
-  /** ITEMS screen: each item drawn as it looks in play, with its effect. */
+  /** MANUAL screen: header, the page, and the navigation bar. */
   drawManual(ctx, game) {
-    const page = ITEM_MANUAL_PAGES[this.manualPage];
+    const page = MANUAL_PAGES[this.manualPage];
     const cx = CANVAS_WIDTH / 2;
     if (!this.manualIcons) {
       this.manualIcons = new Map();
-      for (const p of ITEM_MANUAL_PAGES) {
+      for (const p of MANUAL_PAGES.filter(pg => !pg.screen)) {
         for (const e of p.entries) this.manualIcons.set(e.type, new Powerup(0, 0, e.type));
       }
     }
@@ -354,11 +423,11 @@ class TitleMenu {
 
     // Header
     ctx.textAlign = 'center';
-    ctx.font = 'bold 18px ' + ITEM_MANUAL_FONT;
-    drawShadowedText(ctx, 'アイテム説明', cx, 36, COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
-    ctx.font = 'bold 10px ' + ITEM_MANUAL_FONT;
+    ctx.font = 'bold 18px ' + MANUAL_FONT;
+    drawShadowedText(ctx, page.heading, cx, 36, COLORS.UI_WHITE, COLORS.PLAYER_BULLET_GLOW);
+    ctx.font = 'bold 10px ' + MANUAL_FONT;
     ctx.fillStyle = COLORS.TITLE_SUBTITLE;
-    ctx.fillText(page.title + '   ' + (this.manualPage + 1) + '/' + ITEM_MANUAL_PAGES.length, cx, 52);
+    ctx.fillText(page.title + '   ' + (this.manualPage + 1) + '/' + MANUAL_PAGES.length, cx, 52);
     ctx.strokeStyle = COLORS.TITLE_SUBTITLE;
     ctx.lineWidth = 1;
     ctx.globalAlpha = 0.5;
@@ -368,8 +437,18 @@ class TitleMenu {
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    // Entries: icon, name, effect lines
-    let top = ITEM_MANUAL_TOP;
+    if (page.screen) {
+      this.drawScreenEntries(ctx, game, page);
+    } else {
+      this.drawItemEntries(ctx, game, page);
+    }
+    this.drawManualNav(ctx);
+    ctx.restore();
+  }
+
+  /** Items pages: icon, name, effect lines, then the rules box. */
+  drawItemEntries(ctx, game, page) {
+    let top = MANUAL_TOP;
     for (const e of page.entries) {
       const icon = this.manualIcons.get(e.type);
       icon.x = 32;
@@ -383,10 +462,10 @@ class TitleMenu {
         : icon.def.color;
       ctx.fillText(e.name, 56, top + 6);
       const nameW = ctx.measureText(e.name).width;
-      ctx.font = 'bold 9px ' + ITEM_MANUAL_FONT;
+      ctx.font = 'bold 9px ' + MANUAL_FONT;
       ctx.fillStyle = COLORS.UI_DIM;
       ctx.fillText(e.sub, 62 + nameW, top + 6);
-      ctx.font = '9px ' + ITEM_MANUAL_FONT;
+      ctx.font = '9px ' + MANUAL_FONT;
       ctx.fillStyle = COLORS.UI_WHITE;
       e.lines.forEach((line, i) => ctx.fillText(line, 56, top + 19 + i * 12));
       top += page.entryStep;
@@ -398,29 +477,130 @@ class TitleMenu {
       ctx.fillStyle = 'rgba(136, 187, 255, 0.08)';
       ctx.fillRect(20, top - 12, CANVAS_WIDTH - 40, 22 + page.notes.length * 12);
       ctx.textAlign = 'left';
-      ctx.font = 'bold 10px ' + ITEM_MANUAL_FONT;
+      ctx.font = 'bold 10px ' + MANUAL_FONT;
       ctx.fillStyle = COLORS.UI_YELLOW;
       ctx.fillText(page.notesTitle, 28, top + 2);
-      ctx.font = '9px ' + ITEM_MANUAL_FONT;
+      ctx.font = '9px ' + MANUAL_FONT;
       ctx.fillStyle = COLORS.UI_WHITE;
       page.notes.forEach((line, i) => ctx.fillText(line, 28, top + 16 + i * 12));
     }
 
-    // Navigation bar (also the touch targets)
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 10px ' + ITEM_MANUAL_FONT;
-    ctx.fillStyle = 'rgba(136, 187, 255, 0.12)';
-    ctx.fillRect(20, ITEM_MANUAL_NAV_Y - 13, CANVAS_WIDTH - 40, 19);
-    ctx.fillStyle = COLORS.UI_BLUE;
-    ctx.fillText('< まえ', CANVAS_WIDTH / 6, ITEM_MANUAL_NAV_Y);
-    ctx.fillText('つぎ >', CANVAS_WIDTH * 5 / 6, ITEM_MANUAL_NAV_Y);
-    ctx.fillStyle = COLORS.UI_YELLOW;
-    ctx.fillText('もどる', cx, ITEM_MANUAL_NAV_Y);
-    ctx.fillStyle = COLORS.UI_DIM;
-    ctx.font = '8px ' + ITEM_MANUAL_FONT;
-    ctx.fillText('←→: ページ   ENTER / P / Esc: もどる', cx, 472);
+  }
 
+  /** Navigation bar (also the touch targets). */
+  drawManualNav(ctx) {
+    const cx = CANVAS_WIDTH / 2;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 10px ' + MANUAL_FONT;
+    ctx.fillStyle = 'rgba(136, 187, 255, 0.12)';
+    ctx.fillRect(20, MANUAL_NAV_Y - 13, CANVAS_WIDTH - 40, 19);
+    ctx.fillStyle = COLORS.UI_BLUE;
+    ctx.fillText('< まえ', CANVAS_WIDTH / 6, MANUAL_NAV_Y);
+    ctx.fillText('つぎ >', CANVAS_WIDTH * 5 / 6, MANUAL_NAV_Y);
+    ctx.fillStyle = COLORS.UI_YELLOW;
+    ctx.fillText('もどる', cx, MANUAL_NAV_Y);
+    ctx.fillStyle = COLORS.UI_DIM;
+    ctx.font = '8px ' + MANUAL_FONT;
+    ctx.fillText('←→: ページ   ENTER / P / Esc: もどる', cx, 472);
+  }
+
+  /**
+   * Screen pages: each entry shows its HUD part as in play, then the
+   * explanation. A narrow sample sits left of the name, a wide one
+   * under it.
+   */
+  drawScreenEntries(ctx, game, page) {
+    const left = 24;
+    let top = MANUAL_TOP - 4;
+    for (const e of page.entries) {
+      const s = e.sample;
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 10px ' + MANUAL_FONT;
+      ctx.fillStyle = COLORS.UI_YELLOW;
+      const w = s ? s.sw * (s.zoom || 1) : 0;
+      const h = s ? s.sh * (s.zoom || 1) : 0;
+      let textTop;
+      if (!s) {
+        ctx.fillText(e.name, left, top + 9);
+        textTop = top + 14;
+      } else if (w <= 130) {
+        this.drawHudSample(ctx, game, s, left, top);
+        ctx.fillText(e.name, left + w + 10, top + h / 2 + 4);
+        textTop = top + h + 4;
+      } else {
+        ctx.fillText(e.name, left, top + 9);
+        this.drawHudSample(ctx, game, s, left, top + 14);
+        textTop = top + 14 + h + 4;
+      }
+      ctx.textAlign = 'left';
+      ctx.font = '9px ' + MANUAL_FONT;
+      ctx.fillStyle = COLORS.UI_WHITE;
+      e.lines.forEach((line, i) => ctx.fillText(line, left, textTop + 10 + i * 12));
+      top = textTop + e.lines.length * 12 + 10;
+    }
+  }
+
+  /** One HUD part, drawn by the real HUD code on sample values, in a framed box (zoom: optional scale). */
+  drawHudSample(ctx, game, s, dx, dy) {
+    const k = s.zoom || 1;
+    const w = s.sw * k;
+    const h = s.sh * k;
+    ctx.save();
+    ctx.fillStyle = COLORS.BG_DARK;
+    ctx.fillRect(dx, dy, w, h);
+    ctx.beginPath();
+    ctx.rect(dx, dy, w, h);
+    ctx.clip();
+    ctx.translate(dx, dy);
+    ctx.scale(k, k);
+    ctx.translate(-s.sx, -s.sy);
+    const hud = game.hud;
+    const frame = game.globalFrame;
+    switch (s.part) {
+      case 'topBar':
+        hud.drawTopBar(ctx, {
+          player: { maxLives: 4, lives: 3 }, score: 12345, bossRush: null,
+          stage: { stageNumber: 3 }, runFromNewGame: true, crystalStages: { size: 2 },
+        });
+        break;
+      case 'combo':
+        hud.drawCombo(ctx, { combo: { count: 27, multiplier: comboMultiplierFor(27), timeRatio: 1 - (frame % 120) / 120, popupTimer: 0 } });
+        break;
+      case 'bossBar':
+        hud.drawBossBar(ctx, {
+          name: 'ボスの名前', hpPercent: 0.55, isEnraged: Math.floor(frame / 90) % 2 === 1,
+          midboss: true, escapeAfter: 1, state: 'active', escapeSecondsLeft: 12,
+          phases: [0, 0], phaseName: 'FORM 2', subLabel: null, countdownSeconds: null, frame,
+        });
+        break;
+      case 'weapon':
+        hud.drawWeaponPanel(ctx, {
+          player: { weaponDef: WEAPONS[WEAPON_SPREAD], hasLevel: true, weaponLevel: 2, options: [0], reflectActive: true, reflectSecondsLeft: 12 },
+        });
+        break;
+      case 'gauge':
+        hud.drawGauge(ctx, { player: { gauge: 64, burstReady: false }, globalFrame: frame });
+        break;
+      case 'pause':
+        hud.drawPauseButton(ctx);
+        break;
+      case 'burst':
+        hud.drawBurstButton(ctx, { player: { burstReady: true, gauge: GAUGE_MAX }, touch: { buttonFlash: 0 }, globalFrame: frame });
+        break;
+      case 'ship': {
+        if (!this.manualShip) this.manualShip = new Player();
+        const p = this.manualShip;
+        p.x = s.sw / 2;
+        p.y = s.sh / 2 + 2;
+        p.draw(ctx);
+        Game.prototype.drawHitboxDot.call({ player: p }, ctx);
+        break;
+      }
+    }
     ctx.restore();
+    ctx.strokeStyle = 'rgba(136, 187, 255, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(dx - 0.5, dy - 0.5, w + 1, h + 1);
   }
 }
 
